@@ -10,7 +10,6 @@ describe('generateImage', () => {
     prompt: 'A futuristic city skyline',
     workDir: '/tmp/work',
     backendModel: 'gemini-3.6-flash-high',
-    quality: 'high',
     size: undefined,
     imagePaths: [],
     timeoutSec: 600,

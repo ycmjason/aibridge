@@ -9,7 +9,6 @@ export interface ImageGenRequest {
   readonly workDir: string;
   readonly backendModel: string;
   readonly effort?: string | undefined;
-  readonly quality: string;
   readonly size: { readonly w: number; readonly h: number } | undefined;
   readonly imagePaths: readonly string[];
   readonly timeoutSec: number;

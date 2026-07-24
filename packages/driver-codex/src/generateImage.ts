@@ -9,7 +9,6 @@ export interface ImageGenRequest {
   readonly workDir: string;
   readonly backendModel: string;
   readonly effort?: string | undefined;
-  readonly quality: string;
   readonly size: { readonly w: number; readonly h: number } | undefined;
   readonly imagePaths: readonly string[];
   readonly timeoutSec: number;
@@ -51,7 +50,7 @@ export async function generateImage(
       'redraw, trace, or reproduce it with code (no PIL/Pillow/ImageMagick/matplotlib) — write the raw ' +
       'image_gen result as-is, even if imperfect.';
 
-  const prompt = `$imagegen ${refClause}${req.prompt}. Render at ${req.quality.toUpperCase()} quality.${sizeClause} ${guard}`;
+  const prompt = `$imagegen ${refClause}${req.prompt}.${sizeClause} ${guard}`;
 
   const before = cacheRenderPaths();
 

@@ -41,12 +41,6 @@ export const imageGen = buildCommand({
         optional: true,
         brief: 'Reference image path(s), comma-separated — visual reference',
       },
-      quality: {
-        kind: 'parsed',
-        parse: String,
-        optional: true,
-        brief: 'low | medium | high — prompt hint, codex only (default high)',
-      },
       timeout: {
         kind: 'parsed',
         parse: positiveIntSeconds,

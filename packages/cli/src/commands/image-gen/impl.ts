@@ -28,7 +28,6 @@ export interface ImageGenFlags {
   readonly out?: string;
   readonly size?: string;
   readonly image?: string;
-  readonly quality?: string;
   readonly timeout?: number;
   readonly json: boolean;
 }
@@ -55,11 +54,6 @@ export default async function imageGen(
     return fail(
       `effort "-${model.effort}" has no effect on image-gen (gpt-image-2 renders, not the seat model); use ${DEFAULT_IMAGE_GEN}.`,
     );
-  }
-
-  const quality = (flags.quality ?? 'high').toLowerCase();
-  if (!['low', 'medium', 'high'].includes(quality)) {
-    return fail(`invalid --quality "${flags.quality}" (use low | medium | high)`);
   }
 
   let size: { w: number; h: number } | undefined;
@@ -104,7 +98,6 @@ export default async function imageGen(
       workDir: work,
       backendModel: backendModelId(model),
       effort: model.effort,
-      quality,
       size,
       imagePaths,
       timeoutSec,
@@ -118,7 +111,6 @@ export default async function imageGen(
         workDir: work,
         backendModel: backendModelId(model),
         effort: model.effort,
-        quality,
         size,
         imagePaths,
         timeoutSec,
@@ -138,8 +130,8 @@ export default async function imageGen(
           ? 'agy produced no usable image. Re-run with a simpler prompt, or check Antigravity image access.'
           : model.spec.backend === 'grok'
             ? 'grok produced no usable image. Check SuperGrok image access and re-run with a simpler prompt.'
-            : 'codex produced only a tiny/code-drawn image, not a real gpt-image-2 render. ' +
-              'Try --quality high or a clearer, simpler prompt.',
+            : 'codex produced only a tiny/code-drawn image, not a real render. ' +
+              'Try a clearer, simpler prompt.',
       );
     }
 
@@ -182,7 +174,6 @@ export default async function imageGen(
           width: dims?.width ?? null,
           height: dims?.height ?? null,
           sizeRequested: flags.size ?? null,
-          quality: model.spec.backend === 'codex' ? quality : null,
           model: model.spec.slug,
           backend: model.spec.backend,
           real: true,
@@ -191,10 +182,7 @@ export default async function imageGen(
     } else {
       const kb = Math.round(bytes / 1024);
       const dimStr = dims ? `${dims.width}x${dims.height}, ` : '';
-      const qualityStr = model.spec.backend === 'codex' ? `, ${quality} quality` : '';
-      this.process.stdout.write(
-        `✓ Wrote ${outPath} (${dimStr}${kb} KB${qualityStr}, ${model.spec.slug})\n`,
-      );
+      this.process.stdout.write(`✓ Wrote ${outPath} (${dimStr}${kb} KB, ${model.spec.slug})\n`);
     }
   } finally {
     rmSync(work, { recursive: true, force: true });

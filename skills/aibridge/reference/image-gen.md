@@ -8,7 +8,7 @@ matters even if you only hand the prompt back.
 ```bash
 aibridge image-gen "<full prompt — see Part B>" \
   [--model <slug>] [--out out.png] [--size 1024x1024] [--image ref.png] \
-  [--quality high] [--timeout 600] [--json]
+  [--timeout 600] [--json]
 ```
 
 `--model` uses the **same canonical slugs as every other command**
@@ -31,12 +31,12 @@ Notes:
   afterwards when ImageMagick is available.
 - `--image` attaches reference image(s) (comma-separated paths) — every seat
   routes them to its edit path. See **Reference images** below.
-- `--quality` is `low | medium | high` (default `high`) — a **prompt hint, not an
-  API knob**: aibridge appends it to the codex prompt only. No backend's image
-  tool takes a quality parameter (codex: `prompt`, `referenced_image_paths`,
+- **There is no quality flag.** No backend's image tool takes a quality
+  parameter (codex: `prompt`, `referenced_image_paths`,
   `num_last_images_to_include`; grok: `prompt`, `aspect_ratio`; agy: `Prompt`,
-  `ImageName`, `AspectRatio`, `ImagePaths`). agy and grok ignore the flag.
-- `--json` prints `{ out, bytes, width, height, quality, model, backend, real }`.
+  `ImageName`, `AspectRatio`, `ImagePaths`) — put any quality wording in the
+  prompt itself, where it actually reaches the model.
+- `--json` prints `{ out, bytes, width, height, sizeRequested, model, backend, real }`.
 
 ### Reference images (`--image`)
 
