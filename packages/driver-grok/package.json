@@ -1,6 +1,6 @@
 {
   "name": "@aibridge/driver-grok",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "xAI Grok CLI driver for aibridge",
   "type": "module",
   "license": "MIT",

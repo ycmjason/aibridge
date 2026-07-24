@@ -1,6 +1,6 @@
 {
   "name": "@aibridge/cli",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "CLI that bridges tasks to AI CLIs on your machine (plan / implement / review / subagent / image-gen)",
   "type": "module",
   "license": "MIT",
@@ -32,7 +32,7 @@
   ],
   "scripts": {
     "build": "tsdown",
-    "prepack": "pnpm run build"
+    "prepack": "pnpm run build && cp ../../README.md ./README.md"
   },
   "dependencies": {
     "@aibridge/proc": "workspace:*",

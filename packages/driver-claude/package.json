@@ -1,6 +1,6 @@
 {
   "name": "@aibridge/driver-claude",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Anthropic Claude CLI driver for aibridge",
   "type": "module",
   "license": "MIT",
