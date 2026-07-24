@@ -30,7 +30,7 @@ gpt-oss-120b-medium
 - Select with `--model <id>` using the id form above — reasoning effort is BAKED
   INTO the model id (there is no un-suffixed `gemini-3.6-flash`). Probed live:
   `agy -p ... --model gemini-3.6-flash-low` answers fine.
-- The registry (`packages/ai-bridge/src/models.ts`) stores the effort-less base id
+- The registry (`packages/cli/src/models.ts`) stores the effort-less base id
   (`gemini-3.6-flash`) + a `defaultEffort`; `backendModelId()` appends the
   effort suffix for agy. Canonical slug
   `google-antigravity/gemini-3.6-flash[-<effort>]`, default effort `high`.
@@ -88,7 +88,7 @@ dir (for the answer file) had the delegate write ALL its edits into that temp di
 files never reached the caller's repo and were then deleted with it. Symptom: the
 delegate cheerfully reports "created `src/foo`" but the repo is untouched.
 
-Fix (in [`packages/ai-bridge/src/commands/subagent/impl.ts`](../packages/ai-bridge/src/commands/subagent/impl.ts)):
+Fix (in [`packages/cli/src/commands/subagent/impl.ts`](../packages/cli/src/commands/subagent/impl.ts)):
 in tools mode, pass the caller's cwd as the **first** `--add-dir` (its primary
 workspace), the temp answer dir **second**, spawn agy with `cwd: workDir`, and anchor
 the prompt ("you are working in the repository rooted at `<workDir>`; make ALL file
@@ -118,7 +118,7 @@ fast on Pro/Ultra. Don't loop fresh sessions for trivia. Context window ~1M.
 Env toggles: `AGY_CLI_HIDE_ACCOUNT_INFO`, `AGY_CLI_DISABLE_AUTO_UPDATE`,
 `AGY_CLI_DISABLE_LATEX`.
 
-## Implementation — `packages/ai-bridge/src/commands/subagent/impl.ts` (done)
+## Implementation — `packages/cli/src/commands/subagent/impl.ts` (done)
 
 - [x] Resolve `model` from the registry; unknown slug → exit 2.
 - [x] Build args: `["-p", prompt, "--model", model.backendModel, "--print-timeout", "<t>s"]`.

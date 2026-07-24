@@ -2,11 +2,11 @@
 
 A TypeScript CLI that bridges tasks to non-Claude AI CLIs installed on your machine (workspace drivers are zero-dependency; CLI app uses `@stricli/core` inlined into the skill bundle). Organized as a pnpm monorepo under `packages/*`, with a committed skill bundle inside `skills/ai-bridge/scripts/cli.mjs`:
 
-- `node packages/ai-bridge/src/cli.ts plan "<prompt>"` — produce a detailed implementation plan file for a task prompt.
-- `node packages/ai-bridge/src/cli.ts implement <plan.md>` — execute an implementation plan file with real typecheck + tests.
-- `node packages/ai-bridge/src/cli.ts review [--plan <plan.md>]` — review working tree diffs or plan contracts for over-reach and defects.
-- `node packages/ai-bridge/src/cli.ts subagent "<prompt>" [--model <slug>]` — delegate a self-contained task to another model.
-- `node packages/ai-bridge/src/cli.ts image-gen "<prompt>"` — generate an image via a model seat (`openai-codex/gpt-5.6-sol` → gpt-image-2, the default; `xai-grok/grok-4.5` → Imagine).
+- `node packages/cli/src/cli.ts plan "<prompt>"` — produce a detailed implementation plan file for a task prompt.
+- `node packages/cli/src/cli.ts implement <plan.md>` — execute an implementation plan file with real typecheck + tests.
+- `node packages/cli/src/cli.ts review [--plan <plan.md>]` — review working tree diffs or plan contracts for over-reach and defects.
+- `node packages/cli/src/cli.ts subagent "<prompt>" [--model <slug>]` — delegate a self-contained task to another model.
+- `node packages/cli/src/cli.ts image-gen "<prompt>"` — generate an image via a model seat (`openai-codex/gpt-5.6-sol` → gpt-image-2, the default; `xai-grok/grok-4.5` → Imagine).
 
 Models are named by canonical, effort-aware slugs — `<vendor>-<cli>/<model>[-<effort>]`, e.g. `xai-grok/grok-4.5` (default planner/reviewer, via the **Grok CLI**), `google-antigravity/gemini-3.6-flash` (default implementer, via the **Antigravity CLI**, `agy`), `openai-codex/gpt-5.6-sol-high`, `anthropic-claude/opus`. There are no short aliases — always pass the full canonical slug.
 
@@ -41,7 +41,7 @@ Caveats, so this doesn't trip you up later:
 pnpm install
 pnpm check && pnpm typecheck && pnpm repojj:check && pnpm test
 pnpm build:skill
-node packages/ai-bridge/src/cli.ts --help
+node packages/cli/src/cli.ts --help
 node skills/ai-bridge/scripts/cli.mjs --help
 ```
 
@@ -49,19 +49,19 @@ node skills/ai-bridge/scripts/cli.mjs --help
 
 ```bash
 # Produce a detailed implementation plan file for a task prompt
-node packages/ai-bridge/src/cli.ts plan "<prompt>" [--model <slug>] [--out plan.md] [--timeout <seconds>]
+node packages/cli/src/cli.ts plan "<prompt>" [--model <slug>] [--out plan.md] [--timeout <seconds>]
 
 # Execute an implementation plan file
-node packages/ai-bridge/src/cli.ts implement <plan-file> [--model <slug>] [--timeout <seconds>]
+node packages/cli/src/cli.ts implement <plan-file> [--model <slug>] [--timeout <seconds>]
 
 # Review working tree diff or plan contract
-node packages/ai-bridge/src/cli.ts review [--plan <plan-file>] [--base HEAD] [--out review.md] [--model <slug>]
+node packages/cli/src/cli.ts review [--plan <plan-file>] [--base HEAD] [--out review.md] [--model <slug>]
 
 # Delegate a self-contained task to another model
-node packages/ai-bridge/src/cli.ts subagent "<prompt>" [--model <slug>] [--timeout <seconds>] [--no-tools] [--json]
+node packages/cli/src/cli.ts subagent "<prompt>" [--model <slug>] [--timeout <seconds>] [--no-tools] [--json]
 
 # Generate an image (default seat: gpt-image-2 via codex; pass --model xai-grok/grok-4.5 for Imagine)
-node packages/ai-bridge/src/cli.ts image-gen "<prompt>" [--model <slug>] [--out out.png] [--size 1024x1024] [--quality high]
+node packages/cli/src/cli.ts image-gen "<prompt>" [--model <slug>] [--out out.png] [--size 1024x1024] [--quality high]
 ```
 
 The three verbs compose into an orchestrator-driven workflow: `plan` writes a plan file, the orchestrating agent reads and approves it, `implement` executes it, and `review` cross-checks the resulting diff against the plan contract (over-reach is a finding). File paths — not file contents — travel between stages. `subagent` and delegation-backed verbs let the delegate read/write files and run shell by default (auto-approved); `subagent --no-tools` restricts it to reasoning-only, e.g. for untrusted input. `image-gen` takes the same `--model` slugs as other commands (image seats: `openai-codex/gpt-5.6-sol`, `xai-grok/grok-4.5`); the codex path verifies a real gpt-image-2 render (> 100 KB), not a tiny code-drawn substitute.

@@ -2,11 +2,11 @@
 
 `ai-bridge` is a TypeScript CLI that bridges tasks to **non-Claude AI CLIs** already installed and authed on this machine. Workspace driver packages (`proc`, `agy`, `grok`, `codex`, `claude`) maintain zero external runtime dependencies; app package dependencies (`@stricli/core`) are inlined into the committed skill bundle (`skills/ai-bridge/scripts/cli.mjs`), keeping the skill artifact self-contained. The codebase is organized as a pnpm monorepo under `packages/*`:
 
-- **`node packages/ai-bridge/src/cli.ts plan`** (or skill artifact **`node skills/ai-bridge/scripts/cli.mjs plan`**) → a delegate model studies the repo and writes a detailed implementation plan to a FILE (default planner **`xai-grok/grok-4.5`**, off-budget). The orchestrator reads/edits/approves it — plans are passed between stages as paths, not content.
-- **`node packages/ai-bridge/src/cli.ts implement`** → a delegate model implements a plan file in place, running the project's real typecheck/tests (default implementer **`google-antigravity/gemini-3.6-flash`** via `agy`, off-budget). Prints the delegate's summary + `git diff --stat`.
-- **`node packages/ai-bridge/src/cli.ts review`** → a delegate model reviews the working-tree diff against a base ref — with `--plan <file>` as the contract, over-reach is a finding — writing the full report to a file; stdout is just the verdict line (`PASS` / `FINDINGS: …`) + path. With a clean tree and `--plan`, it reviews the plan itself (pre-implementation gate).
-- **`node packages/ai-bridge/src/cli.ts subagent`** → delegate a self-contained task to another model through the canonical registry: default **`xai-grok/grok-4.5`** via the **Grok CLI** (off-budget on its xAI login; ~30 req/min + ~1k msgs/day caps, one run at a time); **`google-antigravity/gemini-3.6-flash`** via the **Antigravity CLI** (`agy`, off-budget) when grok is capped/dead; **`openai-codex/gpt-5.6-sol`** via the **Codex CLI** (off-budget, ChatGPT login); last-resort **`anthropic-claude/sonnet`** / **`anthropic-claude/opus`** via the **claude CLI** (bill the Claude subscription — for when the off-budget CLIs are quota-dead).
-- **`node packages/ai-bridge/src/cli.ts image-gen`** → image generation via a model seat (`openai-codex/gpt-5.6-sol` → gpt-image-2, the default; `xai-grok/grok-4.5` → Imagine).
+- **`node packages/cli/src/cli.ts plan`** (or skill artifact **`node skills/ai-bridge/scripts/cli.mjs plan`**) → a delegate model studies the repo and writes a detailed implementation plan to a FILE (default planner **`xai-grok/grok-4.5`**, off-budget). The orchestrator reads/edits/approves it — plans are passed between stages as paths, not content.
+- **`node packages/cli/src/cli.ts implement`** → a delegate model implements a plan file in place, running the project's real typecheck/tests (default implementer **`google-antigravity/gemini-3.6-flash`** via `agy`, off-budget). Prints the delegate's summary + `git diff --stat`.
+- **`node packages/cli/src/cli.ts review`** → a delegate model reviews the working-tree diff against a base ref — with `--plan <file>` as the contract, over-reach is a finding — writing the full report to a file; stdout is just the verdict line (`PASS` / `FINDINGS: …`) + path. With a clean tree and `--plan`, it reviews the plan itself (pre-implementation gate).
+- **`node packages/cli/src/cli.ts subagent`** → delegate a self-contained task to another model through the canonical registry: default **`xai-grok/grok-4.5`** via the **Grok CLI** (off-budget on its xAI login; ~30 req/min + ~1k msgs/day caps, one run at a time); **`google-antigravity/gemini-3.6-flash`** via the **Antigravity CLI** (`agy`, off-budget) when grok is capped/dead; **`openai-codex/gpt-5.6-sol`** via the **Codex CLI** (off-budget, ChatGPT login); last-resort **`anthropic-claude/sonnet`** / **`anthropic-claude/opus`** via the **claude CLI** (bill the Claude subscription — for when the off-budget CLIs are quota-dead).
+- **`node packages/cli/src/cli.ts image-gen`** → image generation via a model seat (`openai-codex/gpt-5.6-sol` → gpt-image-2, the default; `xai-grok/grok-4.5` → Imagine).
 
 Model slugs are canonical `<vendor>-<cli>/<model>[-<effort>]` (e.g. `openai-codex/gpt-5.6-sol-high`); there are NO short aliases — always pass the full slug. Effort in the slug maps to each backend's own knob; an un-suffixed slug uses the backend's default.
 
@@ -40,9 +40,9 @@ say so unprompted and propose the cleanup — don't wait to be asked.
 
 ## Hard rules
 
-- **Node 24.11+, native TypeScript in packages. NO build step for dev (`node packages/ai-bridge/src/cli.ts`), NO `tsx`, NO `ts-node`.** Run `.ts` files directly with `node` (type-stripping is on by default in Node 24). `tsc` is for type-checking only (`pnpm typecheck`).
+- **Node 24.11+, native TypeScript in packages. NO build step for dev (`node packages/cli/src/cli.ts`), NO `tsx`, NO `ts-node`.** Run `.ts` files directly with `node` (type-stripping is on by default in Node 24). `tsc` is for type-checking only (`pnpm typecheck`).
 - **Committed skill bundle (`skills/ai-bridge/scripts/cli.mjs`).** Generated via `pnpm build:skill` (`tsdown`), self-contained for Vercel skills copy deployment.
-- **App runtime dependencies must be inlined in the skill bundle.** Any dependency of `@aibridge/ai-bridge` must be listed in `tsdown.config.ts` under `deps.alwaysBundle` so the generated `cli.mjs` remains fully self-contained. `onlyImport: []` enforces this in CI.
+- **App runtime dependencies must be inlined in the skill bundle.** Any dependency of `@aibridge/cli` must be listed in `tsdown.config.ts` under `deps.alwaysBundle` so the generated `cli.mjs` remains fully self-contained. `onlyImport: []` enforces this in CI.
 - **Erasable syntax only** — Node strips types, it does not transform them: no `enum`, no `namespace` with runtime members, no parameter properties, no decorators. `tsconfig` enforces this via `erasableSyntaxOnly`.
 - **ESM with explicit `.ts` import extensions** (e.g. `import { app } from "./app.ts"`). `verbatimModuleSyntax` is on → use `import type` for type-only imports.
 - **pnpm only, via corepack.** `corepack use pnpm@latest` manages the pinned `packageManager`. Don't use npm or yarn here.
@@ -51,9 +51,9 @@ say so unprompted and propose the cleanup — don't wait to be asked.
 
 | | |
 |---|---|
-| Run the CLI (dev) | `node packages/ai-bridge/src/cli.ts <args>` or `pnpm ai-bridge <args>` |
+| Run the CLI (dev) | `node packages/cli/src/cli.ts <args>` or `pnpm ai-bridge <args>` |
 | Run the skill bundle | `node skills/ai-bridge/scripts/cli.mjs <args>` |
-| Help | `node packages/ai-bridge/src/cli.ts --help` |
+| Help | `node packages/cli/src/cli.ts --help` |
 | Build skill bundle | `pnpm build:skill` |
 | Plan | `pnpm ai-bridge plan "<task prompt>" [--out <file>]` |
 | Implement | `pnpm ai-bridge implement <plan.md>` |
@@ -67,20 +67,20 @@ say so unprompted and propose the cleanup — don't wait to be asked.
 
 Command orchestration uses **`@stricli/core`** (`buildCommand` / `buildRouteMap` / `buildApplication` / `run`). Strict layering — each layer only imports downward:
 
-- `packages/ai-bridge/src/cli.ts` — thin entry: builds context and calls `runCli(buildContext(process), process.argv.slice(2))` (from `app.ts`).
-- `packages/ai-bridge/src/app.ts` — defines route map and application (`buildApplication`), exports `app` and `runCli(ctx, argv)` wrapper which calls `run(app, argv, ctx)` and normalizes exit codes.
-- `packages/ai-bridge/src/context.ts` — `LocalContext extends CommandContext`, carrying `process`.
-- `packages/ai-bridge/src/exitCode.ts` — `normalizeExitCode`: normalizes stricli's negative `ExitCode`s to Unix-style exit codes (0/1/2/3).
-- `packages/ai-bridge/src/commands/<name>/command.ts` — command entry: exports stricli `buildCommand({ func, parameters, docs })` spec.
-- `packages/ai-bridge/src/commands/<name>/impl.ts` — the implementation `function (this: LocalContext, flags, ...args)`. Impls own *policy* (prompt-craft, stdout contracts, exit codes) and contain ZERO backend process switches.
-- `packages/ai-bridge/src/driver.ts` — structural `AgentCliDriver` interface.
-- `packages/ai-bridge/src/drivers.ts` — map `Backend` → `AgentCliDriver` implementations.
-- `packages/ai-bridge/src/delegate.ts` — thin delegation engine calling `driver.run(task)`.
+- `packages/cli/src/cli.ts` — thin entry: builds context and calls `runCli(buildContext(process), process.argv.slice(2))` (from `app.ts`).
+- `packages/cli/src/app.ts` — defines route map and application (`buildApplication`), exports `app` and `runCli(ctx, argv)` wrapper which calls `run(app, argv, ctx)` and normalizes exit codes.
+- `packages/cli/src/context.ts` — `LocalContext extends CommandContext`, carrying `process`.
+- `packages/cli/src/exitCode.ts` — `normalizeExitCode`: normalizes stricli's negative `ExitCode`s to Unix-style exit codes (0/1/2/3).
+- `packages/cli/src/commands/<name>/command.ts` — command entry: exports stricli `buildCommand({ func, parameters, docs })` spec.
+- `packages/cli/src/commands/<name>/impl.ts` — the implementation `function (this: LocalContext, flags, ...args)`. Impls own *policy* (prompt-craft, stdout contracts, exit codes) and contain ZERO backend process switches.
+- `packages/cli/src/driver.ts` — structural `AgentCliDriver` interface.
+- `packages/cli/src/drivers.ts` — map `Backend` → `AgentCliDriver` implementations.
+- `packages/cli/src/delegate.ts` — thin delegation engine calling `driver.run(task)`.
 - `packages/{proc,agy,grok,codex,claude}` — workspace packages driving each backend CLI independently (zero external runtime dependencies).
 
 ### Adding a subagent model
 
-Edit `packages/ai-bridge/src/models.ts`: add an entry to `MODELS` mapping a canonical slug → `{ backend, backendModel, efforts, defaultEffort?, brief }`. Every command surface (`--model <slug>`) picks it up automatically.
+Edit `packages/cli/src/models.ts`: add an entry to `MODELS` mapping a canonical slug → `{ backend, backendModel, efforts, defaultEffort?, brief }`. Every command surface (`--model <slug>`) picks it up automatically.
 
 ## Further reading — research & implementation notes
 

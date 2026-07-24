@@ -6,6 +6,6 @@
     { "path": "./packages/grok" },
     { "path": "./packages/codex" },
     { "path": "./packages/claude" },
-    { "path": "./packages/ai-bridge" }
+    { "path": "./packages/cli" }
   ]
 }

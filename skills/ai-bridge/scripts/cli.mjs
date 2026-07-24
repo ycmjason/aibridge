@@ -5,7 +5,7 @@ import { isAbsolute, join, resolve } from "node:path";
 import { spawn } from "node:child_process";
 import { randomBytes } from "node:crypto";
 
-//#region node_modules/.pnpm/@stricli+core@1.3.0/node_modules/@stricli/core/dist/index.js
+//#region ../../node_modules/.pnpm/@stricli+core@1.3.0/node_modules/@stricli/core/dist/index.js
 var ExitCode = {
 	/**
 	* Error was thrown by or otherwise caused by an integration.
@@ -1759,7 +1759,7 @@ async function run$4(app, inputs, context) {
 /* v8 ignore else -- @preserve */
 
 //#endregion
-//#region packages/ai-bridge/src/models.ts
+//#region src/models.ts
 const MODELS = {
 	"xai-grok/grok-4.5": {
 		slug: "xai-grok/grok-4.5",
@@ -1911,7 +1911,7 @@ function formatImageGenModelError(input, resolved) {
 }
 
 //#endregion
-//#region packages/ai-bridge/src/parsers.ts
+//#region src/parsers.ts
 /**
 * stricli `parse` functions (string -> T). Throwing inside one makes stricli
 * reject the argument up-front with a clean, flag-named error — instead of
@@ -1930,7 +1930,7 @@ function nonEmptyPrompt(input) {
 }
 
 //#endregion
-//#region packages/proc/src/proc.ts
+//#region ../proc/src/proc.ts
 /**
 * Spawn a command, capture stdout/stderr as UTF-8 strings, and resolve when it
 * exits. Rejects only if the process cannot be spawned at all (e.g. ENOENT) —
@@ -2039,7 +2039,7 @@ function stripAnsi(s) {
 }
 
 //#endregion
-//#region packages/agy/src/agy.ts
+//#region ../agy/src/agy.ts
 /**
 * Assemble the `agy -p …` argv.
 */
@@ -2058,7 +2058,7 @@ function buildAgyPrintArgs(prompt, opts) {
 }
 
 //#endregion
-//#region packages/agy/src/registry.ts
+//#region ../agy/src/registry.ts
 const AGY_CANONICAL_TO_NATIVE = {
 	"google/gemini-3-6-flash-high": "Gemini 3.6 Flash (High)",
 	"google/gemini-3-6-flash-medium": "Gemini 3.6 Flash (Medium)",
@@ -2069,7 +2069,7 @@ const AGY_CANONICAL_TO_NATIVE = {
 };
 
 //#endregion
-//#region packages/agy/src/agyQuota.ts
+//#region ../agy/src/agyQuota.ts
 /**
 * agy quota via the Google Cloud Code API, reusing agy's OWN cached OAuth
 * token — no separate login. Mechanism learned from
@@ -2199,7 +2199,7 @@ function findModelQuota(snapshot, labelOrId) {
 }
 
 //#endregion
-//#region packages/agy/src/probe.ts
+//#region ../agy/src/probe.ts
 const INSTALL_HINT$7 = "Install the Antigravity CLI and sign in.";
 async function probe$3(run = runCaptured) {
 	try {
@@ -2230,7 +2230,7 @@ async function probe$3(run = runCaptured) {
 }
 
 //#endregion
-//#region packages/agy/src/run.ts
+//#region ../agy/src/run.ts
 const NOISE_RE$3 = /^Shell cwd was reset[^\n]*$/gm;
 const INSTALL_HINT$6 = "Install the Antigravity CLI and sign in.";
 function clean$3(s) {
@@ -2310,7 +2310,7 @@ async function run$3(task, exec = runCaptured) {
 }
 
 //#endregion
-//#region packages/claude/src/claude.ts
+//#region ../claude/src/claude.ts
 async function ensureClaude(run = runCaptured) {
 	const version = await probeVersion("claude", run);
 	if (version === null) return {
@@ -2337,7 +2337,7 @@ function buildClaudePrintArgs(prompt, opts) {
 }
 
 //#endregion
-//#region packages/claude/src/claudeQuota.ts
+//#region ../claude/src/claudeQuota.ts
 const WINDOW_RE = /^Current (session|week \([^)]+\)):\s+(\d+)% used(?:\s*·\s*resets\s+(.+))?$/;
 function parseClaudeUsageOutput(stdout) {
 	const windows = [];
@@ -2365,7 +2365,7 @@ async function fetchClaudeQuota() {
 }
 
 //#endregion
-//#region packages/claude/src/probe.ts
+//#region ../claude/src/probe.ts
 const INSTALL_HINT$5 = "Install Claude Code and sign in.";
 async function probe$2(_run = runCaptured) {
 	try {
@@ -2391,7 +2391,7 @@ async function probe$2(_run = runCaptured) {
 }
 
 //#endregion
-//#region packages/claude/src/run.ts
+//#region ../claude/src/run.ts
 const NOISE_RE$2 = /^Shell cwd was reset[^\n]*$/gm;
 const INSTALL_HINT$4 = "Install Claude Code and sign in.";
 function clean$2(s) {
@@ -2457,7 +2457,7 @@ async function run$2(task, exec = runCaptured) {
 }
 
 //#endregion
-//#region packages/codex/src/codex.ts
+//#region ../codex/src/codex.ts
 /**
 * Shared driver for the Codex CLI (`codex exec`), used by `image-gen` (gpt-image-2 renders)
 * and `delegate.ts` / the model registry (`lib/models.ts`).
@@ -2504,7 +2504,7 @@ function buildCodexExecArgs(prompt, opts) {
 }
 
 //#endregion
-//#region packages/codex/src/codexQuota.ts
+//#region ../codex/src/codexQuota.ts
 const USAGE_ENDPOINT = "https://chatgpt.com/backend-api/wham/usage";
 function codexAuthPath() {
 	return process.env.CODEX_AUTH_PATH ?? join(homedir(), ".codex", "auth.json");
@@ -2553,7 +2553,7 @@ async function fetchCodexQuota() {
 }
 
 //#endregion
-//#region packages/codex/src/generateImage.ts
+//#region ../codex/src/generateImage.ts
 const OUT_NAME = "out.png";
 async function generateImage$1(req, exec = runCaptured) {
 	const codex = await ensureCodex(MIN_CODEX_IMAGE, exec);
@@ -2646,7 +2646,7 @@ function mtime$1(path) {
 }
 
 //#endregion
-//#region packages/codex/src/probe.ts
+//#region ../codex/src/probe.ts
 const INSTALL_HINT$3 = "Install the Codex CLI and sign in to ChatGPT.";
 async function probe$1(run = runCaptured) {
 	try {
@@ -2672,7 +2672,7 @@ async function probe$1(run = runCaptured) {
 }
 
 //#endregion
-//#region packages/codex/src/run.ts
+//#region ../codex/src/run.ts
 const NOISE_RE$1 = /^Shell cwd was reset[^\n]*$/gm;
 const INSTALL_HINT$2 = "Install the Codex CLI and sign in to ChatGPT.";
 function clean$1(s) {
@@ -2753,7 +2753,7 @@ async function run$1(task, exec = runCaptured) {
 }
 
 //#endregion
-//#region packages/grok/src/grok.ts
+//#region ../grok/src/grok.ts
 const NOT_AUTHENTICATED_RE = /not authenticated/i;
 async function probeGrokAuth(run = runCaptured, sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))) {
 	const probe = async () => {
@@ -2791,7 +2791,7 @@ function buildGrokPrintArgs(prompt, opts = {}) {
 }
 
 //#endregion
-//#region packages/grok/src/generateImage.ts
+//#region ../grok/src/generateImage.ts
 async function generateImage(req, exec = runCaptured) {
 	const grok = await ensureGrok(exec);
 	if (!grok.ok) return {
@@ -2963,7 +2963,7 @@ function mtime(path) {
 }
 
 //#endregion
-//#region packages/grok/src/probe.ts
+//#region ../grok/src/probe.ts
 const INSTALL_HINT$1 = "Install the Grok CLI (npm i -g @xai-official/grok) and run `grok login`.";
 async function probe(run = runCaptured) {
 	try {
@@ -2989,7 +2989,7 @@ async function probe(run = runCaptured) {
 }
 
 //#endregion
-//#region packages/grok/src/run.ts
+//#region ../grok/src/run.ts
 const NOISE_RE = /^Shell cwd was reset[^\n]*$/gm;
 const INSTALL_HINT = "Install the Grok CLI (npm i -g @xai-official/grok) and run `grok login`.";
 function clean(s) {
@@ -3054,7 +3054,7 @@ async function run(task, exec = runCaptured) {
 }
 
 //#endregion
-//#region packages/ai-bridge/src/drivers.ts
+//#region src/drivers.ts
 const DRIVERS = {
 	agy: {
 		probe: () => probe$3(),
@@ -3085,7 +3085,7 @@ function getDriver(backend) {
 }
 
 //#endregion
-//#region packages/ai-bridge/src/commands/image-gen/impl.ts
+//#region src/commands/image-gen/impl.ts
 const MIN_REAL_BYTES_CODEX = 1e5;
 const MIN_REAL_BYTES_GROK = 1e4;
 async function imageGen$1(flags, prompt) {
@@ -3269,7 +3269,7 @@ async function magick(args) {
 }
 
 //#endregion
-//#region packages/ai-bridge/src/commands/image-gen/command.ts
+//#region src/commands/image-gen/command.ts
 const fullDescription$6 = [
 	"Renders an image by driving the seat's CLI (codex → gpt-image-2, grok →",
 	"Imagine), then verifies the result is a real render before returning it.",
@@ -3340,7 +3340,7 @@ const imageGen = buildCommand({
 });
 
 //#endregion
-//#region packages/ai-bridge/src/delegate.ts
+//#region src/delegate.ts
 const PREAMBLE = "You are the sole executing agent for this task: do it yourself with your tools, now. Never defer to, wait for, or claim to hand off to another agent or process — no one else will act, and work not done in this run does not happen.\n\n";
 async function delegate(opts, driver = getDriver(opts.model.spec.backend)) {
 	const effectivePrompt = opts.tools ? PREAMBLE + opts.prompt : opts.prompt;
@@ -3361,7 +3361,7 @@ async function delegate(opts, driver = getDriver(opts.model.spec.backend)) {
 }
 
 //#endregion
-//#region packages/ai-bridge/src/quotaPreflight.ts
+//#region src/quotaPreflight.ts
 function evaluateAgyPreflight(snapshot, backendModel) {
 	const quota = findModelQuota(snapshot, backendModel);
 	if (!quota) return {
@@ -3436,7 +3436,7 @@ function renderPreflightRefusal(cmd, verdict) {
 }
 
 //#endregion
-//#region packages/ai-bridge/src/runlog.ts
+//#region src/runlog.ts
 function getTimestamp() {
 	const d = /* @__PURE__ */ new Date();
 	return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}-${String(d.getHours()).padStart(2, "0")}${String(d.getMinutes()).padStart(2, "0")}${String(d.getSeconds()).padStart(2, "0")}`;
@@ -3556,7 +3556,7 @@ function readRunLogs(id) {
 }
 
 //#endregion
-//#region packages/ai-bridge/src/commands/implement/impl.ts
+//#region src/commands/implement/impl.ts
 async function implement$1(flags, planFile) {
 	const inputSlug = flags.model ?? "google-antigravity/gemini-3.6-flash";
 	const model = resolveModel(inputSlug);
@@ -3615,7 +3615,7 @@ async function implement$1(flags, planFile) {
 }
 
 //#endregion
-//#region packages/ai-bridge/src/commands/implement/command.ts
+//#region src/commands/implement/command.ts
 const fullDescription$5 = [
 	"Reads an implementation plan file and delegates execution to a model.",
 	"",
@@ -3660,7 +3660,7 @@ const implement = buildCommand({
 });
 
 //#endregion
-//#region packages/ai-bridge/src/commands/plan/impl.ts
+//#region src/commands/plan/impl.ts
 function countOpenQuestions(markdown) {
 	const headingIdx = markdown.search(/^## Open questions[ \t]*$/m);
 	if (headingIdx === -1) return 0;
@@ -3764,7 +3764,7 @@ async function plan$1(flags, taskPrompt) {
 }
 
 //#endregion
-//#region packages/ai-bridge/src/commands/plan/command.ts
+//#region src/commands/plan/command.ts
 const fullDescription$4 = [
 	"Produce a detailed implementation plan for a task prompt.",
 	"",
@@ -3815,7 +3815,7 @@ const plan = buildCommand({
 });
 
 //#endregion
-//#region packages/ai-bridge/src/commands/quota/impl.ts
+//#region src/commands/quota/impl.ts
 function formatReset(resetTime) {
 	if (!resetTime) return "-";
 	const ms = new Date(resetTime).getTime() - Date.now();
@@ -3878,7 +3878,7 @@ async function quotaImpl(flags) {
 }
 
 //#endregion
-//#region packages/ai-bridge/src/commands/quota/command.ts
+//#region src/commands/quota/command.ts
 const fullDescription$3 = [
 	"agy: reads its cached OAuth token (~/.gemini/antigravity-cli/) and asks the",
 	"Cloud Code API for per-model remaining quota. EXHAUSTED means agy turns on",
@@ -3903,7 +3903,7 @@ const quota = buildCommand({
 });
 
 //#endregion
-//#region packages/ai-bridge/src/commands/review/impl.ts
+//#region src/commands/review/impl.ts
 function matchVerdictLine(line) {
 	if (/^PASS\b/i.test(line)) return { kind: "pass" };
 	const match = line.match(/^FINDINGS:\s*(?:(\d+)\s*critical,?\s*)?(?:(\d+)\s*major,?\s*)?(?:(\d+)\s*minor)?/i);
@@ -4040,7 +4040,7 @@ async function review$1(flags) {
 }
 
 //#endregion
-//#region packages/ai-bridge/src/commands/review/command.ts
+//#region src/commands/review/command.ts
 const fullDescription$2 = [
 	"Inspects code diffs or plan contracts and writes a review report.",
 	"",
@@ -4093,7 +4093,7 @@ const review = buildCommand({
 });
 
 //#endregion
-//#region packages/ai-bridge/src/commands/runs/impl.ts
+//#region src/commands/runs/impl.ts
 function formatElapsed(startedAtStr, endedAtStr) {
 	const start = new Date(startedAtStr).getTime();
 	const end = endedAtStr ? new Date(endedAtStr).getTime() : Date.now();
@@ -4218,7 +4218,7 @@ async function runs$1(flags, idPrefix) {
 }
 
 //#endregion
-//#region packages/ai-bridge/src/commands/runs/command.ts
+//#region src/commands/runs/command.ts
 const fullDescription$1 = "Lists recent runs, watches active runs, or displays logs for a specific run.";
 async function runsCommand(flags, idPrefix) {
 	if (flags.watch && idPrefix !== void 0) {
@@ -4265,7 +4265,7 @@ const runs = buildCommand({
 });
 
 //#endregion
-//#region packages/ai-bridge/src/commands/subagent/impl.ts
+//#region src/commands/subagent/impl.ts
 async function subagent$1(flags, prompt) {
 	const inputSlug = flags.model ?? "xai-grok/grok-4.5";
 	const model = resolveModel(inputSlug);
@@ -4318,7 +4318,7 @@ async function subagent$1(flags, prompt) {
 }
 
 //#endregion
-//#region packages/ai-bridge/src/commands/subagent/command.ts
+//#region src/commands/subagent/command.ts
 const fullDescription = [
 	"Hands a self-contained prompt to another model and returns its answer.",
 	"",
@@ -4375,7 +4375,7 @@ const subagent = buildCommand({
 });
 
 //#endregion
-//#region packages/ai-bridge/src/exitCode.ts
+//#region src/exitCode.ts
 /**
 * Stricli uses negative ExitCode values for parse/route failures.
 * Our public contract is Unix-style: 0 ok, 1 op fail, 2 bad args, 3 quota refuse.
@@ -4392,7 +4392,7 @@ function normalizeExitCode(ctx) {
 }
 
 //#endregion
-//#region packages/ai-bridge/src/app.ts
+//#region src/app.ts
 const routes = buildRouteMap({
 	routes: {
 		plan,
@@ -4416,13 +4416,13 @@ async function runCli(ctx, argv) {
 }
 
 //#endregion
-//#region packages/ai-bridge/src/context.ts
+//#region src/context.ts
 function buildContext(process) {
 	return { process };
 }
 
 //#endregion
-//#region packages/ai-bridge/src/cli.ts
+//#region src/cli.ts
 await runCli(buildContext(process), process.argv.slice(2));
 
 //#endregion

@@ -8,8 +8,8 @@
     "node": ">=24.11"
   },
   "scripts": {
-    "ai-bridge": "node packages/ai-bridge/src/cli.ts",
-    "build:skill": "tsdown",
+    "ai-bridge": "node packages/cli/src/cli.ts",
+    "build:skill": "pnpm --filter @aibridge/cli build",
     "check": "biome check .",
     "check:fix": "biome check --write .",
     "typecheck": "tsc -b",
@@ -26,7 +26,6 @@
     "@types/node": "catalog:",
     "lefthook": "catalog:",
     "repojj": "catalog:",
-    "tsdown": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }

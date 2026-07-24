@@ -1,17 +1,21 @@
 {
-  "name": "@aibridge/ai-bridge",
+  "name": "@aibridge/cli",
   "version": "0.0.0",
   "private": true,
   "type": "module",
   "exports": {
     ".": "./src/index.ts"
   },
-  "dependencies": {
+  "scripts": {
+    "build": "tsdown"
+  },
+  "devDependencies": {
     "@aibridge/proc": "workspace:*",
     "@aibridge/agy": "workspace:*",
     "@aibridge/grok": "workspace:*",
     "@aibridge/codex": "workspace:*",
     "@aibridge/claude": "workspace:*",
-    "@stricli/core": "catalog:"
+    "@stricli/core": "catalog:",
+    "tsdown": "catalog:"
   }
 }

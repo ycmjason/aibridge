@@ -61,7 +61,7 @@ ls -t ~/.codex/generated_images/*/ig_*.png | head -1
   space-variadic — put the prompt **before** `-i`, or pipe it via stdin. Multiple:
   `-i a.png,b.png`.
 
-## Implementation checklist for `packages/ai-bridge/src/commands/image-gen/impl.ts`
+## Implementation checklist for `packages/cli/src/commands/image-gen/impl.ts`
 
 - [ ] Resolve `--out` (default `./ai-bridge-image.png`), `--size`, `--quality`.
 - [ ] Discover a codex ≥ ~0.135; error clearly if missing/stale.
