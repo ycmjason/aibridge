@@ -31,7 +31,8 @@
     "src"
   ],
   "scripts": {
-    "build": "tsdown"
+    "build": "tsdown",
+    "prepack": "pnpm run build"
   },
   "dependencies": {
     "@aibridge/proc": "workspace:*",
