@@ -139,7 +139,7 @@ jobs:
           #   pnpm publish --access public --no-git-checks
           # from each package dir (order: proc agy grok codex claude cli), then in
           # each package's npmjs.com settings add Trusted Publisher:
-          #   repo fishballapp/aibridge, workflow publish.yml
+          #   repo ycmjason/aibridge, workflow publish.yml
           # Subsequent version bumps on main publish automatically via this job.
           set -euo pipefail
           for pkg in proc driver-agy driver-grok driver-codex driver-claude cli; do

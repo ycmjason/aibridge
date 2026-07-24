@@ -42,7 +42,7 @@ npm i -g @aibridge/cli
 ### 2. Install the Skill
 
 ```bash
-npx skills add fishballapp/aibridge -g -y \
+npx skills add ycmjason/aibridge -g -y \
   -a amp antigravity antigravity-cli cline codex cursor deepagents gemini-cli \
      github-copilot kimi-code-cli opencode warp zed claude-code
 ```

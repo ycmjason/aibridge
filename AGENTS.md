@@ -109,7 +109,7 @@ Full verified findings and per-command implementation recipes live in [`docs/`](
 
 ## Git — commit & push anytime
 
-This repo's remote is **`git@github.com:fishballapp/aibridge.git`** (branch `main`).
+This repo's remote is **`git@github.com:ycmjason/aibridge.git`** (branch `main`).
 
 **After any meaningful change, commit and push — you do not need to ask.** Keep commits small and messages clear.
 

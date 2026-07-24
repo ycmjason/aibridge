@@ -14,12 +14,12 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/fishballapp/aibridge.git",
+    "url": "git+https://github.com/ycmjason/aibridge.git",
     "directory": "packages/proc"
   },
-  "homepage": "https://github.com/fishballapp/aibridge#readme",
+  "homepage": "https://github.com/ycmjason/aibridge#readme",
   "bugs": {
-    "url": "https://github.com/fishballapp/aibridge/issues"
+    "url": "https://github.com/ycmjason/aibridge/issues"
   },
   "exports": {
     ".": "./src/index.ts"
