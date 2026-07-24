@@ -10,7 +10,6 @@ import {
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { isNotFound, runCaptured } from '@aibridge/proc';
 import type { LocalContext } from '../../context.ts';
 import type { ImageResult } from '../../driver.ts';
 import { getDriver } from '../../drivers.ts';
@@ -19,13 +18,14 @@ import {
   DEFAULT_IMAGE_GEN,
   formatImageGenModelError,
   formatUnknownModelError,
+  imageFormatFor,
   resolveModel,
   supportsImageGen,
 } from '../../models.ts';
 
 export interface ImageGenFlags {
   readonly model?: string;
-  readonly out?: string;
+  readonly out: string;
   readonly aspectRatio?: string;
   readonly image?: string;
   readonly timeout?: number;
@@ -56,6 +56,17 @@ export default async function imageGen(
     );
   }
 
+  const expected = imageFormatFor(model);
+  if (expected === undefined) return fail(formatImageGenModelError(inputSlug, model));
+
+  const label = expected === 'png' ? 'PNG' : 'JPEG';
+  const extValid = expected === 'png' ? /\.png$/i.test(flags.out) : /\.jpe?g$/i.test(flags.out);
+  if (!extValid) {
+    return fail(
+      `--out "${flags.out}" must end in ${expected === 'png' ? '.png' : '.jpg or .jpeg'} — the ${model.spec.slug} seat renders ${label} and aibridge does not convert.`,
+    );
+  }
+
   let aspectRatio: string | undefined;
   if (flags.aspectRatio !== undefined) {
     const m = flags.aspectRatio.match(/^(\d+)\s*:\s*(\d+)$/);
@@ -66,7 +77,7 @@ export default async function imageGen(
   }
 
   const timeoutSec = flags.timeout ?? 600;
-  const outPath = resolve(this.process.cwd(), flags.out ?? './aibridge-image.png');
+  const outPath = resolve(this.process.cwd(), flags.out);
 
   const imagePaths: string[] = [];
   if (flags.image !== undefined) {
@@ -135,20 +146,16 @@ export default async function imageGen(
     copyFileSync(outcome.path, local);
 
     const dims = imageSize(local);
+    const actual = pngSize(local) ? 'png' : jpegSize(local) ? 'jpg' : null;
 
-    const outExt = /\.png$/i.test(outPath) ? 'png' : /\.jpe?g$/i.test(outPath) ? 'jpg' : null;
-    const actualFmt = pngSize(local) ? 'png' : jpegSize(local) ? 'jpg' : null;
-    const needsConvert = outExt !== null && actualFmt !== null && outExt !== actualFmt;
-    if (!needsConvert || !(await magick([local, outPath]))) {
-      if (needsConvert) {
-        this.process.stderr.write(
-          `aibridge image-gen: render is ${actualFmt.toUpperCase()} but out path wants ` +
-            `${outExt.toUpperCase()}, and ImageMagick (magick/convert) is unavailable to convert; ` +
-            'writing the raw bytes as-is.\n',
-        );
-      }
-      copyFileSync(local, outPath);
+    // ponytail: guard for a backend changing formats in the future without throwing away a paid render
+    if (actual !== null && actual !== expected) {
+      this.process.stderr.write(
+        `aibridge image-gen: expected a ${label} render from this seat but got ${actual === 'png' ? 'PNG' : 'JPEG'}; wrote the raw bytes to ${outPath} anyway — the extension does not match the contents.\n`,
+      );
     }
+
+    copyFileSync(local, outPath);
     const bytes = statSync(outPath).size;
 
     if (flags.json) {
@@ -218,16 +225,4 @@ function jpegSize(path: string): { width: number; height: number } | null {
   } catch {
     return null;
   }
-}
-
-async function magick(args: readonly string[]): Promise<boolean> {
-  for (const tool of ['magick', 'convert']) {
-    try {
-      const r = await runCaptured(tool, [...args], { timeoutMs: 60_000 });
-      if (!r.timedOut && r.code === 0) return true;
-    } catch (err) {
-      if (!isNotFound(err)) throw err;
-    }
-  }
-  return false;
 }

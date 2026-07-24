@@ -99,10 +99,20 @@ export const DEFAULT_MODEL = 'xai-grok/grok-4.5';
 export const DEFAULT_IMPLEMENTER = 'google-antigravity/gemini-3.6-flash';
 export const DEFAULT_IMAGE_GEN = 'openai-codex/gpt-5.6-sol';
 
-const IMAGE_GEN_BACKENDS: ReadonlySet<Backend> = new Set(['agy', 'codex', 'grok']);
+export type ImageFormat = 'jpg' | 'png';
+
+const IMAGE_GEN_FORMATS: ReadonlyMap<Backend, ImageFormat> = new Map([
+  ['agy', 'jpg'],
+  ['codex', 'png'],
+  ['grok', 'jpg'],
+]);
 
 export function supportsImageGen(resolved: ResolvedModel): boolean {
-  return IMAGE_GEN_BACKENDS.has(resolved.spec.backend);
+  return IMAGE_GEN_FORMATS.has(resolved.spec.backend);
+}
+
+export function imageFormatFor(resolved: ResolvedModel): ImageFormat | undefined {
+  return IMAGE_GEN_FORMATS.get(resolved.spec.backend);
 }
 
 const EFFORTS_SET: ReadonlySet<string> = new Set<Effort>(['low', 'medium', 'high', 'xhigh', 'max']);
@@ -146,7 +156,7 @@ export function backendModelId(resolved: ResolvedModel): string {
 export function listModelHelpLines(opts: { readonly imageOnly?: boolean } = {}): string[] {
   const lines: string[] = [];
   for (const [slug, spec] of Object.entries(MODELS)) {
-    if (opts.imageOnly && !IMAGE_GEN_BACKENDS.has(spec.backend)) continue;
+    if (opts.imageOnly && !IMAGE_GEN_FORMATS.has(spec.backend)) continue;
     lines.push(`  ${slug}`);
     lines.push(`    ${spec.brief}`);
   }

@@ -41,7 +41,7 @@ npx -y @aibridge/cli subagent "summarize the architecture of this repo"
 | `aibridge implement <plan.md>` | You have an approved plan file and want it executed in place — with your project's **real typecheck and tests** run until green |
 | `aibridge review [--plan <plan.md>]` | You want a **different model** to pressure-test the working-tree diff against the plan contract (over-reach is a finding) — or to review the plan itself before implementing |
 | `aibridge subagent "<task>"` | A self-contained task deserves a concurrent delegate, a cross-model second opinion, or a red-team pass |
-| `aibridge image-gen "<prompt>"` | You need a real raster image — on a Codex (default), Antigravity, or Grok seat, with render verification |
+| `aibridge image-gen "<prompt>" --out out.png` | You need a real raster image — on a Codex (default), Antigravity, or Grok seat, with render verification |
 | `aibridge quota` | Two-second check of every backend's remaining quota before you pipeline work |
 | `aibridge runs` | Inspect or watch past delegation runs (`~/.aibridge/runs`) |
 

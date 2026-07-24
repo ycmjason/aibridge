@@ -25,8 +25,8 @@ export const imageGen = buildCommand({
       out: {
         kind: 'parsed',
         parse: String,
-        optional: true,
-        brief: 'Path to write the image (default: ./aibridge-image.png)',
+        brief:
+          'Path to write the image — extension must match the seat format (.png for codex, .jpg for agy/grok)',
       },
       aspectRatio: {
         kind: 'parsed',

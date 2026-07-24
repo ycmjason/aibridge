@@ -6,33 +6,32 @@ matters even if you only hand the prompt back.
 ## A. Calling it
 
 ```bash
-aibridge image-gen "<full prompt — see Part B>" \
-  [--model <slug>] [--out out.png] [--aspect-ratio 16:9] [--image ref.png] \
+aibridge image-gen "<full prompt — see Part B>" --out out.png \
+  [--model <slug>] [--aspect-ratio 16:9] [--image ref.png] \
   [--timeout 600] [--json]
 ```
 
 `--model` uses the **same canonical slugs as every other command**
 (`resolveModel`; no short aliases). Image-capable seats today:
 
-| slug | backend CLI |
-|---|---|
-| `openai-codex/gpt-5.6-sol` (default) | Codex CLI |
-| `google-antigravity/gemini-3.6-flash` | Antigravity CLI (`agy`) |
-| `xai-grok/grok-4.5` | Grok CLI |
+| slug | backend CLI | renders |
+|---|---|---|
+| `openai-codex/gpt-5.6-sol` (default) | Codex CLI | PNG |
+| `google-antigravity/gemini-3.6-flash` | Antigravity CLI (`agy`) | JPEG |
+| `xai-grok/grok-4.5` | Grok CLI | JPEG |
 
 Other seats fail fast with a list of capable models.
 
 Notes:
 
-- `--out` defaults to `./aibridge-image.png`. **agy** renders JPEG, so saving to `--out foo.png` uses ImageMagick (`magick`/`convert`) to convert; if unavailable, the CLI warns and writes raw bytes as-is.
-- `--aspect-ratio N:M` (e.g. `16:9`, `1:1`) — passed through as a real tool parameter on **agy** and **grok**, and as a prompt hint on **codex**. The CLI no longer resizes renders; output dimensions are whatever the model rendered.
+- `--out` is required, and its extension must match the seat's format (see the
+  table above). A mismatch is rejected before anything runs. You get the model's
+  own bytes — aibridge never converts or resizes.
+- `--aspect-ratio N:M` (e.g. `16:9`, `1:1`) — the only geometry control. Output
+  dimensions are whatever the model renders at that ratio; exact pixel counts
+  aren't controllable, so resize downstream if you need them.
 - `--image` attaches reference image(s) (comma-separated paths) — every seat
   routes them to its edit path. See **Reference images** below.
-- **There is no quality flag.** No backend's image tool takes a quality
-  parameter (codex: `prompt`, `referenced_image_paths`,
-  `num_last_images_to_include`; grok: `prompt`, `aspect_ratio`; agy: `Prompt`,
-  `ImageName`, `AspectRatio`, `ImagePaths`) — put any quality wording in the
-  prompt itself, where it actually reaches the model.
 - `--json` prints `{ out, bytes, width, height, aspectRatio, model, backend, real }`.
 
 ### Reference images (`--image`)
@@ -42,11 +41,11 @@ inventing from scratch — e.g. keep the same subject, change only what you ask:
 
 ```bash
 aibridge image-gen "the same woman, now in a denim shirt in a bright kitchen, waist-up" \
-  --image avatar.png --aspect-ratio 9:16
+  --out avatar2.png --image avatar.png --aspect-ratio 9:16
 
 # same brief, on a different seat
 aibridge image-gen "the same woman, now in a denim shirt in a bright kitchen, waist-up" \
-  --model xai-grok/grok-4.5 --image avatar.png --aspect-ratio 9:16
+  --model xai-grok/grok-4.5 --out avatar2.jpg --image avatar.jpg --aspect-ratio 9:16
 ```
 
 With a reference, write the prompt as a **diff** — say only what should *change*
@@ -59,8 +58,8 @@ and style. Multiple refs: `--image face.png,style.png`.
    what it *looks like*, not its job.
 2. **Specify the aspect ratio** via `--aspect-ratio` and/or the prompt text (e.g. `16:9`, `1:1`). Exact pixel counts are not controllable on any seat.
 3. **Always specify the background** — a concrete colour with hex, or
-   `opaque`/`auto`. (No seat emits transparency — grok and agy render opaque
-   JPEGs; key the alpha out of a flat colour afterwards if you need it.)
+   `opaque`/`auto`. (No seat emits transparency — codex PNGs and grok/agy JPEGs
+   are all opaque; key the alpha out of a flat colour afterwards if you need it.)
 4. **Specify what matters**: subject, composition, palette, style/medium, mood,
    lighting.
 5. **Abstraction dial** — *lock* the critical (verbatim text in straight quotes,
