@@ -1,8 +1,13 @@
 import assert from 'node:assert/strict';
 import type { AgyQuotaSnapshot } from '@aibridge/driver-agy';
 import type { CodexQuotaSnapshot } from '@aibridge/driver-codex';
+import type { GrokQuotaSnapshot } from '@aibridge/driver-grok';
 import { test } from 'vitest';
-import { evaluateAgyPreflight, evaluateCodexPreflight } from './quotaPreflight.ts';
+import {
+  evaluateAgyPreflight,
+  evaluateCodexPreflight,
+  evaluateGrokPreflight,
+} from './quotaPreflight.ts';
 
 test('evaluateAgyPreflight: exhausted model returns ok:false with resetTime', () => {
   const snapshot: AgyQuotaSnapshot = {
@@ -173,6 +178,46 @@ test('evaluateCodexPreflight: healthy (77% used) returns ok:true', () => {
   };
 
   const result = evaluateCodexPreflight(snapshot);
+
+  assert.deepEqual(result, { ok: true });
+});
+
+test('evaluateGrokPreflight: usedPercent at 100 refuses with resetAt', () => {
+  const snapshot: GrokQuotaSnapshot = {
+    fetchedAt: '2024-01-01T12:00:00Z',
+    periodType: 'weekly',
+    periodStart: '2024-01-01T00:00:00Z',
+    periodEnd: '2024-01-08T00:00:00Z',
+    usedPercent: 100,
+    products: [],
+    onDemandUsedCents: undefined,
+    onDemandCapCents: undefined,
+    prepaidBalanceCents: undefined,
+  };
+
+  const result = evaluateGrokPreflight(snapshot);
+
+  assert.deepEqual(result, {
+    ok: false,
+    message: 'grok credit quota exhausted',
+    resetAt: '2024-01-08T00:00:00Z',
+  });
+});
+
+test('evaluateGrokPreflight: healthy (17% used) returns ok:true', () => {
+  const snapshot: GrokQuotaSnapshot = {
+    fetchedAt: '2024-01-01T12:00:00Z',
+    periodType: 'weekly',
+    periodStart: '2024-01-01T00:00:00Z',
+    periodEnd: '2024-01-08T00:00:00Z',
+    usedPercent: 17,
+    products: [],
+    onDemandUsedCents: undefined,
+    onDemandCapCents: undefined,
+    prepaidBalanceCents: undefined,
+  };
+
+  const result = evaluateGrokPreflight(snapshot);
 
   assert.deepEqual(result, { ok: true });
 });

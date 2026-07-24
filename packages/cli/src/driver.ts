@@ -1,6 +1,7 @@
 import type { AgyQuotaSnapshot } from '@aibridge/driver-agy';
 import type { ClaudeQuotaSnapshot } from '@aibridge/driver-claude';
 import type { CodexQuotaSnapshot } from '@aibridge/driver-codex';
+import type { GrokQuotaSnapshot } from '@aibridge/driver-grok';
 import type { Effort } from './models.ts';
 
 export type Availability =
@@ -28,7 +29,11 @@ export type DelegationResult =
       readonly exitCode: number | null;
     };
 
-export type QuotaSnapshot = AgyQuotaSnapshot | CodexQuotaSnapshot | ClaudeQuotaSnapshot;
+export type QuotaSnapshot =
+  | AgyQuotaSnapshot
+  | CodexQuotaSnapshot
+  | ClaudeQuotaSnapshot
+  | GrokQuotaSnapshot;
 
 export interface ImageGenRequest {
   readonly prompt: string;

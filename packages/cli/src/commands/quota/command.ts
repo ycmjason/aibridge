@@ -2,6 +2,8 @@ import { buildCommand } from '@stricli/core';
 import quotaImpl from './impl.ts';
 
 const fullDescription = [
+  'grok: reads ~/.grok/auth.json and asks the xAI billing endpoint for the',
+  'weekly credit usage percentage and per-product split.',
   'agy: reads its cached OAuth token (~/.gemini/antigravity-cli/) and asks the',
   'Cloud Code API for per-model remaining quota. EXHAUSTED means agy turns on',
   'that model fail with an empty answer until the reset time.',
@@ -24,7 +26,7 @@ export const quota = buildCommand({
     },
   },
   docs: {
-    brief: 'Show agy / codex / claude quota with reset times',
+    brief: 'Show grok / agy / codex / claude quota with reset times',
     fullDescription,
   },
 });

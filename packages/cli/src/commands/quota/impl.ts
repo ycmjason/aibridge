@@ -1,6 +1,7 @@
 import { type AgyQuotaSnapshot, fetchAgyQuota } from '@aibridge/driver-agy';
 import { type ClaudeQuotaSnapshot, fetchClaudeQuota } from '@aibridge/driver-claude';
 import { type CodexQuotaSnapshot, fetchCodexQuota } from '@aibridge/driver-codex';
+import { fetchGrokQuota, type GrokQuotaSnapshot } from '@aibridge/driver-grok';
 import type { LocalContext } from '../../context.ts';
 
 export interface QuotaFlags {
@@ -15,6 +16,20 @@ function formatReset(resetTime: string | undefined): string {
   const mins = Math.round(ms / 60_000);
   const rel = mins < 60 ? `${mins}m` : `${Math.floor(mins / 60)}h${mins % 60}m`;
   return `${new Date(resetTime).toLocaleTimeString()} (in ${rel})`;
+}
+
+function renderGrok(ctx: LocalContext, snapshot: GrokQuotaSnapshot): void {
+  ctx.process.stdout.write('=== grok (xAI) — used this period ===\n');
+  ctx.process.stdout.write(`${'PERIOD'.padEnd(10)} ${'USED'.padEnd(10)} RESET\n`);
+  const usedPctStr = snapshot.usedPercent !== undefined ? `${snapshot.usedPercent}%` : '?';
+  const periodStr = snapshot.periodType ?? '-';
+  ctx.process.stdout.write(
+    `${periodStr.padEnd(10)} ${usedPctStr.padEnd(10)} ${formatReset(snapshot.periodEnd)}\n`,
+  );
+  if (snapshot.products.length > 0) {
+    const prods = snapshot.products.map(p => `${p.product} ${p.usedPercent}%`).join(' · ');
+    ctx.process.stdout.write(`  ${prods}\n`);
+  }
 }
 
 function renderAgy(ctx: LocalContext, snapshot: AgyQuotaSnapshot): void {
@@ -75,19 +90,24 @@ function renderSection<T>(
 }
 
 export default async function quotaImpl(this: LocalContext, flags: QuotaFlags): Promise<void> {
-  const [agy, codex, claude] = await Promise.allSettled([
+  const [grok, agy, codex, claude] = await Promise.allSettled([
+    fetchGrokQuota(),
     fetchAgyQuota(),
     fetchCodexQuota(),
     fetchClaudeQuota(),
   ]);
 
   const allFailed =
-    agy.status === 'rejected' && codex.status === 'rejected' && claude.status === 'rejected';
+    grok.status === 'rejected' &&
+    agy.status === 'rejected' &&
+    codex.status === 'rejected' &&
+    claude.status === 'rejected';
 
   if (flags.json) {
     this.process.stdout.write(
       `${JSON.stringify(
         {
+          grok: grok.status === 'fulfilled' ? grok.value : { error: String(grok.reason) },
           agy: agy.status === 'fulfilled' ? agy.value : { error: String(agy.reason) },
           codex: codex.status === 'fulfilled' ? codex.value : { error: String(codex.reason) },
           claude: claude.status === 'fulfilled' ? claude.value : { error: String(claude.reason) },
@@ -100,6 +120,8 @@ export default async function quotaImpl(this: LocalContext, flags: QuotaFlags): 
     return;
   }
 
+  renderSection(this, grok, 'grok (xAI)', renderGrok);
+  this.process.stdout.write('\n');
   renderSection(this, agy, 'agy (Antigravity)', renderAgy);
   this.process.stdout.write('\n');
   renderSection(this, codex, 'codex (ChatGPT)', renderCodex);

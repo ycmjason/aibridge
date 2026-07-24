@@ -82,7 +82,7 @@ Requires the backing CLIs on `PATH` and authed: **`grok`** (recommended planner/
 | `subagent` | Delegate a self-contained task to another model | [reference/subagent.md](reference/subagent.md) |
 | `image-gen` | Generate a raster image via a model seat (codex, agy, or grok backend) | [reference/image-gen.md](reference/image-gen.md) |
 | `runs` | Monitor and inspect execution runs | — |
-| `quota` | Show backend quota and reset times (agy, codex, claude) | — |
+| `quota` | Show backend quota and reset times (grok, agy, codex, claude) | — |
 | `models` | List every model seat in the registry (slug, efforts, image format) | — |
 
 ## Routing
@@ -132,10 +132,7 @@ Claude- and GPT-grade work on Antigravity's quota, which matters when the
 same-provider seats are the ones you are avoiding. Run `aibridge models [--json]` for exact per-seat facts (accepted efforts, image format, pinned model ID). `aibridge <command> --help`
 lists every seat.
 
-- **grok is aggressively capped** (~30 req/min, ~1k msgs/day, no local usage
-  probe): run ONE grok stage at a time. It is the only seat that tolerates a
-  vague brief, so spend it where the input is unclear rather than where a
-  detailed plan already exists.
+- **grok is aggressively capped** (~30 req/min, ~1k msgs/day; `aibridge quota` tracks weekly credit usage): run ONE grok stage at a time. It is the only seat that tolerates a vague brief, so spend it where the input is unclear rather than where a detailed plan already exists.
 - **Keep the reviewer cross-model from the implementer** — a model reviewing
   its own diff shares its own blind spots. The recommended seats already differ; if you
   override one seat, check the other. The same logic applies to you: for work

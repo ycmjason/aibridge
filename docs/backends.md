@@ -24,4 +24,4 @@
 
 ## grok / claude
 
-- Plain print-mode CLIs; effort maps to `--reasoning-effort` (grok) / `--effort` (claude). grok is aggressively capped (~30 req/min, ~1k msgs/day) with no local usage probe — one grok stage at a time. claude quota is read from its usage command (session + weekly windows).
+- Plain print-mode CLIs; effort maps to `--reasoning-effort` (grok) / `--effort` (claude). grok is aggressively capped (~30 req/min, ~1k msgs/day). Usage probe: `GET /v1/billing?format=credits` on `cli-chat-proxy.grok.com`, bearer from `~/.grok/auth.json`, returning a **weekly credit percentage** plus a per-product split. Per-minute and per-day rate limits are NOT queryable and surface only as HTTP 429, so the weekly credit percentage is the only measurable signal. claude quota is read from its usage command (session + weekly windows).

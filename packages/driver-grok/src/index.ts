@@ -10,5 +10,13 @@ export {
   probeGrokAuth,
   runGrokPrint,
 } from './grok.ts';
+export {
+  fetchGrokQuota,
+  type GrokQuotaProduct,
+  type GrokQuotaSnapshot,
+  grokAuthPath,
+  parseGrokBilling,
+  type RawGrokBilling,
+} from './grokQuota.ts';
 export { type Availability, probe } from './probe.ts';
 export { type DelegationResult, type DelegationTask, run } from './run.ts';

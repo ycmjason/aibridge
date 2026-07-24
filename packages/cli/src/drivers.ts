@@ -15,6 +15,7 @@ const agyDriver: AgentCliDriver = {
 const grokDriver: AgentCliDriver = {
   probe: () => grok.probe(),
   run: task => grok.run(task),
+  quota: () => grok.fetchGrokQuota(),
   generateImage: req => grok.generateImage(req),
 };
 

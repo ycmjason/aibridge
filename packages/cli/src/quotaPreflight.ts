@@ -1,5 +1,6 @@
 import { type AgyQuotaSnapshot, fetchAgyQuota, findModelQuota } from '@aibridge/driver-agy';
 import { type CodexQuotaSnapshot, fetchCodexQuota } from '@aibridge/driver-codex';
+import { fetchGrokQuota, type GrokQuotaSnapshot } from '@aibridge/driver-grok';
 import { backendModelId, type ResolvedModel } from './models.ts';
 
 export type PreflightVerdict =
@@ -51,9 +52,25 @@ export function evaluateCodexPreflight(snapshot: CodexQuotaSnapshot): PreflightV
   return { ok: true };
 }
 
+export function evaluateGrokPreflight(snapshot: GrokQuotaSnapshot): PreflightVerdict {
+  if (snapshot.usedPercent !== undefined && snapshot.usedPercent >= 100) {
+    return {
+      ok: false,
+      message: 'grok credit quota exhausted',
+      resetAt: snapshot.periodEnd,
+    };
+  }
+
+  return { ok: true };
+}
+
 export async function preflightModel(resolved: ResolvedModel): Promise<PreflightVerdict> {
   if (resolved.spec.backend === 'codex') {
     return preflightCodex();
+  }
+
+  if (resolved.spec.backend === 'grok') {
+    return preflightGrok();
   }
 
   if (resolved.spec.backend !== 'agy') {
@@ -75,6 +92,18 @@ export async function preflightCodex(): Promise<PreflightVerdict> {
   try {
     const snapshot = await fetchCodexQuota();
     return evaluateCodexPreflight(snapshot);
+  } catch (err) {
+    return {
+      ok: true,
+      warning: `quota preflight failed (${(err as Error).message}); proceeding`,
+    };
+  }
+}
+
+export async function preflightGrok(): Promise<PreflightVerdict> {
+  try {
+    const snapshot = await fetchGrokQuota();
+    return evaluateGrokPreflight(snapshot);
   } catch (err) {
     return {
       ok: true,
