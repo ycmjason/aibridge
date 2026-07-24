@@ -1,5 +1,5 @@
 {
-  "name": "@ai-bridge/agy",
+  "name": "@aibridge/agy",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -7,6 +7,6 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@ai-bridge/proc": "workspace:*"
+    "@aibridge/proc": "workspace:*"
   }
 }

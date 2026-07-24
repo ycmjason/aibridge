@@ -1,7 +1,7 @@
 import { existsSync, readdirSync, statSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
-import { isNotFound, type RunResult, runCaptured, stripAnsi } from '@ai-bridge/proc';
+import { isNotFound, type RunResult, runCaptured, stripAnsi } from '@aibridge/proc';
 import { buildCodexExecArgs, ensureCodex, MIN_CODEX_IMAGE } from './codex.ts';
 
 export interface ImageGenRequest {

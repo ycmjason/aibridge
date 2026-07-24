@@ -1,4 +1,4 @@
-import { isNotFound, type RunResult, runCaptured, stripAnsi } from '@ai-bridge/proc';
+import { isNotFound, type RunResult, runCaptured, stripAnsi } from '@aibridge/proc';
 import { buildGrokPrintArgs } from './grok.ts';
 
 export interface DelegationTask {

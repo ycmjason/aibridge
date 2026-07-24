@@ -1,5 +1,5 @@
 import { writeFileSync } from 'node:fs';
-import type { RunOptions, RunResult } from '@ai-bridge/proc';
+import type { RunOptions, RunResult } from '@aibridge/proc';
 import { describe, expect, it } from 'vitest';
 import { run } from './run.ts';
 

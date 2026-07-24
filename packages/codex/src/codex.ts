@@ -5,7 +5,7 @@ import {
   type RunResult,
   runCaptured,
   semverGte,
-} from '@ai-bridge/proc';
+} from '@aibridge/proc';
 
 /**
  * Shared driver for the Codex CLI (`codex exec`), used by `image-gen` (gpt-image-2 renders)

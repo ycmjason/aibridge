@@ -11,7 +11,7 @@ export default defineConfig({
   dts: false,
   clean: false,
   deps: {
-    alwaysBundle: [/^@ai-bridge\//, '@stricli/core'],
+    alwaysBundle: [/^@aibridge\//, '@stricli/core'],
     onlyImport: [],
   },
   banner: '// generated — do not edit; rebuild with pnpm build:skill',

@@ -1,6 +1,6 @@
 import { existsSync } from 'node:fs';
 import { isAbsolute, resolve } from 'node:path';
-import { runCaptured } from '@ai-bridge/proc';
+import { runCaptured } from '@aibridge/proc';
 import type { LocalContext } from '../../context.ts';
 import { delegate } from '../../delegate.ts';
 import { DEFAULT_IMPLEMENTER, formatUnknownModelError, resolveModel } from '../../models.ts';

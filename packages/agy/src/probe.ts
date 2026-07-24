@@ -1,4 +1,4 @@
-import { isNotFound, runCaptured } from '@ai-bridge/proc';
+import { isNotFound, runCaptured } from '@aibridge/proc';
 
 export type Availability =
   | { readonly ok: true; readonly version: string }

@@ -10,7 +10,7 @@ import {
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { isNotFound, runCaptured } from '@ai-bridge/proc';
+import { isNotFound, runCaptured } from '@aibridge/proc';
 import type { LocalContext } from '../../context.ts';
 import type { ImageResult } from '../../driver.ts';
 import { getDriver } from '../../drivers.ts';

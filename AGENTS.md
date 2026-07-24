@@ -42,7 +42,7 @@ say so unprompted and propose the cleanup — don't wait to be asked.
 
 - **Node 24.11+, native TypeScript in packages. NO build step for dev (`node packages/ai-bridge/src/cli.ts`), NO `tsx`, NO `ts-node`.** Run `.ts` files directly with `node` (type-stripping is on by default in Node 24). `tsc` is for type-checking only (`pnpm typecheck`).
 - **Committed skill bundle (`skills/ai-bridge/scripts/cli.mjs`).** Generated via `pnpm build:skill` (`tsdown`), self-contained for Vercel skills copy deployment.
-- **App runtime dependencies must be inlined in the skill bundle.** Any dependency of `@ai-bridge/ai-bridge` must be listed in `tsdown.config.ts` under `deps.alwaysBundle` so the generated `cli.mjs` remains fully self-contained. `onlyImport: []` enforces this in CI.
+- **App runtime dependencies must be inlined in the skill bundle.** Any dependency of `@aibridge/ai-bridge` must be listed in `tsdown.config.ts` under `deps.alwaysBundle` so the generated `cli.mjs` remains fully self-contained. `onlyImport: []` enforces this in CI.
 - **Erasable syntax only** — Node strips types, it does not transform them: no `enum`, no `namespace` with runtime members, no parameter properties, no decorators. `tsconfig` enforces this via `erasableSyntaxOnly`.
 - **ESM with explicit `.ts` import extensions** (e.g. `import { app } from "./app.ts"`). `verbatimModuleSyntax` is on → use `import type` for type-only imports.
 - **pnpm only, via corepack.** `corepack use pnpm@latest` manages the pinned `packageManager`. Don't use npm or yarn here.
@@ -93,7 +93,7 @@ Full verified findings and per-command implementation recipes live in [`docs/`](
 
 ## Critical runtime gotchas (read before implementing the impls)
 
-- **`agy` stdout capture — no TTY workaround needed (re-verified agy 1.0.6).** An earlier note claimed `agy -p` only emits to a TTY and hangs when piped/redirected (Antigravity issue #76). Re-tested on agy 1.0.6 from this repo: **false here** — agy emits clean text to a piped, redirected, or fully-headless stdout (`runCaptured` in `@ai-bridge/proc`). See [`docs/subagent-agy.md`](docs/subagent-agy.md).
+- **`agy` stdout capture — no TTY workaround needed (re-verified agy 1.0.6).** An earlier note claimed `agy -p` only emits to a TTY and hangs when piped/redirected (Antigravity issue #76). Re-tested on agy 1.0.6 from this repo: **false here** — agy emits clean text to a piped, redirected, or fully-headless stdout (`runCaptured` in `@aibridge/proc`). See [`docs/subagent-agy.md`](docs/subagent-agy.md).
 - **Verify codex image renders.** A real gpt-image-2 PNG is hundreds of KB–MB; a code-drawn (PIL) substitute is tiny (~10–30 KB). Always check output file size (> ~100 KB) before declaring success; raw renders are cached under `~/.codex/generated_images/<uuid>/ig_*.png`.
 - **agy quota death shows up as an empty answer.** An exhausted model makes `agy -p` return an empty answer after ~6s (the CLI exits 0). Quota preflight is the guard: `preflightModel` refuses before spawning when agy snapshot says model group is exhausted.
 

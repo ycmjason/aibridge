@@ -1,4 +1,4 @@
-import { runCaptured } from '@ai-bridge/proc';
+import { runCaptured } from '@aibridge/proc';
 
 export interface ClaudeQuotaWindow {
   readonly window: string;

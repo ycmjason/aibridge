@@ -1,4 +1,4 @@
-import { isNotFound, probeVersion, type RunResult, runCaptured } from '@ai-bridge/proc';
+import { isNotFound, probeVersion, type RunResult, runCaptured } from '@aibridge/proc';
 
 /**
  * Shared driver for the xAI Grok CLI (`grok -p`), an off-budget backend for

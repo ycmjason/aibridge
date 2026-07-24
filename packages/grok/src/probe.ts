@@ -1,4 +1,4 @@
-import { isNotFound, runCaptured } from '@ai-bridge/proc';
+import { isNotFound, runCaptured } from '@aibridge/proc';
 import { ensureGrok } from './grok.ts';
 
 export type Availability =

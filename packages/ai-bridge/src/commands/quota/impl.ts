@@ -1,6 +1,6 @@
-import { type AgyQuotaSnapshot, fetchAgyQuota } from '@ai-bridge/agy';
-import { type ClaudeQuotaSnapshot, fetchClaudeQuota } from '@ai-bridge/claude';
-import { type CodexQuotaSnapshot, fetchCodexQuota } from '@ai-bridge/codex';
+import { type AgyQuotaSnapshot, fetchAgyQuota } from '@aibridge/agy';
+import { type ClaudeQuotaSnapshot, fetchClaudeQuota } from '@aibridge/claude';
+import { type CodexQuotaSnapshot, fetchCodexQuota } from '@aibridge/codex';
 import type { LocalContext } from '../../context.ts';
 
 export interface QuotaFlags {

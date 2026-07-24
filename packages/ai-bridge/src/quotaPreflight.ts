@@ -1,5 +1,5 @@
-import { type AgyQuotaSnapshot, fetchAgyQuota, findModelQuota } from '@ai-bridge/agy';
-import { type CodexQuotaSnapshot, fetchCodexQuota } from '@ai-bridge/codex';
+import { type AgyQuotaSnapshot, fetchAgyQuota, findModelQuota } from '@aibridge/agy';
+import { type CodexQuotaSnapshot, fetchCodexQuota } from '@aibridge/codex';
 import { backendModelId, type ResolvedModel } from './models.ts';
 
 export type PreflightVerdict =

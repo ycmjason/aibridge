@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import type { RunResult } from '@ai-bridge/proc';
+import type { RunResult } from '@aibridge/proc';
 import { describe, expect, it, test } from 'vitest';
 import { buildGrokPrintArgs, probeGrokAuth } from './grok.ts';
 

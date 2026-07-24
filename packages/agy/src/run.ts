@@ -1,7 +1,7 @@
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { isNotFound, type RunResult, runCaptured, stripAnsi } from '@ai-bridge/proc';
+import { isNotFound, type RunResult, runCaptured, stripAnsi } from '@aibridge/proc';
 import { buildAgyPrintArgs } from './agy.ts';
 
 export interface DelegationTask {

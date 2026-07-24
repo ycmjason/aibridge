@@ -1,4 +1,4 @@
-import { isNotFound, runCaptured } from '@ai-bridge/proc';
+import { isNotFound, runCaptured } from '@aibridge/proc';
 import { ensureCodex, MIN_CODEX_STRUCTURED } from './codex.ts';
 
 export type Availability =

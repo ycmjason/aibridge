@@ -1,7 +1,7 @@
 import { existsSync, readdirSync, statSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { isNotFound, type RunResult, runCaptured, stripAnsi } from '@ai-bridge/proc';
+import { isNotFound, type RunResult, runCaptured, stripAnsi } from '@aibridge/proc';
 import { buildGrokPrintArgs, ensureGrok } from './grok.ts';
 
 export interface ImageGenRequest {

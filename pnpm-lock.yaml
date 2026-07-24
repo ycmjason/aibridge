@@ -59,25 +59,25 @@ importers:
 
   packages/agy:
     dependencies:
-      '@ai-bridge/proc':
+      '@aibridge/proc':
         specifier: workspace:*
         version: link:../proc
 
   packages/ai-bridge:
     dependencies:
-      '@ai-bridge/agy':
+      '@aibridge/agy':
         specifier: workspace:*
         version: link:../agy
-      '@ai-bridge/claude':
+      '@aibridge/claude':
         specifier: workspace:*
         version: link:../claude
-      '@ai-bridge/codex':
+      '@aibridge/codex':
         specifier: workspace:*
         version: link:../codex
-      '@ai-bridge/grok':
+      '@aibridge/grok':
         specifier: workspace:*
         version: link:../grok
-      '@ai-bridge/proc':
+      '@aibridge/proc':
         specifier: workspace:*
         version: link:../proc
       '@stricli/core':
@@ -86,19 +86,19 @@ importers:
 
   packages/claude:
     dependencies:
-      '@ai-bridge/proc':
+      '@aibridge/proc':
         specifier: workspace:*
         version: link:../proc
 
   packages/codex:
     dependencies:
-      '@ai-bridge/proc':
+      '@aibridge/proc':
         specifier: workspace:*
         version: link:../proc
 
   packages/grok:
     dependencies:
-      '@ai-bridge/proc':
+      '@aibridge/proc':
         specifier: workspace:*
         version: link:../proc
 

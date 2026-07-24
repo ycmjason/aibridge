@@ -1,5 +1,5 @@
 {
-  "name": "@ai-bridge/ai-bridge",
+  "name": "@aibridge/ai-bridge",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -7,11 +7,11 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@ai-bridge/proc": "workspace:*",
-    "@ai-bridge/agy": "workspace:*",
-    "@ai-bridge/grok": "workspace:*",
-    "@ai-bridge/codex": "workspace:*",
-    "@ai-bridge/claude": "workspace:*",
+    "@aibridge/proc": "workspace:*",
+    "@aibridge/agy": "workspace:*",
+    "@aibridge/grok": "workspace:*",
+    "@aibridge/codex": "workspace:*",
+    "@aibridge/claude": "workspace:*",
     "@stricli/core": "catalog:"
   }
 }
