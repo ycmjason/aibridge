@@ -36,6 +36,7 @@ jobs:
         run: |
           tmp="$(mktemp -d)"
           cp -R skills/ai-bridge "$tmp/skill"
+          test -f "$tmp/skill/THIRD-PARTY-LICENSES"
           cd "$tmp/skill" && node scripts/cli.mjs --help
       - name: Ban import.meta / __dirname in package sources
         run: |

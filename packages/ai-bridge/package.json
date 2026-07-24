@@ -11,6 +11,7 @@
     "@ai-bridge/agy": "workspace:*",
     "@ai-bridge/grok": "workspace:*",
     "@ai-bridge/codex": "workspace:*",
-    "@ai-bridge/claude": "workspace:*"
+    "@ai-bridge/claude": "workspace:*",
+    "@stricli/core": "catalog:"
   }
 }

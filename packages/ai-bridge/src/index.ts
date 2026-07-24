@@ -1,4 +1,4 @@
-export { runCli } from './app.ts';
+export { app, runCli } from './app.ts';
 export { buildContext, type LocalContext } from './context.ts';
 export { type DelegateOptions, type DelegateOutcome, delegate } from './delegate.ts';
 export type { AgentCliDriver, DelegationResult, DelegationTask } from './driver.ts';

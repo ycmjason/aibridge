@@ -1,6 +1,6 @@
 # ai-bridge
 
-A tiny, zero-dependency TypeScript CLI that bridges tasks to non-Claude AI CLIs installed on your machine. Organized as a pnpm monorepo under `packages/*`, with a committed skill bundle inside `skills/ai-bridge/scripts/cli.mjs`:
+A TypeScript CLI that bridges tasks to non-Claude AI CLIs installed on your machine (workspace drivers are zero-dependency; CLI app uses `@stricli/core` inlined into the skill bundle). Organized as a pnpm monorepo under `packages/*`, with a committed skill bundle inside `skills/ai-bridge/scripts/cli.mjs`:
 
 - `node packages/ai-bridge/src/cli.ts plan "<prompt>"` — produce a detailed implementation plan file for a task prompt.
 - `node packages/ai-bridge/src/cli.ts implement <plan.md>` — execute an implementation plan file with real typecheck + tests.

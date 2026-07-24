@@ -45,6 +45,8 @@ skill's own directory:
 node <skill-dir>/scripts/cli.mjs <command> [options]
 ```
 
+Bundled third-party code is listed in [THIRD-PARTY-LICENSES](THIRD-PARTY-LICENSES).
+
 `<skill-dir>` is the directory this `SKILL.md` lives in (resolve it to an absolute
 path). For brevity the reference files below write the command as
 `ai-bridge <command> …` — **substitute the `node <skill-dir>/scripts/cli.mjs`

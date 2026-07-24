@@ -1,61 +1,42 @@
-import { runImageGen } from './commands/image-gen/command.ts';
-import { runImplement } from './commands/implement/command.ts';
-import { runPlan } from './commands/plan/command.ts';
-import { runQuota } from './commands/quota/command.ts';
-import { runReview } from './commands/review/command.ts';
-import { runRuns } from './commands/runs/command.ts';
-import { runSubagent } from './commands/subagent/command.ts';
+import { buildApplication, buildRouteMap, run } from '@stricli/core';
+import { imageGen } from './commands/image-gen/command.ts';
+import { implement } from './commands/implement/command.ts';
+import { plan } from './commands/plan/command.ts';
+import { quota } from './commands/quota/command.ts';
+import { review } from './commands/review/command.ts';
+import { runs } from './commands/runs/command.ts';
+import { subagent } from './commands/subagent/command.ts';
 import type { LocalContext } from './context.ts';
+import { normalizeExitCode } from './exitCode.ts';
 
 const BRIEF =
   'Bridge tasks to non-Claude AI CLIs — a plan → implement → review workflow, task delegation, and image generation (codex gpt-image-2 / grok Imagine).';
 
-function topLevelHelp(): string {
-  return [
-    `ai-bridge — ${BRIEF}`,
-    '',
-    'Usage: ai-bridge <command> [options]',
-    '',
-    'Commands:',
-    '  plan        Expand a task into a detailed implementation plan file',
-    '  implement   Implement a plan file in place (edits the working tree)',
-    '  review      Review the working-tree diff (or a plan) against a plan contract',
-    '  subagent    Delegate a self-contained task to a non-Claude model',
-    '  image-gen   Generate a raster image via a model seat (codex or grok)',
-    '  runs        Monitor and inspect execution runs',
-    '  quota       Show backend quota and reset times (agy, codex, claude)',
-    '',
-    "Run `ai-bridge <command> --help` for a command's options.",
-    '',
-  ].join('\n');
-}
+const routes = buildRouteMap({
+  routes: {
+    plan,
+    implement,
+    review,
+    subagent,
+    'image-gen': imageGen,
+    runs,
+    quota,
+  },
+  docs: {
+    brief: BRIEF,
+  },
+});
 
+export const app = buildApplication(routes, {
+  name: 'ai-bridge',
+  scanner: {
+    // Accept --no-preflight / --no-tools while flag keys stay camelCase in TS
+    caseStyle: 'allow-kebab-for-camel',
+  },
+});
+
+/** Public entry used by cli.ts and index.ts — preserves runCli(ctx, argv) surface. */
 export async function runCli(ctx: LocalContext, argv: readonly string[]): Promise<void> {
-  const [command, ...rest] = argv;
-
-  if (command === undefined || command === '--help' || command === '-h') {
-    ctx.process.stdout.write(topLevelHelp());
-    return;
-  }
-
-  switch (command) {
-    case 'plan':
-      return runPlan(ctx, rest);
-    case 'implement':
-      return runImplement(ctx, rest);
-    case 'review':
-      return runReview(ctx, rest);
-    case 'subagent':
-      return runSubagent(ctx, rest);
-    case 'image-gen':
-      return runImageGen(ctx, rest);
-    case 'runs':
-      return runRuns(ctx, rest);
-    case 'quota':
-      return runQuota(ctx, rest);
-    default:
-      ctx.process.stderr.write(`ai-bridge: unknown command "${command}"\n\n${topLevelHelp()}`);
-      ctx.process.exitCode = 2;
-      return;
-  }
+  await run(app, argv, ctx);
+  normalizeExitCode(ctx);
 }

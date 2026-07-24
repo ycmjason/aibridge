@@ -1,11 +1,1764 @@
 // generated — do not edit; rebuild with pnpm build:skill
-import { parseArgs } from "node:util";
 import { appendFileSync, closeSync, copyFileSync, existsSync, mkdirSync, mkdtempSync, openSync, readFileSync, readSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
 import { isAbsolute, join, resolve } from "node:path";
 import { spawn } from "node:child_process";
 import { randomBytes } from "node:crypto";
 
+//#region node_modules/.pnpm/@stricli+core@1.3.0/node_modules/@stricli/core/dist/index.js
+var ExitCode = {
+	/**
+	* Error was thrown by or otherwise caused by an integration.
+	*/
+	IntegrationError: -10,
+	/**
+	* Unable to find a command in the application with the given command line arguments.
+	*/
+	UnknownCommand: -5,
+	/**
+	* Unable to parse the specified arguments.
+	*/
+	InvalidArgument: -4,
+	/**
+	* An error was thrown while loading the context for a command run.
+	*/
+	ContextLoadError: -3,
+	/**
+	* Failed to load command module.
+	*/
+	CommandLoadError: -2,
+	/**
+	* An unexpected error was thrown by or not caught by this library.
+	*/
+	InternalError: -1,
+	/**
+	* Command executed successfully.
+	*/
+	Success: 0,
+	/**
+	* Command module unexpectedly threw an error.
+	*/
+	CommandRunError: 1
+};
+function convertKebabCaseToCamelCase(str) {
+	return str.replace(/-./g, (match) => match[1].toUpperCase());
+}
+function convertCamelCaseToKebabCase(name) {
+	return Array.from(name).map((char, i) => {
+		const upper = char.toUpperCase();
+		const lower = char.toLowerCase();
+		if (i === 0 || upper !== char || upper === lower) return char;
+		return `-${lower}`;
+	}).join("");
+}
+function newSparseMatrix(defaultValue) {
+	const values = /* @__PURE__ */ new Map();
+	return {
+		get: (...args) => {
+			return values.get(args.join(",")) ?? defaultValue;
+		},
+		set: (value, ...args) => {
+			values.set(args.join(","), value);
+		}
+	};
+}
+function damerauLevenshtein(a, b, options) {
+	const { threshold, weights } = options;
+	if (a === b) return 0;
+	const lengthDiff = Math.abs(a.length - b.length);
+	if (typeof threshold === "number" && lengthDiff > threshold) return Infinity;
+	const matrix = newSparseMatrix(Infinity);
+	matrix.set(0, -1, -1);
+	for (let j = 0; j < b.length; ++j) matrix.set((j + 1) * weights.insertion, -1, j);
+	for (let i = 0; i < a.length; ++i) matrix.set((i + 1) * weights.deletion, i, -1);
+	let prevRowMinDistance = -Infinity;
+	for (let i = 0; i < a.length; ++i) {
+		let rowMinDistance = Infinity;
+		for (let j = 0; j <= b.length - 1; ++j) {
+			const cost = a[i] === b[j] ? 0 : 1;
+			const distances = [
+				matrix.get(i - 1, j) + weights.deletion,
+				matrix.get(i, j - 1) + weights.insertion,
+				matrix.get(i - 1, j - 1) + cost * weights.substitution
+			];
+			if (a[i] === b[j - 1] && a[i - 1] === b[j]) distances.push(matrix.get(i - 2, j - 2) + cost * weights.transposition);
+			const minDistance = Math.min(...distances);
+			matrix.set(minDistance, i, j);
+			if (minDistance < rowMinDistance) rowMinDistance = minDistance;
+		}
+		if (rowMinDistance > threshold) {
+			if (prevRowMinDistance > threshold) return Infinity;
+			prevRowMinDistance = rowMinDistance;
+		} else prevRowMinDistance = -Infinity;
+	}
+	const distance = matrix.get(a.length - 1, b.length - 1);
+	if (distance > threshold) return Infinity;
+	return distance;
+}
+function compareAlternatives(a, b, target) {
+	const cmp = a[1] - b[1];
+	if (cmp !== 0) return cmp;
+	const aStartsWith = a[0].startsWith(target);
+	const bStartsWith = b[0].startsWith(target);
+	if (aStartsWith && !bStartsWith) return -1;
+	else if (!aStartsWith && bStartsWith) return 1;
+	return a[0].localeCompare(b[0]);
+}
+function filterClosestAlternatives(target, alternatives, options) {
+	const validAlternatives = alternatives.map((alt) => [alt, damerauLevenshtein(target, alt, options)]).filter(([, dist]) => dist <= options.threshold);
+	const minDistance = Math.min(...validAlternatives.map(([, dist]) => dist));
+	return validAlternatives.filter(([, dist]) => dist === minDistance).sort((a, b) => compareAlternatives(a, b, target)).map(([alt]) => alt);
+}
+var InternalError = class extends Error {};
+function formatException(exc) {
+	if (exc instanceof Error) return exc.stack ?? String(exc);
+	return String(exc);
+}
+function maximum(arr1, arr2) {
+	const maxValues = [];
+	const maxLength = Math.max(arr1.length, arr2.length);
+	for (let i = 0; i < maxLength; ++i) maxValues[i] = Math.max(arr1[i], arr2[i]);
+	return maxValues;
+}
+function formatRowsWithColumns(cells, separators) {
+	if (cells.length === 0) return [];
+	const startingLengths = Array(Math.max(...cells.map((cellRow) => cellRow.length))).fill(0, 0);
+	const maxLengths = cells.reduce((acc, cellRow) => {
+		return maximum(acc, cellRow.map((cell) => cell.length));
+	}, startingLengths);
+	return cells.map((cellRow) => {
+		const firstCell = (cellRow[0] ?? "").padEnd(maxLengths[0]);
+		return cellRow.slice(1).reduce((parts, str, i, arr) => {
+			const paddedStr = arr.length === i + 1 ? str : str.padEnd(maxLengths[i + 1]);
+			return [
+				...parts,
+				separators?.[i] ?? " ",
+				paddedStr
+			];
+		}, [firstCell]).join("").trimEnd();
+	});
+}
+function joinWithGrammar(parts, grammar) {
+	if (parts.length <= 1) return parts[0] ?? "";
+	if (parts.length === 2) return parts.join(` ${grammar.conjunction} `);
+	let allButLast = parts.slice(0, parts.length - 1).join(", ");
+	if (grammar.serialComma) allButLast += ",";
+	return [
+		allButLast,
+		grammar.conjunction,
+		parts[parts.length - 1]
+	].join(" ");
+}
+function group(array, callback) {
+	return array.reduce((groupings, item) => {
+		const key = callback(item);
+		const groupItems = groupings[key] ?? [];
+		groupItems.push(item);
+		groupings[key] = groupItems;
+		return groupings;
+	}, {});
+}
+function groupBy(array, selector) {
+	return group(array, (item) => item[selector]);
+}
+async function allSettledOrElse(values) {
+	const grouped = groupBy(await Promise.allSettled(values), "status");
+	if (grouped.rejected && grouped.rejected.length > 0) return {
+		status: "rejected",
+		reasons: grouped.rejected.map((result) => result.reason)
+	};
+	return {
+		status: "fulfilled",
+		value: grouped.fulfilled?.map((result) => result.value) ?? []
+	};
+}
+var TRUTHY_VALUES = /* @__PURE__ */ new Set([
+	"true",
+	"t",
+	"yes",
+	"y",
+	"on",
+	"1",
+	""
+]);
+var FALSY_VALUES = /* @__PURE__ */ new Set([
+	"false",
+	"f",
+	"no",
+	"n",
+	"off",
+	"0"
+]);
+var looseBooleanParser = (input) => {
+	const value = input.toLowerCase();
+	if (TRUTHY_VALUES.has(value)) return true;
+	if (FALSY_VALUES.has(value)) return false;
+	throw new SyntaxError(`Cannot convert ${input} to a boolean`);
+};
+var numberParser = (input) => {
+	const value = Number(input);
+	if (Number.isNaN(value)) throw new SyntaxError(`Cannot convert ${input} to a number`);
+	return value;
+};
+var ArgumentScannerError = class extends InternalError {
+	_brand;
+};
+function formatMessageForArgumentScannerError(error, formatter) {
+	const formatError = formatter[error.constructor.name];
+	if (formatError) return formatError(error);
+	return error.message;
+}
+function resolveAllowedNegationForFlags(flags) {
+	return Object.fromEntries(Object.entries(flags).map(([internalFlagName, flag]) => {
+		return [internalFlagName, flag.kind === "boolean" && flag.withNegated !== false];
+	}));
+}
+function resolveAliases(flags, aliases, scannerCaseStyle) {
+	return Object.fromEntries(Object.entries(aliases).map(([alias, internalFlagName_]) => {
+		const internalFlagName = internalFlagName_;
+		const flag = flags[internalFlagName];
+		if (!flag) throw new FlagNotFoundError(asExternal(internalFlagName, scannerCaseStyle), [], alias);
+		return [alias, [internalFlagName, flag]];
+	}));
+}
+var FlagNotFoundError = class extends ArgumentScannerError {
+	/**
+	* Command line input that triggered this error.
+	*/
+	input;
+	/**
+	* Set of proposed suggestions that are similar to the input.
+	*/
+	corrections;
+	/**
+	* Set if error was caused indirectly by an alias.
+	* This indicates that something is wrong with the command configuration itself.
+	*/
+	aliasName;
+	constructor(input, corrections, aliasName) {
+		let message = `No flag registered for --${input}`;
+		if (aliasName) message += ` (aliased from -${aliasName})`;
+		else if (corrections.length > 0) {
+			const formattedCorrections = joinWithGrammar(corrections.map((correction) => `--${correction}`), {
+				kind: "conjunctive",
+				conjunction: "or",
+				serialComma: true
+			});
+			message += `, did you mean ${formattedCorrections}?`;
+		}
+		super(message);
+		this.input = input;
+		this.corrections = corrections;
+		this.aliasName = aliasName;
+	}
+};
+var AliasNotFoundError = class extends ArgumentScannerError {
+	/**
+	* Command line input that triggered this error.
+	*/
+	input;
+	constructor(input) {
+		super(`No alias registered for -${input}`);
+		this.input = input;
+	}
+};
+function getPlaceholder(param, index) {
+	if (param.placeholder) return param.placeholder;
+	return typeof index === "number" ? `arg${index}` : "args";
+}
+function asExternal(internal, scannerCaseStyle) {
+	return scannerCaseStyle === "allow-kebab-for-camel" ? convertCamelCaseToKebabCase(internal) : internal;
+}
+var ArgumentParseError = class extends ArgumentScannerError {
+	/**
+	* External name of flag or placeholder for positional argument that was parsing this input.
+	*/
+	externalFlagNameOrPlaceholder;
+	/**
+	* Command line input that triggered this error.
+	*/
+	input;
+	/**
+	* Raw exception thrown from parse function.
+	*/
+	exception;
+	constructor(externalFlagNameOrPlaceholder, input, exception) {
+		super(`Failed to parse "${input}" for ${externalFlagNameOrPlaceholder}: ${exception instanceof Error ? exception.message : String(exception)}`);
+		this.externalFlagNameOrPlaceholder = externalFlagNameOrPlaceholder;
+		this.input = input;
+		this.exception = exception;
+	}
+};
+function parseInput(externalFlagNameOrPlaceholder, parameter, input, context) {
+	try {
+		return parameter.parse.call(context, input);
+	} catch (exc) {
+		throw new ArgumentParseError(externalFlagNameOrPlaceholder, input, exc);
+	}
+}
+var EnumValidationError = class extends ArgumentScannerError {
+	/**
+	* External name of flag that was parsing this input.
+	*/
+	externalFlagName;
+	/**
+	* Command line input that triggered this error.
+	*/
+	input;
+	/**
+	* All possible enum values.
+	*/
+	values;
+	constructor(externalFlagName, input, values, corrections) {
+		let message = `Expected "${input}" to be one of (${values.join("|")})`;
+		if (corrections.length > 0) {
+			const formattedCorrections = joinWithGrammar(corrections.map((str) => `"${str}"`), {
+				kind: "conjunctive",
+				conjunction: "or",
+				serialComma: true
+			});
+			message += `, did you mean ${formattedCorrections}?`;
+		}
+		super(message);
+		this.externalFlagName = externalFlagName;
+		this.input = input;
+		this.values = values;
+	}
+};
+var UnsatisfiedFlagError = class extends ArgumentScannerError {
+	/**
+	* External name of flag that was active when this error was thrown.
+	*/
+	externalFlagName;
+	/**
+	* External name of flag that interrupted the original flag.
+	*/
+	nextFlagName;
+	constructor(externalFlagName, nextFlagName) {
+		let message = `Expected input for flag --${externalFlagName}`;
+		if (nextFlagName) message += ` but encountered --${nextFlagName} instead`;
+		super(message);
+		this.externalFlagName = externalFlagName;
+		this.nextFlagName = nextFlagName;
+	}
+};
+var UnexpectedPositionalError = class extends ArgumentScannerError {
+	/**
+	* Expected (maximum) count of positional arguments.
+	*/
+	expectedCount;
+	/**
+	* Command line input that triggered this error.
+	*/
+	input;
+	constructor(expectedCount, input) {
+		super(`Too many arguments, expected ${expectedCount} but encountered "${input}"`);
+		this.expectedCount = expectedCount;
+		this.input = input;
+	}
+};
+var UnsatisfiedPositionalError = class extends ArgumentScannerError {
+	/**
+	* Placeholder for positional argument that was active when this error was thrown.
+	*/
+	placeholder;
+	/**
+	* If specified, indicates the minimum number of arguments that are expected and the last argument count.
+	*/
+	limit;
+	constructor(placeholder, limit) {
+		let message;
+		if (limit) {
+			message = `Expected at least ${limit[0]} argument(s) for ${placeholder}`;
+			if (limit[1] === 0) message += " but found none";
+			else message += ` but only found ${limit[1]}`;
+		} else message = `Expected argument for ${placeholder}`;
+		super(message);
+		this.placeholder = placeholder;
+		this.limit = limit;
+	}
+};
+function undoNegation(flagName) {
+	if (flagName.startsWith("no") && flagName.length > 2) {
+		if (flagName[2] === "-") return flagName.slice(4);
+		const firstChar = flagName[2];
+		if (firstChar !== firstChar.toUpperCase()) return;
+		return firstChar.toLowerCase() + flagName.slice(3);
+	}
+}
+function findInternalFlagMatch(externalFlagName, flags, allowsNegation, config) {
+	const internalFlagName = externalFlagName;
+	let flag = flags[internalFlagName];
+	let foundFlagWithNegatedFalse;
+	let foundFlagWithNegatedFalseFromKebabConversion = false;
+	if (!flag) {
+		const internalWithoutNegation = undoNegation(internalFlagName);
+		if (internalWithoutNegation) {
+			flag = flags[internalWithoutNegation];
+			if (flag) if (allowsNegation[internalWithoutNegation]) return [
+				internalWithoutNegation,
+				flag,
+				true
+			];
+			else {
+				foundFlagWithNegatedFalse = internalWithoutNegation;
+				flag = void 0;
+			}
+		}
+	}
+	const camelCaseFlagName = convertKebabCaseToCamelCase(externalFlagName);
+	if (config.caseStyle === "allow-kebab-for-camel" && !flag) {
+		flag = flags[camelCaseFlagName];
+		if (flag) return [camelCaseFlagName, flag];
+		const camelCaseWithoutNegation = undoNegation(camelCaseFlagName);
+		if (camelCaseWithoutNegation) {
+			flag = flags[camelCaseWithoutNegation];
+			if (flag) if (allowsNegation[camelCaseWithoutNegation]) return [
+				camelCaseWithoutNegation,
+				flag,
+				true
+			];
+			else {
+				foundFlagWithNegatedFalse = camelCaseWithoutNegation;
+				foundFlagWithNegatedFalseFromKebabConversion = true;
+				flag = void 0;
+			}
+		}
+	}
+	if (!flag) {
+		if (foundFlagWithNegatedFalse) {
+			let correction = foundFlagWithNegatedFalse;
+			if (foundFlagWithNegatedFalseFromKebabConversion && externalFlagName.includes("-")) correction = convertCamelCaseToKebabCase(foundFlagWithNegatedFalse);
+			throw new FlagNotFoundError(externalFlagName, [correction]);
+		}
+		if (camelCaseFlagName in flags) throw new FlagNotFoundError(externalFlagName, [camelCaseFlagName]);
+		const kebabCaseFlagName = convertCamelCaseToKebabCase(externalFlagName);
+		if (kebabCaseFlagName in flags) throw new FlagNotFoundError(externalFlagName, [kebabCaseFlagName]);
+		throw new FlagNotFoundError(externalFlagName, filterClosestAlternatives(internalFlagName, Object.keys(flags), config.distanceOptions));
+	}
+	return [internalFlagName, flag];
+}
+function isNiladic(namedFlagWithNegation) {
+	if (namedFlagWithNegation[1].kind === "boolean" || namedFlagWithNegation[1].kind === "counter") return true;
+	return false;
+}
+var FLAG_SHORTHAND_PATTERN = /^-([a-z]+)$/i;
+var FLAG_NAME_PATTERN = /^--([a-z][a-z-.\d_]+)$/i;
+function findFlagsByArgument(arg, flags, allowsNegation, resolvedAliases, config) {
+	const shorthandMatch = FLAG_SHORTHAND_PATTERN.exec(arg);
+	if (shorthandMatch) {
+		const batch = shorthandMatch[1];
+		return Array.from(batch).map((alias) => {
+			const aliasName = alias;
+			const namedFlag = resolvedAliases[aliasName];
+			if (!namedFlag) throw new AliasNotFoundError(aliasName);
+			return namedFlag;
+		});
+	}
+	const flagNameMatch = FLAG_NAME_PATTERN.exec(arg);
+	if (flagNameMatch) {
+		const externalFlagName = flagNameMatch[1];
+		return [findInternalFlagMatch(externalFlagName, flags, allowsNegation, config)];
+	}
+	return [];
+}
+var FLAG_NAME_VALUE_PATTERN = /^--([a-z][a-z-.\d_]+)=(.+)$/i;
+var ALIAS_VALUE_PATTERN = /^-([a-z])=(.+)$/i;
+var InvalidNegatedFlagSyntaxError = class extends ArgumentScannerError {
+	/**
+	* External name of flag that was active when this error was thrown.
+	*/
+	externalFlagName;
+	/**
+	* Input text equivalent to right hand side of input
+	*/
+	valueText;
+	constructor(externalFlagName, valueText) {
+		super(`Cannot negate flag --${externalFlagName} and pass "${valueText}" as value`);
+		this.externalFlagName = externalFlagName;
+		this.valueText = valueText;
+	}
+};
+function findFlagByArgumentWithInput(arg, flags, allowsNegation, resolvedAliases, config) {
+	const flagsNameMatch = FLAG_NAME_VALUE_PATTERN.exec(arg);
+	if (flagsNameMatch) {
+		const externalFlagName = flagsNameMatch[1];
+		const namedFlag = findInternalFlagMatch(externalFlagName, flags, allowsNegation, config);
+		const valueText = flagsNameMatch[2];
+		if (namedFlag[2]) throw new InvalidNegatedFlagSyntaxError(externalFlagName, valueText);
+		return [namedFlag, valueText];
+	}
+	const aliasValueMatch = ALIAS_VALUE_PATTERN.exec(arg);
+	if (aliasValueMatch) {
+		const aliasName = aliasValueMatch[1];
+		const namedFlag = resolvedAliases[aliasName];
+		if (!namedFlag) throw new AliasNotFoundError(aliasName);
+		return [namedFlag, aliasValueMatch[2]];
+	}
+}
+async function parseInputsForFlag(externalFlagName, flag, inputs, config, context) {
+	if (!inputs) {
+		if ("default" in flag && typeof flag.default !== "undefined") {
+			if (flag.kind === "boolean") return flag.default;
+			if (flag.kind === "enum") {
+				if ("variadic" in flag && flag.variadic && Array.isArray(flag.default)) {
+					const defaultArray = flag.default;
+					for (const value of defaultArray) if (!flag.values.includes(value)) {
+						const corrections = filterClosestAlternatives(value, flag.values, config.distanceOptions);
+						throw new EnumValidationError(externalFlagName, value, flag.values, corrections);
+					}
+					return flag.default;
+				}
+				return flag.default;
+			}
+			if ("variadic" in flag && flag.variadic && Array.isArray(flag.default)) {
+				const defaultArray = flag.default;
+				return Promise.all(defaultArray.map((input2) => parseInput(externalFlagName, flag, input2, context)));
+			}
+			return parseInput(externalFlagName, flag, flag.default, context);
+		}
+		if (flag.optional) return;
+		if (flag.kind === "boolean") return false;
+		else if (flag.kind === "counter") return 0;
+		throw new UnsatisfiedFlagError(externalFlagName);
+	}
+	if (flag.kind === "counter") return inputs.reduce((total, input2) => {
+		try {
+			return total + numberParser.call(context, input2);
+		} catch (exc) {
+			throw new ArgumentParseError(externalFlagName, input2, exc);
+		}
+	}, 0);
+	if ("variadic" in flag && flag.variadic) {
+		if (flag.kind === "enum") {
+			for (const input2 of inputs) if (!flag.values.includes(input2)) {
+				const corrections = filterClosestAlternatives(input2, flag.values, config.distanceOptions);
+				throw new EnumValidationError(externalFlagName, input2, flag.values, corrections);
+			}
+			return inputs;
+		}
+		return Promise.all(inputs.map((input2) => parseInput(externalFlagName, flag, input2, context)));
+	}
+	const input = inputs[0];
+	if (flag.kind === "boolean") try {
+		return looseBooleanParser.call(context, input);
+	} catch (exc) {
+		throw new ArgumentParseError(externalFlagName, input, exc);
+	}
+	if (flag.kind === "enum") {
+		if (!flag.values.includes(input)) {
+			const corrections = filterClosestAlternatives(input, flag.values, config.distanceOptions);
+			throw new EnumValidationError(externalFlagName, input, flag.values, corrections);
+		}
+		return input;
+	}
+	return parseInput(externalFlagName, flag, input, context);
+}
+var UnexpectedFlagError = class extends ArgumentScannerError {
+	/**
+	* External name of flag that was parsing this input.
+	*/
+	externalFlagName;
+	/**
+	* Command line input that was previously encountered by this flag.
+	*/
+	previousInput;
+	/**
+	* Command line input that triggered this error.
+	*/
+	input;
+	constructor(externalFlagName, previousInput, input) {
+		super(`Too many arguments for --${externalFlagName}, encountered "${input}" after "${previousInput}"`);
+		this.externalFlagName = externalFlagName;
+		this.previousInput = previousInput;
+		this.input = input;
+	}
+};
+function isVariadicFlag(flag) {
+	if (flag.kind === "counter") return true;
+	if ("variadic" in flag) return Boolean(flag.variadic);
+	return false;
+}
+function storeInput(flagInputs, scannerCaseStyle, [internalFlagName, flag], input) {
+	const inputs = flagInputs.get(internalFlagName) ?? [];
+	if (inputs.length > 0 && !isVariadicFlag(flag)) throw new UnexpectedFlagError(asExternal(internalFlagName, scannerCaseStyle), inputs[0], input);
+	if ("variadic" in flag && typeof flag.variadic === "string") {
+		const multipleInputs = input.split(flag.variadic);
+		flagInputs.set(internalFlagName, [...inputs, ...multipleInputs]);
+	} else flagInputs.set(internalFlagName, [...inputs, input]);
+}
+function isFlagSatisfiedByInputs(flags, flagInputs, key) {
+	if (flagInputs.get(key)) {
+		const flag = flags[key];
+		if (isVariadicFlag(flag)) return false;
+		return true;
+	}
+	return false;
+}
+function buildArgumentScanner(parameters, config) {
+	const { flags = {}, aliases = {}, positional = {
+		kind: "tuple",
+		parameters: []
+	} } = parameters;
+	const allowsNegation = resolveAllowedNegationForFlags(flags);
+	const resolvedAliases = resolveAliases(flags, aliases, config.caseStyle);
+	const positionalInputs = [];
+	const flagInputs = /* @__PURE__ */ new Map();
+	let positionalIndex = 0;
+	let activeFlag;
+	let treatInputsAsArguments = false;
+	return {
+		next: (input) => {
+			if (!treatInputsAsArguments && config.allowArgumentEscapeSequence && input === "--") {
+				if (activeFlag) if (activeFlag[1].kind === "parsed" && activeFlag[1].inferEmpty) {
+					storeInput(flagInputs, config.caseStyle, activeFlag, "");
+					activeFlag = void 0;
+				} else throw new UnsatisfiedFlagError(asExternal(activeFlag[0], config.caseStyle));
+				treatInputsAsArguments = true;
+				return;
+			}
+			if (!treatInputsAsArguments) {
+				const flagInput = findFlagByArgumentWithInput(input, flags, allowsNegation, resolvedAliases, config);
+				if (flagInput) {
+					if (activeFlag) if (activeFlag[1].kind === "parsed" && activeFlag[1].inferEmpty) {
+						storeInput(flagInputs, config.caseStyle, activeFlag, "");
+						activeFlag = void 0;
+					} else throw new UnsatisfiedFlagError(asExternal(activeFlag[0], config.caseStyle), asExternal(flagInput[0][0], config.caseStyle));
+					storeInput(flagInputs, config.caseStyle, ...flagInput);
+					return;
+				}
+				const nextFlags = findFlagsByArgument(input, flags, allowsNegation, resolvedAliases, config);
+				if (nextFlags.length > 0) {
+					if (activeFlag) if (activeFlag[1].kind === "parsed" && activeFlag[1].inferEmpty) {
+						storeInput(flagInputs, config.caseStyle, activeFlag, "");
+						activeFlag = void 0;
+					} else throw new UnsatisfiedFlagError(asExternal(activeFlag[0], config.caseStyle), asExternal(nextFlags[0][0], config.caseStyle));
+					if (nextFlags.every(isNiladic)) for (const nextFlag of nextFlags) if (nextFlag[1].kind === "boolean") storeInput(flagInputs, config.caseStyle, nextFlag, nextFlag[2] ? "false" : "true");
+					else storeInput(flagInputs, config.caseStyle, nextFlag, "1");
+					else if (nextFlags.length > 1) throw new UnsatisfiedFlagError(asExternal(nextFlags.find((nextFlag) => !isNiladic(nextFlag))[0], config.caseStyle));
+					else activeFlag = nextFlags[0];
+					return;
+				}
+			}
+			if (activeFlag) {
+				storeInput(flagInputs, config.caseStyle, activeFlag, input);
+				activeFlag = void 0;
+			} else {
+				if (positional.kind === "tuple") {
+					if (positionalIndex >= positional.parameters.length) throw new UnexpectedPositionalError(positional.parameters.length, input);
+				} else if (typeof positional.maximum === "number" && positionalIndex >= positional.maximum) throw new UnexpectedPositionalError(positional.maximum, input);
+				positionalInputs[positionalIndex] = input;
+				++positionalIndex;
+			}
+		},
+		parseArguments: async (context) => {
+			const errors = [];
+			let positionalValues_p;
+			if (positional.kind === "array") {
+				if (typeof positional.minimum === "number" && positionalIndex < positional.minimum) errors.push(new UnsatisfiedPositionalError(getPlaceholder(positional.parameter), [positional.minimum, positionalIndex]));
+				positionalValues_p = allSettledOrElse(positionalInputs.map(async (input, i) => {
+					return parseInput(getPlaceholder(positional.parameter, i + 1), positional.parameter, input, context);
+				}));
+			} else positionalValues_p = allSettledOrElse(positional.parameters.map(async (param, i) => {
+				const placeholder = getPlaceholder(param, i + 1);
+				const input = positionalInputs[i];
+				if (typeof input !== "string") {
+					if (typeof param.default === "string") return parseInput(placeholder, param, param.default, context);
+					if (param.optional) return;
+					throw new UnsatisfiedPositionalError(placeholder);
+				}
+				return parseInput(placeholder, param, input, context);
+			}));
+			if (activeFlag && activeFlag[1].kind === "parsed" && activeFlag[1].inferEmpty) {
+				storeInput(flagInputs, config.caseStyle, activeFlag, "");
+				activeFlag = void 0;
+			}
+			const flagEntries_p = allSettledOrElse(Object.entries(flags).map(async (entry) => {
+				const [internalFlagName, flag] = entry;
+				const externalFlagName = asExternal(internalFlagName, config.caseStyle);
+				if (activeFlag && activeFlag[0] === internalFlagName) throw new UnsatisfiedFlagError(externalFlagName);
+				return [internalFlagName, await parseInputsForFlag(externalFlagName, flag, flagInputs.get(internalFlagName), config, context)];
+			}));
+			const [positionalValuesResult, flagEntriesResult] = await Promise.all([positionalValues_p, flagEntries_p]);
+			if (positionalValuesResult.status === "rejected") for (const reason of positionalValuesResult.reasons) errors.push(reason);
+			if (flagEntriesResult.status === "rejected") for (const reason of flagEntriesResult.reasons) errors.push(reason);
+			if (errors.length > 0) return {
+				success: false,
+				errors
+			};
+			if (positionalValuesResult.status === "rejected") throw new InternalError("Unknown failure while scanning positional arguments");
+			if (flagEntriesResult.status === "rejected") throw new InternalError("Unknown failure while scanning flag arguments");
+			return {
+				success: true,
+				arguments: [Object.fromEntries(flagEntriesResult.value), ...positionalValuesResult.value]
+			};
+		},
+		proposeCompletions: async ({ partial, completionConfig, text, context }) => {
+			if (activeFlag) return proposeFlagCompletionsForPartialInput(activeFlag[1], context, partial);
+			const completions = [];
+			if (!treatInputsAsArguments) {
+				const shorthandMatch = FLAG_SHORTHAND_PATTERN.exec(partial);
+				if (completionConfig.includeAliases) {
+					if (partial === "" || partial === "-") {
+						const incompleteAliases = Object.entries(aliases).filter((entry) => !isFlagSatisfiedByInputs(flags, flagInputs, entry[1]));
+						for (const [alias] of incompleteAliases) {
+							const flag = resolvedAliases[alias];
+							if (flag) completions.push({
+								kind: "argument:flag",
+								completion: `-${alias}`,
+								brief: flag[1].brief
+							});
+						}
+					} else if (shorthandMatch) {
+						const partialAliases = Array.from(shorthandMatch[1]);
+						const flagInputsIncludingPartial = new Map(flagInputs);
+						for (const alias of partialAliases) {
+							const namedFlag = resolvedAliases[alias];
+							if (!namedFlag) throw new AliasNotFoundError(alias);
+							storeInput(flagInputsIncludingPartial, config.caseStyle, namedFlag, namedFlag[1].kind === "boolean" ? "true" : "1");
+						}
+						const lastAlias = partialAliases[partialAliases.length - 1];
+						if (lastAlias) {
+							const namedFlag = resolvedAliases[lastAlias];
+							if (namedFlag) completions.push({
+								kind: "argument:flag",
+								completion: partial,
+								brief: namedFlag[1].brief
+							});
+						}
+						const incompleteAliases = Object.entries(aliases).filter((entry) => !isFlagSatisfiedByInputs(flags, flagInputsIncludingPartial, entry[1]));
+						for (const [alias] of incompleteAliases) {
+							const flag = resolvedAliases[alias];
+							if (flag) completions.push({
+								kind: "argument:flag",
+								completion: `${partial}${alias}`,
+								brief: flag[1].brief
+							});
+						}
+					}
+				}
+				if (partial === "" || partial === "-" || partial.startsWith("--")) {
+					if (config.allowArgumentEscapeSequence) completions.push({
+						kind: "argument:flag",
+						completion: "--",
+						brief: text.briefs.argumentEscapeSequence
+					});
+					let incompleteFlags = Object.entries(flags).filter(([flagName]) => !isFlagSatisfiedByInputs(flags, flagInputs, flagName));
+					if (config.caseStyle === "allow-kebab-for-camel") incompleteFlags = incompleteFlags.map(([flagName, param]) => {
+						return [convertCamelCaseToKebabCase(flagName), param];
+					});
+					const possibleFlags = incompleteFlags.map(([flagName, param]) => [`--${flagName}`, param]).filter(([flagName]) => flagName.startsWith(partial));
+					completions.push(...possibleFlags.map(([name, param]) => {
+						return {
+							kind: "argument:flag",
+							completion: name,
+							brief: param.brief
+						};
+					}));
+				}
+			}
+			if (positional.kind === "array") {
+				if (positional.parameter.proposeCompletions) {
+					if (typeof positional.maximum !== "number" || positionalIndex < positional.maximum) {
+						const positionalCompletions = await positional.parameter.proposeCompletions.call(context, partial);
+						completions.push(...positionalCompletions.map((value) => {
+							return {
+								kind: "argument:value",
+								completion: value,
+								brief: positional.parameter.brief
+							};
+						}));
+					}
+				}
+			} else {
+				const nextPositional = positional.parameters[positionalIndex];
+				if (nextPositional?.proposeCompletions) {
+					const positionalCompletions = await nextPositional.proposeCompletions.call(context, partial);
+					completions.push(...positionalCompletions.map((value) => {
+						return {
+							kind: "argument:value",
+							completion: value,
+							brief: nextPositional.brief
+						};
+					}));
+				}
+			}
+			return completions.filter(({ completion }) => completion.startsWith(partial));
+		}
+	};
+}
+async function proposeFlagCompletionsForPartialInput(flag, context, partial) {
+	if (typeof flag.variadic === "string") {
+		if (partial.endsWith(flag.variadic)) return proposeFlagCompletionsForPartialInput(flag, context, "");
+	}
+	let values;
+	if (flag.kind === "enum") values = flag.values;
+	else if (flag.proposeCompletions) values = await flag.proposeCompletions.call(context, partial);
+	else values = [];
+	return values.map((value) => {
+		return {
+			kind: "argument:value",
+			completion: value,
+			brief: flag.brief
+		};
+	}).filter(({ completion }) => completion.startsWith(partial));
+}
+function listAllRouteNamesAndAliasesForScan(routeMap, scannerCaseStyle, config) {
+	const displayCaseStyle = scannerCaseStyle === "allow-kebab-for-camel" ? "convert-camel-to-kebab" : scannerCaseStyle;
+	let entries = routeMap.getAllEntries();
+	if (!config.includeHiddenRoutes) entries = entries.filter((entry) => !entry.hidden);
+	return entries.flatMap((entry) => {
+		const routeName = entry.name[displayCaseStyle];
+		if (config.includeAliases) return [routeName, ...entry.aliases];
+		return [routeName];
+	});
+}
+async function runCommand({ loader, parameters }, { context, inputs, scannerConfig, errorFormatting, determineExitCode, ansiColorByStream }) {
+	let parsedArguments;
+	try {
+		const scanner = buildArgumentScanner(parameters, scannerConfig);
+		for (const input of inputs) scanner.next(input);
+		const result = await scanner.parseArguments(context);
+		if (result.success) parsedArguments = result.arguments;
+		else {
+			for (const error of result.errors) {
+				const errorMessage = errorFormatting.exceptionWhileParsingArguments(error, ansiColorByStream.stderr);
+				context.process.stderr.write(ansiColorByStream.stderr ? `\x1B[1m\x1B[31m${errorMessage}\x1B[39m\x1B[22m
+` : `${errorMessage}
+`);
+			}
+			return ExitCode.InvalidArgument;
+		}
+	} catch (exc) {
+		const errorMessage = errorFormatting.exceptionWhileParsingArguments(exc, ansiColorByStream.stderr);
+		context.process.stderr.write(ansiColorByStream.stderr ? `\x1B[1m\x1B[31m${errorMessage}\x1B[39m\x1B[22m
+` : `${errorMessage}
+`);
+		return ExitCode.InvalidArgument;
+	}
+	let commandFunction;
+	try {
+		const loaded = await loader();
+		if (typeof loaded === "function") commandFunction = loaded;
+		else commandFunction = loaded.default;
+	} catch (exc) {
+		const errorMessage = errorFormatting.exceptionWhileLoadingCommandFunction(exc, ansiColorByStream.stderr);
+		context.process.stderr.write(ansiColorByStream.stderr ? `\x1B[1m\x1B[31m${errorMessage}\x1B[39m\x1B[22m
+` : `${errorMessage}
+`);
+		return ExitCode.CommandLoadError;
+	}
+	try {
+		const result = await commandFunction.call(context, ...parsedArguments);
+		if (result instanceof Error) {
+			const errorMessage = errorFormatting.commandErrorResult(result, ansiColorByStream.stderr);
+			context.process.stderr.write(ansiColorByStream.stderr ? `\x1B[1m\x1B[31m${errorMessage}\x1B[39m\x1B[22m
+` : `${errorMessage}
+`);
+			if (determineExitCode) return determineExitCode(result);
+			return ExitCode.CommandRunError;
+		}
+	} catch (exc) {
+		const errorMessage = errorFormatting.exceptionWhileRunningCommand(exc, ansiColorByStream.stderr);
+		context.process.stderr.write(ansiColorByStream.stderr ? `\x1B[1m\x1B[31m${errorMessage}\x1B[39m\x1B[22m
+` : `${errorMessage}
+`);
+		if (determineExitCode) return determineExitCode(exc);
+		return ExitCode.CommandRunError;
+	}
+	return ExitCode.Success;
+}
+var RouteMapSymbol = Symbol("RouteMap");
+var CommandSymbol = Symbol("Command");
+function buildRouteScanner(root, config, startingPrefix, additionalFlags) {
+	const prefix = [...startingPrefix];
+	const unprocessedInputs = [];
+	const flags = {};
+	for (const additionalFlag of additionalFlags) flags[additionalFlag.name] = additionalFlag;
+	const aliases = {};
+	for (const additionalFlag of additionalFlags) if (additionalFlag.aliases) for (const alias of additionalFlag.aliases) aliases[alias] = additionalFlag.name;
+	const resolvedAliases = resolveAliases(flags, aliases, config.caseStyle);
+	let activeFlag;
+	let parent;
+	let current = root;
+	let target;
+	let treatInputsAsArguments = false;
+	return {
+		next: (input) => {
+			if (!treatInputsAsArguments && config.allowArgumentEscapeSequence && input === "--") {
+				treatInputsAsArguments = true;
+				unprocessedInputs.push(input);
+				return;
+			}
+			if (!treatInputsAsArguments && !activeFlag) try {
+				const nextFlags = findFlagsByArgument(input, flags, {}, resolvedAliases, config);
+				for (const currentFlag of nextFlags) {
+					if (!currentFlag[1].global && current !== root) continue;
+					activeFlag = currentFlag[1];
+					target = current;
+					return;
+				}
+			} catch {}
+			if (target || treatInputsAsArguments) {
+				unprocessedInputs.push(input);
+				return;
+			}
+			if (current.kind === CommandSymbol) {
+				target = current;
+				unprocessedInputs.push(input);
+				return;
+			}
+			const camelCaseRouteName = convertKebabCaseToCamelCase(input);
+			let internalRouteName = input;
+			let next = current.getRoutingTargetForInput(internalRouteName);
+			if (config.caseStyle === "allow-kebab-for-camel" && !next) {
+				next = current.getRoutingTargetForInput(camelCaseRouteName);
+				if (next) internalRouteName = camelCaseRouteName;
+			}
+			if (!next) {
+				const defaultCommand = current.getDefaultCommand();
+				unprocessedInputs.push(input);
+				if (defaultCommand) {
+					parent = [current, ""];
+					current = defaultCommand;
+					return;
+				}
+				return {
+					input,
+					routeMap: current
+				};
+			}
+			parent = [current, input];
+			current = next;
+			prefix.push(input);
+		},
+		finish: () => {
+			target = target ?? current;
+			if (target.kind === RouteMapSymbol && !activeFlag) {
+				const defaultCommand = target.getDefaultCommand();
+				if (defaultCommand) {
+					parent = [target, ""];
+					target = defaultCommand;
+				}
+			}
+			const aliases2 = parent ? parent[0].getOtherAliasesForInput(parent[1], config.caseStyle) : {
+				original: [],
+				"convert-camel-to-kebab": []
+			};
+			return {
+				target,
+				unprocessedInputs,
+				prefix,
+				aliases: aliases2,
+				activeFlag
+			};
+		}
+	};
+}
+function checkEnvironmentVariable(process, varName) {
+	const value = process.env?.[varName];
+	return typeof value === "string" && looseBooleanParser(value);
+}
+var text_en = {
+	headers: {
+		usage: "USAGE",
+		aliases: "ALIASES",
+		commands: "COMMANDS",
+		flags: "FLAGS",
+		arguments: "ARGUMENTS"
+	},
+	keywords: {
+		default: "default =",
+		separator: "separator ="
+	},
+	briefs: {
+		help: "Print help information and exit",
+		helpAll: "Print help information (including hidden commands/flags) and exit",
+		version: "Print version information and exit",
+		argumentEscapeSequence: "All subsequent inputs should be interpreted as arguments"
+	},
+	noCommandRegisteredForInput({ input, corrections }) {
+		const errorMessage = `No command registered for \`${input}\``;
+		if (corrections.length > 0) return `${errorMessage}, did you mean ${joinWithGrammar(corrections, {
+			kind: "conjunctive",
+			conjunction: "or",
+			serialComma: true
+		})}?`;
+		else return errorMessage;
+	},
+	noTextAvailableForLocale({ requestedLocale, defaultLocale }) {
+		return `Application does not support "${requestedLocale}" locale, defaulting to "${defaultLocale}"`;
+	},
+	exceptionWhileParsingArguments(exc) {
+		if (exc instanceof ArgumentScannerError) return formatMessageForArgumentScannerError(exc, {});
+		return `Unable to parse arguments, ${(this.formatException ?? formatException)(exc)}`;
+	},
+	exceptionWhileLoadingCommandFunction(exc) {
+		return `Unable to load command function, ${(this.formatException ?? formatException)(exc)}`;
+	},
+	exceptionWhileLoadingCommandContext(exc) {
+		return `Unable to load command context, ${(this.formatException ?? formatException)(exc)}`;
+	},
+	exceptionWhileRunningCommand(exc) {
+		return `Command failed, ${(this.formatException ?? formatException)(exc)}`;
+	},
+	exceptionWhileRunningIntegrationHook({ exception, hook, integration }) {
+		return `Unexpected exception thrown by '${integration}' integration during '${hook}' hook.
+${(this.formatException ?? formatException)(exception)}`;
+	},
+	exceptionWhileRunningIntegrationFlag({ exception, integration }) {
+		return `Unexpected exception thrown by "--${integration}" flag from the '${integration}' integration.
+${(this.formatException ?? formatException)(exception)}`;
+	},
+	commandErrorResult(err) {
+		return err.message;
+	},
+	currentVersionIsNotLatest({ currentVersion, latestVersion, upgradeCommand }) {
+		if (upgradeCommand) return `Latest available version is ${latestVersion} (currently running ${currentVersion}), upgrade with "${upgradeCommand}"`;
+		return `Latest available version is ${latestVersion} (currently running ${currentVersion})`;
+	}
+};
+function defaultTextLoader(locale) {
+	if (locale.startsWith("en")) return text_en;
+}
+function shouldUseAnsiColor(process, stream, config) {
+	return !config.disableAnsiColor && !checkEnvironmentVariable(process, "STRICLI_NO_COLOR") && (stream.getColorDepth?.(process.env) ?? 1) >= 4;
+}
+function shouldUseAnsiColorForStreams(process, config) {
+	return {
+		stdout: shouldUseAnsiColor(process, process.stdout, config),
+		stderr: shouldUseAnsiColor(process, process.stderr, config)
+	};
+}
+function validateCaseStyleCompatibility(scan, display) {
+	if (scan === "original" && display === "convert-camel-to-kebab") throw new Error("Cannot convert route and flag names on display (convert-camel-to-kebab) but scan as original");
+}
+function help({ alias = "h", includeHidden = false, formatting, ...config }) {
+	return {
+		validate(_root, config2) {
+			validateCaseStyleCompatibility(config2.scanner.caseStyle, formatting.caseStyle);
+		},
+		flag: {
+			...config,
+			global: true,
+			aliases: alias === false ? [] : [alias],
+			async run(app, { text, ansiColorByStream, result, additionalFlags }) {
+				this.process.stdout.write(result.target.formatHelp({
+					prefix: result.prefix,
+					additionalFlags,
+					includeArgumentEscapeSequenceFlag: app.config.scanner.allowArgumentEscapeSequence,
+					includeHidden,
+					config: formatting,
+					aliases: result.aliases[formatting.caseStyle],
+					text,
+					ansiColor: ansiColorByStream.stdout
+				}));
+			}
+		}
+	};
+}
+function version({ info, alias = "v", hook = "app:start", ...config }) {
+	let versionCheck;
+	if (info.getLatestVersion) {
+		const getLatestVersion = info.getLatestVersion;
+		versionCheck = async function({ text, ansiColorByStream }) {
+			if (checkEnvironmentVariable(this.process, "STRICLI_SKIP_VERSION_CHECK")) return;
+			let currentVersion;
+			if ("currentVersion" in info) currentVersion = info.currentVersion;
+			else currentVersion = await info.getCurrentVersion.call(this);
+			const latestVersion = await getLatestVersion.call(this, currentVersion);
+			if (latestVersion && currentVersion !== latestVersion) {
+				const warningMessage = text.currentVersionIsNotLatest({
+					currentVersion,
+					latestVersion,
+					upgradeCommand: info.upgradeCommand,
+					ansiColor: ansiColorByStream.stderr
+				});
+				this.process.stderr.write(ansiColorByStream.stderr ? `\x1B[1m\x1B[33m${warningMessage}\x1B[39m\x1B[22m
+` : `${warningMessage}
+`);
+			}
+		};
+	}
+	return {
+		hooks: versionCheck ? { [hook]: versionCheck } : {},
+		flag: {
+			...config,
+			defaultForRouteMap: false,
+			global: false,
+			aliases: alias === false ? [] : [alias],
+			async run() {
+				let currentVersion;
+				if ("currentVersion" in info) currentVersion = info.currentVersion;
+				else currentVersion = await info.getCurrentVersion.call(this);
+				this.process.stdout.write(currentVersion + "\n");
+			}
+		}
+	};
+}
+async function runHook(integrations, hookName, context, args) {
+	for (const [name, integration] of Object.entries(integrations)) {
+		const hook = integration.hooks?.[hookName];
+		if (hook) try {
+			await hook.call(context, args);
+		} catch (exc) {
+			const errorMessage = args.text.exceptionWhileRunningIntegrationHook({
+				exception: exc,
+				hook: hookName,
+				integration: name,
+				ansiColor: args.ansiColorByStream.stderr
+			});
+			context.process.stderr.write(args.ansiColorByStream.stderr ? `\x1B[1m\x1B[31m${errorMessage}\x1B[39m\x1B[22m
+` : `${errorMessage}
+`);
+			return ExitCode.IntegrationError;
+		}
+	}
+}
+function checkIntegrationsForCollisions(integrations, caseStyle) {
+	let routeMapDefault;
+	const flagNames = new Set(Object.keys(integrations));
+	const aliases = /* @__PURE__ */ new Map();
+	for (const [name, integration] of Object.entries(integrations)) {
+		if (caseStyle === "allow-kebab-for-camel") {
+			const camelCase = convertKebabCaseToCamelCase(name);
+			if (camelCase !== name && flagNames.has(camelCase)) throw new InternalError(`Multiple integrations are trying to use the same flag name (with 'allow-kebab-for-camel'): '${name}' and '${camelCase}'`);
+		}
+		if (integration.flag) {
+			if (integration.flag.defaultForRouteMap) {
+				if (routeMapDefault) throw new InternalError(`Multiple integrations provide a default flag for route maps: '${routeMapDefault}' and '${name}'`);
+				routeMapDefault = name;
+			}
+			for (const alias of integration.flag.aliases ?? []) {
+				const flagForAlias = aliases.get(alias);
+				if (flagForAlias) throw new InternalError(`Multiple integrations are trying to use the same flag alias "-${alias}": '${flagForAlias}' and '${name}'`);
+				aliases.set(alias, name);
+			}
+		}
+	}
+}
+function checkIntegrationsForFlagNameConflicts(root, additionalFlags, caseStyle) {
+	function checkForConflicts(target, prefix) {
+		if (target.kind === CommandSymbol) {
+			const relevantFlags = root === target ? additionalFlags : additionalFlags.filter(({ global }) => global);
+			for (const { name, aliases } of relevantFlags) {
+				if (target.usesFlag(name, caseStyle)) throw new InternalError(`'${name}' integration provides a flag that would override: "${[...prefix, `--${name}`].join(" ")}"`);
+				for (const alias of aliases ?? []) if (target.usesFlag(alias, caseStyle)) throw new InternalError(`'${name}' integration provides a flag with an alias that would override: "${[...prefix, `-${alias}`].join(" ")}"`);
+			}
+		} else for (const entry of target.getAllEntries()) checkForConflicts(entry.target, [...prefix, entry.name.original]);
+	}
+	checkForConflicts(root, []);
+}
+function gatherAdditionalFlagsFromIntegrations(integrations) {
+	const flags = [];
+	for (const [name, integration] of Object.entries(integrations)) if (integration.flag) flags.push({
+		...integration.flag,
+		name
+	});
+	return flags;
+}
+function validateIntegrations(integrations, root, config) {
+	for (const [name, integration] of Object.entries(integrations)) try {
+		integration.validate?.(root, config);
+	} catch (exc) {
+		throw new InternalError(`Integration '${name}' failed validation: ${String(exc)}`, { cause: exc });
+	}
+}
+function gatherDefaultIntegrations(config, text) {
+	const integrations = {
+		help: help({
+			brief: text.briefs.help,
+			alias: "h",
+			defaultForRouteMap: true,
+			includeHidden: false,
+			formatting: config.documentation
+		}),
+		helpAll: help({
+			brief: text.briefs.helpAll,
+			alias: "H",
+			hidden: !config.documentation.alwaysShowHelpAllFlag,
+			includeHidden: true,
+			formatting: config.documentation
+		})
+	};
+	if (config.versionInfo) integrations["version"] = version({
+		brief: text.briefs.version,
+		info: config.versionInfo,
+		alias: "v",
+		hook: "app:start"
+	});
+	return integrations;
+}
+async function runApplication(app, rawInputs, context) {
+	const ansiColorByStream = shouldUseAnsiColorForStreams(context.process, app.config.documentation);
+	let text = app.defaultText;
+	if (context.locale && "loadText" in app.config.localization) {
+		const localeText = app.config.localization.loadText(context.locale);
+		if (localeText) text = localeText;
+		else {
+			const warningMessage = text.noTextAvailableForLocale({
+				requestedLocale: context.locale,
+				defaultLocale: app.config.localization.defaultLocale,
+				ansiColor: ansiColorByStream.stderr
+			});
+			context.process.stderr.write(ansiColorByStream.stderr ? `\x1B[1m\x1B[33m${warningMessage}\x1B[39m\x1B[22m
+` : `${warningMessage}
+`);
+		}
+	}
+	const hookStartExitCode = await runHook(app.integrations, "app:start", context, {
+		text,
+		ansiColorByStream
+	});
+	if (typeof hookStartExitCode === "number") return hookStartExitCode;
+	const exitCode = await scanInputsAndRunTarget(app, rawInputs, context, text, ansiColorByStream);
+	const hookEndExitCode = await runHook(app.integrations, "app:end", context, {
+		text,
+		ansiColorByStream,
+		exitCode
+	});
+	if (typeof hookEndExitCode === "number") return hookEndExitCode;
+	return exitCode;
+}
+async function scanInputsAndRunTarget(app, rawInputs, context, text, ansiColorByStream) {
+	const additionalFlags = gatherAdditionalFlagsFromIntegrations(app.integrations);
+	const inputs = rawInputs.slice();
+	const scanner = buildRouteScanner(app.root, app.config.scanner, [app.config.name], additionalFlags);
+	let error;
+	while (inputs.length > 0 && !error) {
+		const arg = inputs.shift();
+		error = scanner.next(arg);
+	}
+	if (error) {
+		const routeNames = listAllRouteNamesAndAliasesForScan(error.routeMap, app.config.scanner.caseStyle, app.config.completion);
+		const corrections = filterClosestAlternatives(error.input, routeNames, app.config.scanner.distanceOptions).map((str) => `\`${str}\``);
+		const errorMessage = text.noCommandRegisteredForInput({
+			input: error.input,
+			corrections,
+			ansiColor: ansiColorByStream.stderr
+		});
+		context.process.stderr.write(ansiColorByStream.stderr ? `\x1B[1m\x1B[31m${errorMessage}\x1B[39m\x1B[22m
+` : `${errorMessage}
+`);
+		return ExitCode.UnknownCommand;
+	}
+	let { activeFlag, ...result } = scanner.finish();
+	if (activeFlag || result.target.kind === RouteMapSymbol) {
+		if (!activeFlag) activeFlag = additionalFlags.find((flag) => flag.defaultForRouteMap);
+		if (activeFlag) {
+			let additionalFlagsForTarget = additionalFlags;
+			if (result.target !== app.root) additionalFlagsForTarget = additionalFlagsForTarget.filter((flag) => flag.global);
+			try {
+				await activeFlag.run.call(context, app, {
+					text,
+					ansiColorByStream,
+					result,
+					additionalFlags: additionalFlagsForTarget
+				});
+			} catch (exc) {
+				const errorMessage = text.exceptionWhileRunningIntegrationFlag({
+					exception: exc,
+					ansiColor: ansiColorByStream.stderr,
+					integration: activeFlag.name
+				});
+				context.process.stderr.write(ansiColorByStream.stderr ? `\x1B[1m\x1B[31m${errorMessage}\x1B[39m\x1B[22m
+` : `${errorMessage}
+`);
+				return ExitCode.IntegrationError;
+			}
+		}
+		return ExitCode.Success;
+	}
+	let commandContext;
+	if ("forCommand" in context) try {
+		commandContext = await context.forCommand({ prefix: result.prefix });
+	} catch (exc) {
+		const errorMessage = text.exceptionWhileLoadingCommandContext(exc, ansiColorByStream.stderr);
+		context.process.stderr.write(ansiColorByStream.stderr ? `\x1B[1m\x1B[31m${errorMessage}\x1B[39m\x1B[22m` : errorMessage);
+		return ExitCode.ContextLoadError;
+	}
+	else commandContext = context;
+	const hookStartExitCode = await runHook(app.integrations, "command:start", commandContext, {
+		text,
+		ansiColorByStream,
+		result
+	});
+	if (typeof hookStartExitCode === "number") return hookStartExitCode;
+	const exitCode = await runCommand(result.target, {
+		context: commandContext,
+		inputs: result.unprocessedInputs,
+		scannerConfig: app.config.scanner,
+		errorFormatting: text,
+		determineExitCode: app.config.determineExitCode,
+		ansiColorByStream
+	});
+	const hookEndExitCode = await runHook(app.integrations, "command:end", commandContext, {
+		text,
+		ansiColorByStream,
+		result,
+		exitCode
+	});
+	if (typeof hookEndExitCode === "number") return hookEndExitCode;
+	return exitCode;
+}
+function hasDefault(flag) {
+	return "default" in flag && typeof flag.default !== "undefined";
+}
+function isOptionalAtRuntime(flag) {
+	return flag.optional ?? hasDefault(flag);
+}
+function withDefaultFormattingConfiguration(config, scannerCaseStyle) {
+	let displayCaseStyle;
+	if (config.caseStyle) displayCaseStyle = config.caseStyle;
+	else if (scannerCaseStyle === "allow-kebab-for-camel") displayCaseStyle = "convert-camel-to-kebab";
+	else displayCaseStyle = scannerCaseStyle;
+	validateCaseStyleCompatibility(scannerCaseStyle, displayCaseStyle);
+	return {
+		useAliasInUsageLine: config.useAliasInUsageLine ?? false,
+		onlyRequiredInUsageLine: config.onlyRequiredInUsageLine ?? false,
+		caseStyle: displayCaseStyle
+	};
+}
+function wrapRequiredFlag(text) {
+	return `(${text})`;
+}
+function wrapOptionalFlag(text) {
+	return `[${text}]`;
+}
+function wrapVariadicFlag(text) {
+	return `${text}...`;
+}
+function wrapRequiredParameter(text) {
+	return `<${text}>`;
+}
+function wrapOptionalParameter(text) {
+	return `[<${text}>]`;
+}
+function wrapVariadicParameter(text) {
+	return `<${text}>...`;
+}
+function formatUsageLineForParameters(parameters, args) {
+	const flagsUsage = Object.entries(parameters.flags ?? {}).filter(([, flag]) => {
+		if (flag.hidden) return false;
+		if (args.config.onlyRequiredInUsageLine && isOptionalAtRuntime(flag)) return false;
+		return true;
+	}).map(([name, flag]) => {
+		let displayName = args.config.caseStyle === "convert-camel-to-kebab" ? `--${convertCamelCaseToKebabCase(name)}` : `--${name}`;
+		if (parameters.aliases && args.config.useAliasInUsageLine) {
+			const aliases = Object.entries(parameters.aliases).filter((entry) => entry[1] === name);
+			if (aliases.length === 1 && aliases[0]) displayName = `-${aliases[0][0]}`;
+		}
+		if (flag.kind === "boolean") return [flag, displayName];
+		if (flag.kind === "enum" && typeof flag.placeholder !== "string") return [flag, `${displayName} ${flag.values.join("|")}`];
+		const placeholder = flag.placeholder ?? "value";
+		return [flag, `${displayName} ${placeholder}`];
+	}).map(([flag, usage]) => {
+		if (flag.kind === "parsed" && flag.variadic) {
+			if (isOptionalAtRuntime(flag)) return wrapVariadicFlag(wrapOptionalFlag(usage));
+			return wrapVariadicFlag(wrapRequiredFlag(usage));
+		}
+		if (isOptionalAtRuntime(flag)) return wrapOptionalFlag(usage);
+		return wrapRequiredFlag(usage);
+	});
+	let positionalUsage = [];
+	const positional = parameters.positional;
+	if (positional) if (positional.kind === "array") positionalUsage = [wrapVariadicParameter(positional.parameter.placeholder ?? "args")];
+	else {
+		let parameters2 = positional.parameters;
+		if (args.config.onlyRequiredInUsageLine) parameters2 = parameters2.filter((param) => !param.optional && typeof param.default === "undefined");
+		positionalUsage = parameters2.map((param, i) => {
+			const argName = param.placeholder ?? `arg${i + 1}`;
+			return param.optional || typeof param.default !== "undefined" ? wrapOptionalParameter(argName) : wrapRequiredParameter(argName);
+		});
+	}
+	return [
+		...args.prefix,
+		...flagsUsage,
+		...positionalUsage
+	].join(" ");
+}
+function formatForDisplay(flagName, displayCaseStyle) {
+	if (displayCaseStyle === "convert-camel-to-kebab") return convertCamelCaseToKebabCase(flagName);
+	return flagName;
+}
+function formatAsNegated(flagName, displayCaseStyle) {
+	if (displayCaseStyle === "convert-camel-to-kebab") return `no-${convertCamelCaseToKebabCase(flagName)}`;
+	return `no${flagName[0].toUpperCase()}${flagName.slice(1)}`;
+}
+function withDefaults(config) {
+	const scannerCaseStyle = config.scanner?.caseStyle ?? "original";
+	const scannerConfig = {
+		caseStyle: scannerCaseStyle,
+		allowArgumentEscapeSequence: config.scanner?.allowArgumentEscapeSequence ?? false,
+		distanceOptions: config.scanner?.distanceOptions ?? {
+			threshold: 7,
+			weights: {
+				insertion: 1,
+				deletion: 3,
+				substitution: 2,
+				transposition: 0
+			}
+		}
+	};
+	const documentationConfig = {
+		alwaysShowHelpAllFlag: config.documentation?.alwaysShowHelpAllFlag ?? false,
+		disableAnsiColor: config.documentation?.disableAnsiColor ?? false,
+		...withDefaultFormattingConfiguration(config.documentation ?? {}, scannerCaseStyle)
+	};
+	const completionConfig = {
+		includeAliases: config.completion?.includeAliases ?? documentationConfig.useAliasInUsageLine,
+		includeHiddenRoutes: config.completion?.includeHiddenRoutes ?? false,
+		...config.completion
+	};
+	return {
+		...config,
+		scanner: scannerConfig,
+		completion: completionConfig,
+		documentation: documentationConfig,
+		localization: {
+			defaultLocale: "en",
+			loadText: defaultTextLoader,
+			...config.localization
+		}
+	};
+}
+function buildApplication(root, appConfig, integrations) {
+	const config = withDefaults(appConfig);
+	let defaultText;
+	if ("text" in config.localization) defaultText = config.localization.text;
+	else {
+		const text = config.localization.loadText(config.localization.defaultLocale);
+		if (!text) throw new InternalError(`No text available for the default locale "${config.localization.defaultLocale}"`);
+		defaultText = text;
+	}
+	if (integrations) checkIntegrationsForCollisions(integrations, config.scanner.caseStyle);
+	else integrations = gatherDefaultIntegrations(config, defaultText);
+	checkIntegrationsForFlagNameConflicts(root, gatherAdditionalFlagsFromIntegrations(integrations), config.scanner.caseStyle);
+	validateIntegrations(integrations, root, config);
+	return {
+		root,
+		config,
+		defaultText,
+		integrations
+	};
+}
+function formatRowForAdditionalFlag(flag, caseStyle) {
+	return {
+		aliases: flag.aliases ? flag.aliases.map((alias) => `-${alias}`).join(" ") : "",
+		flagName: `--${formatForDisplay(flag.name, caseStyle)}`,
+		brief: flag.brief,
+		hidden: flag.hidden
+	};
+}
+function formatDocumentationForFlagParameters(flags, aliases, args) {
+	const { keywords } = args.text;
+	const visibleFlags = Object.entries(flags).filter(([, flag]) => {
+		if (flag.hidden && !args.includeHidden) return false;
+		return true;
+	});
+	const atLeastOneOptional = visibleFlags.some(([, flag]) => isOptionalAtRuntime(flag));
+	const rows = visibleFlags.map(([name, flag]) => {
+		const aliasStrings = Object.entries(aliases).filter((entry) => entry[1] === name).map(([alias]) => `-${alias}`);
+		let flagName = "--" + formatForDisplay(name, args.config.caseStyle);
+		if (flag.kind === "boolean" && flag.default !== false && flag.withNegated !== false) {
+			const negatedFlagName = formatAsNegated(name, args.config.caseStyle);
+			flagName = `${flagName}/--${negatedFlagName}`;
+		}
+		if (isOptionalAtRuntime(flag)) flagName = `[${flagName}]`;
+		else if (atLeastOneOptional) flagName = ` ${flagName}`;
+		if (flag.kind === "parsed" && flag.variadic) flagName = `${flagName}...`;
+		const suffixParts = [];
+		if (flag.kind === "enum") {
+			const choices = flag.values.join("|");
+			suffixParts.push(choices);
+		}
+		if (hasDefault(flag)) {
+			const defaultKeyword = args.ansiColor ? `\x1B[2m${keywords.default}\x1B[22m` : keywords.default;
+			let defaultValue;
+			if (Array.isArray(flag.default)) if (flag.default.length === 0) defaultValue = "[]";
+			else {
+				const separator = "variadic" in flag && typeof flag.variadic === "string" ? flag.variadic : " ";
+				defaultValue = flag.default.join(separator);
+			}
+			else defaultValue = flag.default === "" ? `""` : String(flag.default);
+			suffixParts.push(`${defaultKeyword} ${defaultValue}`);
+		}
+		if ("variadic" in flag && typeof flag.variadic === "string") {
+			const separatorKeyword = args.ansiColor ? `\x1B[2m${keywords.separator}\x1B[22m` : keywords.separator;
+			suffixParts.push(`${separatorKeyword} ${flag.variadic}`);
+		}
+		const suffix = suffixParts.length > 0 ? `[${suffixParts.join(", ")}]` : void 0;
+		return {
+			aliases: aliasStrings.join(" "),
+			flagName,
+			brief: flag.brief,
+			suffix,
+			hidden: flag.hidden
+		};
+	});
+	for (const flag of args.additionalFlags) {
+		if (flag.hidden && !args.includeHidden) continue;
+		const row = formatRowForAdditionalFlag(flag, args.config.caseStyle);
+		rows.push({
+			...row,
+			flagName: atLeastOneOptional ? ` ${row.flagName}` : row.flagName
+		});
+	}
+	if (args.includeArgumentEscapeSequenceFlag) rows.push({
+		aliases: "",
+		flagName: atLeastOneOptional ? " --" : "--",
+		brief: args.text.briefs.argumentEscapeSequence
+	});
+	return formatRowsWithColumns(rows.map((row) => {
+		if (!args.ansiColor) return [
+			row.aliases,
+			row.flagName,
+			row.brief,
+			row.suffix ?? ""
+		];
+		return [
+			row.hidden ? `\x1B[2m${row.aliases}\x1B[22m` : `\x1B[1m${row.aliases}\x1B[22m`,
+			row.hidden ? `\x1B[2m${row.flagName}\x1B[22m` : `\x1B[1m${row.flagName}\x1B[22m`,
+			row.hidden ? `\x1B[2;3m${row.brief}\x1B[22;23m` : `\x1B[;;3m${row.brief}\x1B[;;;23m`,
+			row.suffix ?? ""
+		];
+	}), [
+		" ",
+		"  ",
+		" "
+	]);
+}
+function* generateUsageLinesForAdditionalFlags(flags, includeHidden, caseStyle, useAliasInUsageLine) {
+	for (const flag of flags) {
+		if (flag.hidden && !includeHidden) continue;
+		if (useAliasInUsageLine && flag.aliases && flag.aliases.length > 0) yield `-${flag.aliases[0]}`;
+		else yield `--${formatForDisplay(flag.name, caseStyle)}`;
+	}
+}
+function formatDocumentationForPositionalParameters(positional, args) {
+	if (positional.kind === "array") {
+		const name = positional.parameter.placeholder ?? "args";
+		return formatRowsWithColumns([[args.ansiColor ? `\x1B[1m${name}...\x1B[22m` : `${name}...`, args.ansiColor ? `\x1B[3m${positional.parameter.brief}\x1B[23m` : positional.parameter.brief]], ["  "]);
+	}
+	const { keywords } = args.text;
+	const atLeastOneOptional = positional.parameters.some((def) => def.optional);
+	return formatRowsWithColumns(positional.parameters.map((def, i) => {
+		let name = def.placeholder ?? `arg${i + 1}`;
+		let suffix;
+		if (def.optional) name = `[${name}]`;
+		else if (atLeastOneOptional) name = ` ${name}`;
+		if (def.default) suffix = `[${args.ansiColor ? `\x1B[2m${keywords.default}\x1B[22m` : keywords.default} ${def.default}]`;
+		return [
+			args.ansiColor ? `\x1B[1m${name}\x1B[22m` : name,
+			args.ansiColor ? `\x1B[3m${def.brief}\x1B[23m` : def.brief,
+			suffix ?? ""
+		];
+	}), ["  ", " "]);
+}
+function* generateCommandHelpLines(parameters, docs, args) {
+	const { brief, fullDescription, customUsage } = docs;
+	const { headers } = args.text;
+	const prefix = args.prefix.join(" ");
+	yield args.ansiColor ? `\x1B[4m${headers.usage}\x1B[24m` : headers.usage;
+	if (customUsage) for (const usage of customUsage) if (typeof usage === "string") yield `  ${prefix} ${usage}`;
+	else {
+		const brief2 = args.ansiColor ? `\x1B[3m${usage.brief}\x1B[23m` : usage.brief;
+		yield `  ${prefix} ${usage.input}
+    ${brief2}`;
+	}
+	else yield `  ${formatUsageLineForParameters(parameters, args)}`;
+	for (const line of generateUsageLinesForAdditionalFlags(args.additionalFlags, args.includeHidden, args.config.caseStyle, args.config.useAliasInUsageLine)) yield `  ${prefix} ${line}`;
+	yield "";
+	yield fullDescription ?? brief;
+	if (args.aliases && args.aliases.length > 0) {
+		const aliasPrefix = args.prefix.slice(0, -1).join(" ");
+		yield "";
+		yield args.ansiColor ? `\x1B[4m${headers.aliases}\x1B[24m` : headers.aliases;
+		for (const alias of args.aliases) yield `  ${aliasPrefix} ${alias}`;
+	}
+	yield "";
+	yield args.ansiColor ? `\x1B[4m${headers.flags}\x1B[24m` : headers.flags;
+	for (const line of formatDocumentationForFlagParameters(parameters.flags ?? {}, parameters.aliases ?? {}, args)) yield `  ${line}`;
+	const positional = parameters.positional ?? {
+		kind: "tuple",
+		parameters: []
+	};
+	if (positional.kind === "array" || positional.parameters.length > 0) {
+		yield "";
+		yield args.ansiColor ? `\x1B[4m${headers.arguments}\x1B[24m` : headers.arguments;
+		for (const line of formatDocumentationForPositionalParameters(positional, args)) yield `  ${line}`;
+	}
+}
+function* asNegationFlagNames(flagName) {
+	yield `no-${convertCamelCaseToKebabCase(flagName)}`;
+	yield `no${flagName[0].toUpperCase()}${flagName.slice(1)}`;
+}
+function checkForNegationCollisions(flags) {
+	const flagsAllowingNegation = Object.entries(flags).filter(([, flag]) => flag.kind === "boolean" && !flag.optional);
+	for (const [internalFlagName] of flagsAllowingNegation) for (const negatedFlagName of asNegationFlagNames(internalFlagName)) if (negatedFlagName in flags) throw new InternalError(`Unable to allow negation for --${internalFlagName} as it conflicts with --${negatedFlagName}`);
+}
+function checkForInvalidVariadicSeparators(flags) {
+	for (const [internalFlagName, flag] of Object.entries(flags)) if ("variadic" in flag && typeof flag.variadic === "string") {
+		if (flag.variadic.length < 1) throw new InternalError(`Unable to use "" as variadic separator for --${internalFlagName} as it is empty`);
+		if (/\s/.test(flag.variadic)) throw new InternalError(`Unable to use "${flag.variadic}" as variadic separator for --${internalFlagName} as it contains whitespace`);
+	}
+}
+function buildCommand(builderArgs) {
+	const { flags = {}, aliases = {} } = builderArgs.parameters;
+	checkForNegationCollisions(flags);
+	checkForInvalidVariadicSeparators(flags);
+	let loader;
+	if ("func" in builderArgs) loader = async () => builderArgs.func;
+	else loader = builderArgs.loader;
+	return {
+		kind: CommandSymbol,
+		loader,
+		parameters: builderArgs.parameters,
+		get brief() {
+			return builderArgs.docs.brief;
+		},
+		/* v8 ignore next -- @preserve */
+		get fullDescription() {
+			return builderArgs.docs.fullDescription;
+		},
+		formatUsageLine: (args) => {
+			return formatUsageLineForParameters(builderArgs.parameters, args);
+		},
+		formatHelp: (args) => {
+			return [...generateCommandHelpLines(builderArgs.parameters, builderArgs.docs, args)].join("\n") + "\n";
+		},
+		usesFlag: (flagName, caseStyle) => {
+			if (caseStyle === "allow-kebab-for-camel") {
+				if (convertCamelCaseToKebabCase(flagName) in flags) return true;
+			}
+			return Boolean(flagName in flags || flagName in aliases);
+		}
+	};
+}
+function* generateRouteMapHelpLines(routes, docs, args) {
+	const { brief, fullDescription, hideRoute } = docs;
+	const { headers } = args.text;
+	yield args.ansiColor ? `\x1B[4m${headers.usage}\x1B[24m` : headers.usage;
+	for (const [name, route] of Object.entries(routes)) if (!hideRoute || !hideRoute[name] || args.includeHidden) {
+		const externalRouteName = args.config.caseStyle === "convert-camel-to-kebab" ? convertCamelCaseToKebabCase(name) : name;
+		yield `  ${route.formatUsageLine({
+			...args,
+			prefix: [...args.prefix, externalRouteName]
+		})}`;
+	}
+	const prefix = args.prefix.join(" ");
+	for (const line of generateUsageLinesForAdditionalFlags(args.additionalFlags, args.includeHidden, args.config.caseStyle, args.config.useAliasInUsageLine)) yield `  ${prefix} ${line}`;
+	yield "";
+	yield fullDescription ?? brief;
+	if (args.aliases && args.aliases.length > 0) {
+		const aliasPrefix = args.prefix.slice(0, -1).join(" ");
+		yield "";
+		yield args.ansiColor ? `\x1B[4m${headers.aliases}\x1B[24m` : headers.aliases;
+		for (const alias of args.aliases) yield `  ${aliasPrefix} ${alias}`;
+	}
+	yield "";
+	yield args.ansiColor ? `\x1B[4m${headers.flags}\x1B[24m` : headers.flags;
+	for (const line of formatDocumentationForFlagParameters({}, {}, args)) yield `  ${line}`;
+	yield "";
+	yield args.ansiColor ? `\x1B[4m${headers.commands}\x1B[24m` : headers.commands;
+	const formattedRows = formatRowsWithColumns(Object.entries(routes).filter(([name]) => !hideRoute || !hideRoute[name] || args.includeHidden).map(([internalRouteName, route]) => {
+		return {
+			routeName: formatForDisplay(internalRouteName, args.config.caseStyle),
+			brief: route.brief,
+			hidden: hideRoute && hideRoute[internalRouteName]
+		};
+	}).map((row) => {
+		if (!args.ansiColor) return [row.routeName, row.brief];
+		return [row.hidden ? `\x1B[2m${row.routeName}\x1B[22m` : `\x1B[1m${row.routeName}\x1B[22m`, row.hidden ? `\x1B[2;3m${row.brief}\x1B[22;23m` : `\x1B[;;3m${row.brief}\x1B[;;;23m`];
+	}), ["  "]);
+	for (const line of formattedRows) yield `  ${line}`;
+}
+function buildRouteMap({ routes, defaultCommand: defaultCommandRoute, docs, aliases }) {
+	if (Object.entries(routes).length === 0) throw new InternalError("Route map must contain at least one route");
+	const activeAliases = aliases ?? {};
+	const aliasesByRoute = /* @__PURE__ */ new Map();
+	for (const [alias, routeName] of Object.entries(activeAliases)) {
+		if (alias in routes) throw new InternalError(`Cannot use '${alias}' as an alias when a route with that name already exists`);
+		const routeAliases = aliasesByRoute.get(routeName) ?? [];
+		aliasesByRoute.set(routeName, [...routeAliases, alias]);
+	}
+	const defaultCommand = defaultCommandRoute ? routes[defaultCommandRoute] : void 0;
+	if (defaultCommand && defaultCommand.kind === RouteMapSymbol) throw new InternalError(`Cannot use '${defaultCommandRoute}' as the default command because it is not a Command`);
+	const resolveRouteName = (input) => {
+		if (input in activeAliases) return activeAliases[input];
+		else if (input in routes) return input;
+	};
+	return {
+		kind: RouteMapSymbol,
+		get brief() {
+			return docs.brief;
+		},
+		/* v8 ignore next -- @preserve */
+		get fullDescription() {
+			return docs.fullDescription;
+		},
+		formatUsageLine(args) {
+			const routeNames = this.getAllEntries().filter((entry) => !entry.hidden).map((entry) => entry.name[args.config.caseStyle]);
+			return `${args.prefix.join(" ")} ${routeNames.join("|")} ...`;
+		},
+		formatHelp: (args) => {
+			return [...generateRouteMapHelpLines(routes, docs, args)].join("\n") + "\n";
+		},
+		getDefaultCommand: () => {
+			return defaultCommand;
+		},
+		getOtherAliasesForInput: (input, caseStyle) => {
+			if (defaultCommandRoute) {
+				if (input === defaultCommandRoute) return {
+					original: [""],
+					"convert-camel-to-kebab": [""]
+				};
+				if (input === "") return {
+					original: [defaultCommandRoute],
+					"convert-camel-to-kebab": [defaultCommandRoute]
+				};
+			}
+			const camelInput = convertKebabCaseToCamelCase(input);
+			let routeName = resolveRouteName(input);
+			if (!routeName && caseStyle === "allow-kebab-for-camel") routeName = resolveRouteName(camelInput);
+			if (!routeName) return {
+				original: [],
+				"convert-camel-to-kebab": []
+			};
+			const otherAliases = [routeName, ...aliasesByRoute.get(routeName) ?? []].filter((alias) => alias !== input && alias !== camelInput);
+			return {
+				original: otherAliases,
+				"convert-camel-to-kebab": otherAliases.map(convertCamelCaseToKebabCase)
+			};
+		},
+		getRoutingTargetForInput: (input) => {
+			return routes[input in activeAliases ? activeAliases[input] : input];
+		},
+		getAllEntries() {
+			const hiddenRoutes = docs.hideRoute;
+			return Object.entries(routes).map(([originalRouteName, target]) => {
+				return {
+					name: {
+						original: originalRouteName,
+						"convert-camel-to-kebab": convertCamelCaseToKebabCase(originalRouteName)
+					},
+					target,
+					aliases: aliasesByRoute.get(originalRouteName) ?? [],
+					hidden: hiddenRoutes?.[originalRouteName] ?? false
+				};
+			});
+		}
+	};
+}
+async function run$4(app, inputs, context) {
+	const exitCode = await runApplication(app, inputs, context);
+	context.process.exitCode ??= exitCode;
+}
+/* v8 ignore next -- @preserve */
+/* v8 ignore if -- @preserve */
+/* v8 ignore else -- @preserve */
+
+//#endregion
 //#region packages/ai-bridge/src/models.ts
 const MODELS = {
 	"xai-grok/grok-4.5": {
@@ -1335,7 +3088,7 @@ function getDriver(backend) {
 //#region packages/ai-bridge/src/commands/image-gen/impl.ts
 const MIN_REAL_BYTES_CODEX = 1e5;
 const MIN_REAL_BYTES_GROK = 1e4;
-async function imageGen(flags, prompt) {
+async function imageGen$1(flags, prompt) {
 	const fail = (msg) => {
 		this.process.stderr.write(`ai-bridge image-gen: ${msg}\n`);
 		this.process.exitCode = 1;
@@ -1517,92 +3270,74 @@ async function magick(args) {
 
 //#endregion
 //#region packages/ai-bridge/src/commands/image-gen/command.ts
-function help$6() {
-	return [
-		"ai-bridge image-gen — Generate a raster image via a model seat",
-		"",
-		"Renders an image by driving the seat's CLI (codex → gpt-image-2, grok →",
-		"Imagine), then verifies the result is a real render before returning it.",
-		"",
-		"Image-gen seats (canonical slug):",
-		...listModelHelpLines({ imageOnly: true }),
-		`Default: ${DEFAULT_IMAGE_GEN} (gpt-image-2 via codex; historical default).`,
-		"",
-		"Usage: ai-bridge image-gen [options] <prompt>",
-		"",
-		"Options:",
-		`  --model <slug>     Model slug (default: ${DEFAULT_IMAGE_GEN})`,
-		"  --out <path>       Path to write the image (default: ./ai-bridge-image.png)",
-		"  --size <WxH>       WIDTHxHEIGHT (codex: each edge ÷16; grok: mapped to",
-		"                     aspect_ratio, then optionally resized)",
-		"  --image <paths>    Reference image path(s), comma-separated — visual",
-		"                     reference (keep the same subject/identity, restyle, edit)",
-		"  --quality <level>  low | medium | high (codex/gpt-image-2; default high).",
-		"                     Ignored on grok (Imagine has no quality tier).",
-		"  --timeout <secs>   Max seconds to wait for the render (default: 600)",
-		"  --json             Emit a machine-readable JSON result instead of prose",
-		"  -h, --help         Show this help",
-		""
-	].join("\n");
-}
-async function runImageGen(ctx, argv) {
-	let values;
-	let positionals;
-	try {
-		({values, positionals} = parseArgs({
-			args: [...argv],
-			allowPositionals: true,
-			options: {
-				model: { type: "string" },
-				out: { type: "string" },
-				size: { type: "string" },
-				image: { type: "string" },
-				quality: { type: "string" },
-				timeout: { type: "string" },
-				json: {
-					type: "boolean",
-					default: false
-				},
-				help: {
-					type: "boolean",
-					short: "h",
-					default: false
-				}
+const fullDescription$6 = [
+	"Renders an image by driving the seat's CLI (codex → gpt-image-2, grok →",
+	"Imagine), then verifies the result is a real render before returning it.",
+	"",
+	"Image-gen seats (canonical slug):",
+	...listModelHelpLines({ imageOnly: true }),
+	`Default: ${DEFAULT_IMAGE_GEN} (gpt-image-2 via codex; historical default).`
+].join("\n");
+const imageGen = buildCommand({
+	func: imageGen$1,
+	parameters: {
+		flags: {
+			model: {
+				kind: "parsed",
+				parse: String,
+				optional: true,
+				brief: `Model slug (default: ${DEFAULT_IMAGE_GEN})`
+			},
+			out: {
+				kind: "parsed",
+				parse: String,
+				optional: true,
+				brief: "Path to write the image (default: ./ai-bridge-image.png)"
+			},
+			size: {
+				kind: "parsed",
+				parse: String,
+				optional: true,
+				brief: "WIDTHxHEIGHT (codex: each edge ÷16; grok: mapped to aspect_ratio, then optionally resized)"
+			},
+			image: {
+				kind: "parsed",
+				parse: String,
+				optional: true,
+				brief: "Reference image path(s), comma-separated — visual reference"
+			},
+			quality: {
+				kind: "parsed",
+				parse: String,
+				optional: true,
+				brief: "low | medium | high (codex/gpt-image-2; default high)"
+			},
+			timeout: {
+				kind: "parsed",
+				parse: positiveIntSeconds,
+				optional: true,
+				brief: "Max seconds to wait for the render (default: 600)"
+			},
+			json: {
+				kind: "boolean",
+				withNegated: false,
+				brief: "Emit a machine-readable JSON result instead of prose"
 			}
-		}));
-	} catch (err) {
-		return fail$5(ctx, err);
+		},
+		positional: {
+			kind: "tuple",
+			parameters: [{
+				brief: "Description of the image to generate",
+				parse: nonEmptyPrompt,
+				placeholder: "prompt"
+			}]
+		}
+	},
+	docs: {
+		brief: "Generate a raster image via a model seat",
+		fullDescription: fullDescription$6
 	}
-	if (values.help) {
-		ctx.process.stdout.write(help$6());
-		return;
-	}
-	let prompt;
-	let timeout;
-	try {
-		const [first, ...extra] = positionals;
-		if (first === void 0) throw new Error("missing <prompt> argument");
-		if (extra.length > 0) throw new Error(`unexpected extra argument "${extra[0]}"`);
-		prompt = nonEmptyPrompt(first);
-		timeout = values.timeout === void 0 ? void 0 : positiveIntSeconds(values.timeout);
-	} catch (err) {
-		return fail$5(ctx, err);
-	}
-	const flags = {
-		...values.model !== void 0 ? { model: values.model } : {},
-		...values.out !== void 0 ? { out: values.out } : {},
-		...values.size !== void 0 ? { size: values.size } : {},
-		...values.image !== void 0 ? { image: values.image } : {},
-		...values.quality !== void 0 ? { quality: values.quality } : {},
-		...timeout !== void 0 ? { timeout } : {},
-		json: values.json
-	};
-	await imageGen.call(ctx, flags, prompt);
-}
-function fail$5(ctx, err) {
-	ctx.process.stderr.write(`ai-bridge image-gen: ${err instanceof Error ? err.message : String(err)}\n`);
-	ctx.process.exitCode = 2;
-}
+});
 
 //#endregion
 //#region packages/ai-bridge/src/delegate.ts
@@ -1822,7 +3557,7 @@ function readRunLogs(id) {
 
 //#endregion
 //#region packages/ai-bridge/src/commands/implement/impl.ts
-async function implement(flags, planFile) {
+async function implement$1(flags, planFile) {
 	const inputSlug = flags.model ?? "google-antigravity/gemini-3.6-flash";
 	const model = resolveModel(inputSlug);
 	if (!model) {
@@ -1881,72 +3616,48 @@ async function implement(flags, planFile) {
 
 //#endregion
 //#region packages/ai-bridge/src/commands/implement/command.ts
-function help$5() {
-	return [
-		"ai-bridge implement — Execute an implementation plan",
-		"",
-		"Reads an implementation plan file and delegates execution to a model.",
-		"Available models (canonical slug):",
-		...listModelHelpLines(),
-		"",
-		"Usage: ai-bridge implement [options] <plan-file>",
-		"",
-		"Options:",
-		`  --model <slug>       Model slug (default: ${DEFAULT_IMPLEMENTER})`,
-		"  --timeout <secs>     Max seconds for implementation (default: 1800)",
-		"  --no-preflight       Skip the backend quota preflight check",
-		"  -h, --help           Show this help",
-		""
-	].join("\n");
-}
-async function runImplement(ctx, argv) {
-	let values;
-	let positionals;
-	try {
-		({values, positionals} = parseArgs({
-			args: [...argv],
-			allowPositionals: true,
-			options: {
-				model: { type: "string" },
-				preflight: { type: "boolean" },
-				"no-preflight": { type: "boolean" },
-				timeout: { type: "string" },
-				help: {
-					type: "boolean",
-					short: "h",
-					default: false
-				}
+const fullDescription$5 = [
+	"Reads an implementation plan file and delegates execution to a model.",
+	"",
+	"Available models (canonical slug):",
+	...listModelHelpLines()
+].join("\n");
+const implement = buildCommand({
+	func: implement$1,
+	parameters: {
+		flags: {
+			model: {
+				kind: "parsed",
+				parse: String,
+				optional: true,
+				brief: `Model slug (default: ${DEFAULT_IMPLEMENTER})`
+			},
+			timeout: {
+				kind: "parsed",
+				parse: positiveIntSeconds,
+				optional: true,
+				brief: "Max seconds for implementation (default: 1800)"
+			},
+			preflight: {
+				kind: "boolean",
+				default: true,
+				brief: "Check model quota before running (use --no-preflight to skip)"
 			}
-		}));
-	} catch (err) {
-		return fail$4(ctx, err);
+		},
+		positional: {
+			kind: "tuple",
+			parameters: [{
+				brief: "Path to the plan file to implement",
+				parse: String,
+				placeholder: "plan-file"
+			}]
+		}
+	},
+	docs: {
+		brief: "Execute an implementation plan",
+		fullDescription: fullDescription$5
 	}
-	if (values.help) {
-		ctx.process.stdout.write(help$5());
-		return;
-	}
-	let planFile;
-	let timeout;
-	try {
-		const [first, ...extra] = positionals;
-		if (first === void 0) throw new Error("missing <plan-file> argument");
-		if (extra.length > 0) throw new Error(`unexpected extra argument "${extra[0]}"`);
-		planFile = first;
-		timeout = values.timeout === void 0 ? void 0 : positiveIntSeconds(values.timeout);
-	} catch (err) {
-		return fail$4(ctx, err);
-	}
-	const flags = {
-		...values.model !== void 0 ? { model: values.model } : {},
-		...timeout !== void 0 ? { timeout } : {},
-		preflight: values["no-preflight"] !== true
-	};
-	await implement.call(ctx, flags, planFile);
-}
-function fail$4(ctx, err) {
-	ctx.process.stderr.write(`ai-bridge implement: ${err instanceof Error ? err.message : String(err)}\n`);
-	ctx.process.exitCode = 2;
-}
+});
 
 //#endregion
 //#region packages/ai-bridge/src/commands/plan/impl.ts
@@ -1980,7 +3691,7 @@ function extractPathFromPorcelainLine(line) {
 	if (content.startsWith("\"") && content.endsWith("\"")) content = content.slice(1, -1);
 	return content;
 }
-async function plan(flags, taskPrompt) {
+async function plan$1(flags, taskPrompt) {
 	const inputSlug = flags.model ?? "xai-grok/grok-4.5";
 	const model = resolveModel(inputSlug);
 	if (!model) {
@@ -2054,75 +3765,54 @@ async function plan(flags, taskPrompt) {
 
 //#endregion
 //#region packages/ai-bridge/src/commands/plan/command.ts
-function help$4() {
-	return [
-		"ai-bridge plan — Produce a detailed implementation plan for a task prompt",
-		"",
-		"Hands a task prompt to a model to produce an expanded implementation plan file.",
-		"Available models (canonical slug):",
-		...listModelHelpLines(),
-		"",
-		"Usage: ai-bridge plan [options] <task prompt>",
-		"",
-		"Options:",
-		`  --model <slug>       Model slug (default: ${DEFAULT_MODEL})`,
-		"  --out <file>         Where to write the plan (default: <run.dir>/plan.md)",
-		"  --timeout <secs>     Max seconds for planning (default: 1800)",
-		"  --no-preflight       Skip the backend quota preflight check",
-		"  -h, --help           Show this help",
-		""
-	].join("\n");
-}
-async function runPlan(ctx, argv) {
-	let values;
-	let positionals;
-	try {
-		({values, positionals} = parseArgs({
-			args: [...argv],
-			allowPositionals: true,
-			options: {
-				model: { type: "string" },
-				out: { type: "string" },
-				preflight: { type: "boolean" },
-				"no-preflight": { type: "boolean" },
-				timeout: { type: "string" },
-				help: {
-					type: "boolean",
-					short: "h",
-					default: false
-				}
+const fullDescription$4 = [
+	"Produce a detailed implementation plan for a task prompt.",
+	"",
+	"Available models (canonical slug):",
+	...listModelHelpLines()
+].join("\n");
+const plan = buildCommand({
+	func: plan$1,
+	parameters: {
+		flags: {
+			model: {
+				kind: "parsed",
+				parse: String,
+				optional: true,
+				brief: `Model slug (default: ${DEFAULT_MODEL})`
+			},
+			out: {
+				kind: "parsed",
+				parse: String,
+				optional: true,
+				brief: "Where to write the plan (default: <run.dir>/plan.md)"
+			},
+			timeout: {
+				kind: "parsed",
+				parse: positiveIntSeconds,
+				optional: true,
+				brief: "Max seconds for planning (default: 1800)"
+			},
+			preflight: {
+				kind: "boolean",
+				default: true,
+				brief: "Check model quota before running (use --no-preflight to skip)"
 			}
-		}));
-	} catch (err) {
-		return fail$3(ctx, err);
+		},
+		positional: {
+			kind: "tuple",
+			parameters: [{
+				brief: "Task prompt to expand into a detailed implementation plan",
+				parse: nonEmptyPrompt,
+				placeholder: "task-prompt"
+			}]
+		}
+	},
+	docs: {
+		brief: "Produce a detailed implementation plan for a task prompt",
+		fullDescription: fullDescription$4
 	}
-	if (values.help) {
-		ctx.process.stdout.write(help$4());
-		return;
-	}
-	let prompt;
-	let timeout;
-	try {
-		const [first, ...extra] = positionals;
-		if (first === void 0) throw new Error("missing <task prompt> argument");
-		if (extra.length > 0) throw new Error(`unexpected extra argument "${extra[0]}"`);
-		prompt = nonEmptyPrompt(first);
-		timeout = values.timeout === void 0 ? void 0 : positiveIntSeconds(values.timeout);
-	} catch (err) {
-		return fail$3(ctx, err);
-	}
-	const flags = {
-		...values.model !== void 0 ? { model: values.model } : {},
-		...values.out !== void 0 ? { out: values.out } : {},
-		...timeout !== void 0 ? { timeout } : {},
-		preflight: values["no-preflight"] !== true
-	};
-	await plan.call(ctx, flags, prompt);
-}
-function fail$3(ctx, err) {
-	ctx.process.stderr.write(`ai-bridge plan: ${err instanceof Error ? err.message : String(err)}\n`);
-	ctx.process.exitCode = 2;
-}
+});
 
 //#endregion
 //#region packages/ai-bridge/src/commands/quota/impl.ts
@@ -2189,63 +3879,28 @@ async function quotaImpl(flags) {
 
 //#endregion
 //#region packages/ai-bridge/src/commands/quota/command.ts
-function help$3() {
-	return [
-		"ai-bridge quota — Show agy / codex / claude quota with reset times",
-		"",
-		"agy: reads its cached OAuth token (~/.gemini/antigravity-cli/) and asks the",
-		"Cloud Code API for per-model remaining quota. EXHAUSTED means agy turns on",
-		"that model fail with an empty answer until the reset time.",
-		"codex: reads ~/.codex/auth.json and asks the ChatGPT usage endpoint for the",
-		"5-hour and weekly windows (used % + reset). No separate logins for either.",
-		"claude: shells out to `claude -p \"/usage\"` (the slow leg, ~5-10s) and parses",
-		"the session + weekly windows — no HTTP endpoint exists and we never touch",
-		"the Keychain; the claude CLI uses its own credentials.",
-		"",
-		"Usage:",
-		"  ai-bridge quota [--json]",
-		"",
-		"Options:",
-		"  --json     Emit the raw snapshot as JSON",
-		"  -h, --help Show this help",
-		""
-	].join("\n");
-}
-async function runQuota(ctx, argv) {
-	let values;
-	try {
-		({values} = parseArgs({
-			args: [...argv],
-			allowPositionals: false,
-			options: {
-				json: {
-					type: "boolean",
-					default: false
-				},
-				help: {
-					type: "boolean",
-					short: "h",
-					default: false
-				}
-			}
-		}));
-	} catch (err) {
-		ctx.process.stderr.write(`ai-bridge quota: ${err.message}\n\n${help$3()}`);
-		ctx.process.exitCode = 2;
-		return;
+const fullDescription$3 = [
+	"agy: reads its cached OAuth token (~/.gemini/antigravity-cli/) and asks the",
+	"Cloud Code API for per-model remaining quota. EXHAUSTED means agy turns on",
+	"that model fail with an empty answer until the reset time.",
+	"codex: reads ~/.codex/auth.json and asks the ChatGPT usage endpoint for the",
+	"5-hour and weekly windows (used % + reset). No separate logins for either.",
+	"claude: shells out to `claude -p \"/usage\"` (the slow leg, ~5-10s) and parses",
+	"the session + weekly windows — no HTTP endpoint exists and we never touch",
+	"the Keychain; the claude CLI uses its own credentials."
+].join("\n");
+const quota = buildCommand({
+	func: quotaImpl,
+	parameters: { flags: { json: {
+		kind: "boolean",
+		withNegated: false,
+		brief: "Emit the raw snapshot as JSON"
+	} } },
+	docs: {
+		brief: "Show agy / codex / claude quota with reset times",
+		fullDescription: fullDescription$3
 	}
-	if (values.help) {
-		ctx.process.stdout.write(help$3());
-		return;
-	}
-	const flags = { json: values.json };
-	try {
-		await quotaImpl.call(ctx, flags);
-	} catch (err) {
-		ctx.process.stderr.write(`ai-bridge quota: ${err.message}\n`);
-		ctx.process.exitCode = 1;
-	}
-}
+});
 
 //#endregion
 //#region packages/ai-bridge/src/commands/review/impl.ts
@@ -2294,7 +3949,7 @@ function parseReviewVerdict(response) {
 		rawLine: lines[0]
 	};
 }
-async function review(flags) {
+async function review$1(flags) {
 	const inputSlug = flags.model ?? "xai-grok/grok-4.5";
 	const model = resolveModel(inputSlug);
 	if (!model) {
@@ -2386,75 +4041,56 @@ async function review(flags) {
 
 //#endregion
 //#region packages/ai-bridge/src/commands/review/command.ts
-function help$2() {
-	return [
-		"ai-bridge review — Review working tree diff or plan contract",
-		"",
-		"Inspects code diffs or plan contracts and writes a review report.",
-		"Available models (canonical slug):",
-		...listModelHelpLines(),
-		"",
-		"Usage: ai-bridge review [options]",
-		"",
-		"Options:",
-		`  --model <slug>       Model slug (default: ${DEFAULT_MODEL})`,
-		"  --plan <file>        Plan file for contract / over-reach check",
-		"  --base <ref>         Base git ref to diff against (default: HEAD)",
-		"  --out <file>         Where to write the review report (default: <run.dir>/review.md)",
-		"  --timeout <secs>     Max seconds for review (default: 1200)",
-		"  --no-preflight       Skip the backend quota preflight check",
-		"  -h, --help           Show this help",
-		""
-	].join("\n");
-}
-async function runReview(ctx, argv) {
-	let values;
-	try {
-		({values} = parseArgs({
-			args: [...argv],
-			allowPositionals: true,
-			options: {
-				model: { type: "string" },
-				plan: { type: "string" },
-				base: { type: "string" },
-				out: { type: "string" },
-				preflight: { type: "boolean" },
-				"no-preflight": { type: "boolean" },
-				timeout: { type: "string" },
-				help: {
-					type: "boolean",
-					short: "h",
-					default: false
-				}
-			}
-		}));
-	} catch (err) {
-		return fail$2(ctx, err);
+const fullDescription$2 = [
+	"Inspects code diffs or plan contracts and writes a review report.",
+	"",
+	"Available models (canonical slug):",
+	...listModelHelpLines()
+].join("\n");
+const review = buildCommand({
+	func: review$1,
+	parameters: { flags: {
+		model: {
+			kind: "parsed",
+			parse: String,
+			optional: true,
+			brief: `Model slug (default: ${DEFAULT_MODEL})`
+		},
+		plan: {
+			kind: "parsed",
+			parse: String,
+			optional: true,
+			brief: "Plan file for contract / over-reach check"
+		},
+		base: {
+			kind: "parsed",
+			parse: String,
+			optional: true,
+			brief: "Base git ref to diff against (default: HEAD)"
+		},
+		out: {
+			kind: "parsed",
+			parse: String,
+			optional: true,
+			brief: "Where to write the review report (default: <run.dir>/review.md)"
+		},
+		timeout: {
+			kind: "parsed",
+			parse: positiveIntSeconds,
+			optional: true,
+			brief: "Max seconds for review (default: 1200)"
+		},
+		preflight: {
+			kind: "boolean",
+			default: true,
+			brief: "Check model quota before running (use --no-preflight to skip)"
+		}
+	} },
+	docs: {
+		brief: "Review working tree diff or plan contract",
+		fullDescription: fullDescription$2
 	}
-	if (values.help) {
-		ctx.process.stdout.write(help$2());
-		return;
-	}
-	let timeout;
-	try {
-		timeout = values.timeout === void 0 ? void 0 : positiveIntSeconds(values.timeout);
-	} catch (err) {
-		return fail$2(ctx, err);
-	}
-	const flags = {
-		...values.model !== void 0 ? { model: values.model } : {},
-		...values.plan !== void 0 ? { plan: values.plan } : {},
-		...values.base !== void 0 ? { base: values.base } : {},
-		...values.out !== void 0 ? { out: values.out } : {},
-		...timeout !== void 0 ? { timeout } : {},
-		preflight: values["no-preflight"] !== true
-	};
-	await review.call(ctx, flags);
-}
-function fail$2(ctx, err) {
-	ctx.process.stderr.write(`ai-bridge review: ${err instanceof Error ? err.message : String(err)}\n`);
-	ctx.process.exitCode = 2;
-}
+});
 
 //#endregion
 //#region packages/ai-bridge/src/commands/runs/impl.ts
@@ -2473,7 +4109,7 @@ function getStatus(run) {
 	}
 	return run.status;
 }
-async function runs(flags, idPrefix) {
+async function runs$1(flags, idPrefix) {
 	if (idPrefix !== void 0) {
 		const matches = listRuns().filter((r) => r.id.startsWith(idPrefix));
 		if (matches.length === 0) {
@@ -2583,77 +4219,54 @@ async function runs(flags, idPrefix) {
 
 //#endregion
 //#region packages/ai-bridge/src/commands/runs/command.ts
-function help$1() {
-	return [
-		"ai-bridge runs — Monitor and inspect execution runs",
-		"",
-		"Lists recent runs, watches active runs, or displays logs for a specific run.",
-		"",
-		"Usage:",
-		"  ai-bridge runs [options]",
-		"  ai-bridge runs <id-prefix>",
-		"",
-		"Options:",
-		"  --watch    Watch running runs in real time (refresh every 2s)",
-		"  --json     Emit output in JSON Lines format (list mode only)",
-		"  -h, --help Show this help",
-		""
-	].join("\n");
-}
-async function runRuns(ctx, argv) {
-	let values;
-	let positionals;
-	try {
-		({values, positionals} = parseArgs({
-			args: [...argv],
-			allowPositionals: true,
-			options: {
-				watch: {
-					type: "boolean",
-					default: false
-				},
-				json: {
-					type: "boolean",
-					default: false
-				},
-				help: {
-					type: "boolean",
-					short: "h",
-					default: false
-				}
-			}
-		}));
-	} catch (err) {
-		return fail$1(ctx, err);
-	}
-	if (values.help) {
-		ctx.process.stdout.write(help$1());
+const fullDescription$1 = "Lists recent runs, watches active runs, or displays logs for a specific run.";
+async function runsCommand(flags, idPrefix) {
+	if (flags.watch && idPrefix !== void 0) {
+		this.process.stderr.write("ai-bridge runs: cannot specify <id> when using --watch\n");
+		this.process.exitCode = 2;
 		return;
 	}
-	let idPrefix;
-	try {
-		const [first, ...extra] = positionals;
-		if (first !== void 0) idPrefix = first;
-		if (extra.length > 0) throw new Error(`unexpected extra argument "${extra[0]}"`);
-		if (values.watch && idPrefix !== void 0) throw new Error("cannot specify <id> when using --watch");
-		if (values.watch && values.json) throw new Error("cannot specify --json when using --watch");
-	} catch (err) {
-		return fail$1(ctx, err);
+	if (flags.watch && flags.json) {
+		this.process.stderr.write("ai-bridge runs: cannot specify --json when using --watch\n");
+		this.process.exitCode = 2;
+		return;
 	}
-	const flags = {
-		watch: values.watch,
-		json: values.json
-	};
-	await runs.call(ctx, flags, idPrefix);
+	await runs$1.call(this, flags, idPrefix);
 }
-function fail$1(ctx, err) {
-	ctx.process.stderr.write(`ai-bridge runs: ${err instanceof Error ? err.message : String(err)}\n`);
-	ctx.process.exitCode = 2;
-}
+const runs = buildCommand({
+	func: runsCommand,
+	parameters: {
+		flags: {
+			watch: {
+				kind: "boolean",
+				withNegated: false,
+				brief: "Watch running runs in real time (refresh every 2s)"
+			},
+			json: {
+				kind: "boolean",
+				withNegated: false,
+				brief: "Emit output in JSON Lines format (list mode only)"
+			}
+		},
+		positional: {
+			kind: "tuple",
+			parameters: [{
+				brief: "Run id prefix to inspect (defaults to listing recent runs)",
+				parse: String,
+				placeholder: "id-prefix",
+				optional: true
+			}]
+		}
+	},
+	docs: {
+		brief: "Monitor and inspect execution runs",
+		fullDescription: fullDescription$1
+	}
+});
 
 //#endregion
 //#region packages/ai-bridge/src/commands/subagent/impl.ts
-async function subagent(flags, prompt) {
+async function subagent$1(flags, prompt) {
 	const inputSlug = flags.model ?? "xai-grok/grok-4.5";
 	const model = resolveModel(inputSlug);
 	if (!model) {
@@ -2706,127 +4319,100 @@ async function subagent(flags, prompt) {
 
 //#endregion
 //#region packages/ai-bridge/src/commands/subagent/command.ts
-function help() {
-	return [
-		"ai-bridge subagent — Delegate a self-contained task to another model",
-		"",
-		"Hands a self-contained prompt to another model and returns its answer.",
-		"Available models (canonical slug):",
-		...listModelHelpLines(),
-		`Default: ${DEFAULT_MODEL} (off-budget). The claude-backend slugs are FALLBACKS for`,
-		"when the off-budget CLIs are quota-exhausted — they bill your Claude subscription.",
-		"",
-		"Usage: ai-bridge subagent [options] <prompt>",
-		"",
-		"Options:",
-		`  --model <slug>     Model slug to delegate to (default: ${DEFAULT_MODEL})`,
-		"  --timeout <secs>   Max seconds to wait for the backend (default: 600)",
-		"  --no-tools         Restrict the delegate to reasoning only (no file/shell",
-		"                     access). Tools are ON by default; use this for untrusted input.",
-		"  --no-preflight     Skip the backend quota preflight check",
-		"  --json             Emit a machine-readable JSON result (using canonical slug) instead of prose",
-		"  -h, --help         Show this help",
-		""
-	].join("\n");
-}
-async function runSubagent(ctx, argv) {
-	let values;
-	let positionals;
-	try {
-		({values, positionals} = parseArgs({
-			args: [...argv],
-			allowPositionals: true,
-			options: {
-				model: { type: "string" },
-				timeout: { type: "string" },
-				tools: { type: "boolean" },
-				"no-tools": { type: "boolean" },
-				preflight: { type: "boolean" },
-				"no-preflight": { type: "boolean" },
-				json: {
-					type: "boolean",
-					default: false
-				},
-				help: {
-					type: "boolean",
-					short: "h",
-					default: false
-				}
+const fullDescription = [
+	"Hands a self-contained prompt to another model and returns its answer.",
+	"",
+	"Available models (canonical slug):",
+	...listModelHelpLines(),
+	`Default: ${DEFAULT_MODEL} (off-budget). The claude-backend slugs are FALLBACKS for`,
+	"when the off-budget CLIs are quota-exhausted — they bill your Claude subscription."
+].join("\n");
+const subagent = buildCommand({
+	func: subagent$1,
+	parameters: {
+		flags: {
+			model: {
+				kind: "parsed",
+				parse: String,
+				optional: true,
+				brief: `Model slug to delegate to (default: ${DEFAULT_MODEL})`
+			},
+			timeout: {
+				kind: "parsed",
+				parse: positiveIntSeconds,
+				optional: true,
+				brief: "Max seconds to wait for the backend (default: 600)"
+			},
+			tools: {
+				kind: "boolean",
+				default: true,
+				brief: "Allow delegate model to use tools (use --no-tools to restrict to reasoning only)"
+			},
+			preflight: {
+				kind: "boolean",
+				default: true,
+				brief: "Check model quota before running (use --no-preflight to skip)"
+			},
+			json: {
+				kind: "boolean",
+				withNegated: false,
+				brief: "Emit a machine-readable JSON result (using canonical slug) instead of prose"
 			}
-		}));
-	} catch (err) {
-		return fail(ctx, err);
+		},
+		positional: {
+			kind: "tuple",
+			parameters: [{
+				brief: "Self-contained task prompt for the delegate model",
+				parse: nonEmptyPrompt,
+				placeholder: "prompt"
+			}]
+		}
+	},
+	docs: {
+		brief: "Delegate a self-contained task to another model",
+		fullDescription
 	}
-	if (values.help) {
-		ctx.process.stdout.write(help());
+});
+
+//#endregion
+//#region packages/ai-bridge/src/exitCode.ts
+/**
+* Stricli uses negative ExitCode values for parse/route failures.
+* Our public contract is Unix-style: 0 ok, 1 op fail, 2 bad args, 3 quota refuse.
+* Call after `run()`; never overwrite a code already set by an impl (run uses ??=).
+*/
+function normalizeExitCode(ctx) {
+	const code = ctx.process.exitCode;
+	if (typeof code !== "number") return;
+	if (code === ExitCode.InvalidArgument || code === ExitCode.UnknownCommand) {
+		ctx.process.exitCode = 2;
 		return;
 	}
-	let prompt;
-	let timeout;
-	try {
-		const [first, ...extra] = positionals;
-		if (first === void 0) throw new Error("missing <prompt> argument");
-		if (extra.length > 0) throw new Error(`unexpected extra argument "${extra[0]}"`);
-		prompt = nonEmptyPrompt(first);
-		timeout = values.timeout === void 0 ? void 0 : positiveIntSeconds(values.timeout);
-	} catch (err) {
-		return fail(ctx, err);
-	}
-	const flags = {
-		...values.model !== void 0 ? { model: values.model } : {},
-		...timeout !== void 0 ? { timeout } : {},
-		tools: values["no-tools"] !== true,
-		preflight: values["no-preflight"] !== true,
-		json: values.json
-	};
-	await subagent.call(ctx, flags, prompt);
-}
-function fail(ctx, err) {
-	ctx.process.stderr.write(`ai-bridge subagent: ${err instanceof Error ? err.message : String(err)}\n`);
-	ctx.process.exitCode = 2;
+	if (code !== 0 && code !== 1 && code !== 2 && code !== 3) ctx.process.exitCode = 1;
 }
 
 //#endregion
 //#region packages/ai-bridge/src/app.ts
-const BRIEF = "Bridge tasks to non-Claude AI CLIs — a plan → implement → review workflow, task delegation, and image generation (codex gpt-image-2 / grok Imagine).";
-function topLevelHelp() {
-	return [
-		`ai-bridge — ${BRIEF}`,
-		"",
-		"Usage: ai-bridge <command> [options]",
-		"",
-		"Commands:",
-		"  plan        Expand a task into a detailed implementation plan file",
-		"  implement   Implement a plan file in place (edits the working tree)",
-		"  review      Review the working-tree diff (or a plan) against a plan contract",
-		"  subagent    Delegate a self-contained task to a non-Claude model",
-		"  image-gen   Generate a raster image via a model seat (codex or grok)",
-		"  runs        Monitor and inspect execution runs",
-		"  quota       Show backend quota and reset times (agy, codex, claude)",
-		"",
-		"Run `ai-bridge <command> --help` for a command's options.",
-		""
-	].join("\n");
-}
+const routes = buildRouteMap({
+	routes: {
+		plan,
+		implement,
+		review,
+		subagent,
+		"image-gen": imageGen,
+		runs,
+		quota
+	},
+	docs: { brief: "Bridge tasks to non-Claude AI CLIs — a plan → implement → review workflow, task delegation, and image generation (codex gpt-image-2 / grok Imagine)." }
+});
+const app = buildApplication(routes, {
+	name: "ai-bridge",
+	scanner: { caseStyle: "allow-kebab-for-camel" }
+});
+/** Public entry used by cli.ts and index.ts — preserves runCli(ctx, argv) surface. */
 async function runCli(ctx, argv) {
-	const [command, ...rest] = argv;
-	if (command === void 0 || command === "--help" || command === "-h") {
-		ctx.process.stdout.write(topLevelHelp());
-		return;
-	}
-	switch (command) {
-		case "plan": return runPlan(ctx, rest);
-		case "implement": return runImplement(ctx, rest);
-		case "review": return runReview(ctx, rest);
-		case "subagent": return runSubagent(ctx, rest);
-		case "image-gen": return runImageGen(ctx, rest);
-		case "runs": return runRuns(ctx, rest);
-		case "quota": return runQuota(ctx, rest);
-		default:
-			ctx.process.stderr.write(`ai-bridge: unknown command "${command}"\n\n${topLevelHelp()}`);
-			ctx.process.exitCode = 2;
-			return;
-	}
+	await run$4(app, argv, ctx);
+	normalizeExitCode(ctx);
 }
 
 //#endregion

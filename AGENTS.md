@@ -1,6 +1,6 @@
 # ai-bridge — AGENTS.md
 
-`ai-bridge` is a small, zero-dependency TypeScript CLI that bridges tasks to **non-Claude AI CLIs** already installed and authed on this machine. The codebase is organized as a pnpm monorepo under `packages/*`:
+`ai-bridge` is a TypeScript CLI that bridges tasks to **non-Claude AI CLIs** already installed and authed on this machine. Workspace driver packages (`proc`, `agy`, `grok`, `codex`, `claude`) maintain zero external runtime dependencies; app package dependencies (`@stricli/core`) are inlined into the committed skill bundle (`skills/ai-bridge/scripts/cli.mjs`), keeping the skill artifact self-contained. The codebase is organized as a pnpm monorepo under `packages/*`:
 
 - **`node packages/ai-bridge/src/cli.ts plan`** (or skill artifact **`node skills/ai-bridge/scripts/cli.mjs plan`**) → a delegate model studies the repo and writes a detailed implementation plan to a FILE (default planner **`xai-grok/grok-4.5`**, off-budget). The orchestrator reads/edits/approves it — plans are passed between stages as paths, not content.
 - **`node packages/ai-bridge/src/cli.ts implement`** → a delegate model implements a plan file in place, running the project's real typecheck/tests (default implementer **`google-antigravity/gemini-3.6-flash`** via `agy`, off-budget). Prints the delegate's summary + `git diff --stat`.
@@ -42,6 +42,7 @@ say so unprompted and propose the cleanup — don't wait to be asked.
 
 - **Node 24.11+, native TypeScript in packages. NO build step for dev (`node packages/ai-bridge/src/cli.ts`), NO `tsx`, NO `ts-node`.** Run `.ts` files directly with `node` (type-stripping is on by default in Node 24). `tsc` is for type-checking only (`pnpm typecheck`).
 - **Committed skill bundle (`skills/ai-bridge/scripts/cli.mjs`).** Generated via `pnpm build:skill` (`tsdown`), self-contained for Vercel skills copy deployment.
+- **App runtime dependencies must be inlined in the skill bundle.** Any dependency of `@ai-bridge/ai-bridge` must be listed in `tsdown.config.ts` under `deps.alwaysBundle` so the generated `cli.mjs` remains fully self-contained. `onlyImport: []` enforces this in CI.
 - **Erasable syntax only** — Node strips types, it does not transform them: no `enum`, no `namespace` with runtime members, no parameter properties, no decorators. `tsconfig` enforces this via `erasableSyntaxOnly`.
 - **ESM with explicit `.ts` import extensions** (e.g. `import { app } from "./app.ts"`). `verbatimModuleSyntax` is on → use `import type` for type-only imports.
 - **pnpm only, via corepack.** `corepack use pnpm@latest` manages the pinned `packageManager`. Don't use npm or yarn here.
@@ -62,19 +63,20 @@ say so unprompted and propose the cleanup — don't wait to be asked.
 | Quota (all backends) | `pnpm ai-bridge quota [--json]` — agy group windows (weekly+5h) & per-model, codex 5h/weekly, claude session/weekly. Check BEFORE delegating: agy quota is shared per model GROUP (all Gemini tiers drain together) |
 | Check / Type-check / Repo / Test | `pnpm check` · `pnpm typecheck` · `pnpm repojj:check` · `pnpm test` |
 
-## Architecture (node:util parseArgs + workspace packages)
+## Architecture (@stricli/core + workspace packages)
 
-Command orchestration uses Node's built-in **`node:util` `parseArgs`** (zero external dependencies). Strict layering — each layer only imports downward:
+Command orchestration uses **`@stricli/core`** (`buildCommand` / `buildRouteMap` / `buildApplication` / `run`). Strict layering — each layer only imports downward:
 
-- `packages/ai-bridge/src/cli.ts` — thin entry: builds context and calls `runCli(context, process.argv.slice(2))` (from `app.ts`).
-- `packages/ai-bridge/src/app.ts` — routes to the subcommands (`runCli(ctx, argv)`).
-- `packages/ai-bridge/src/context.ts` — `LocalContext`, the `this` handed to every command.
-- `packages/ai-bridge/src/commands/<name>/command.ts` — command entry: exports `run<Command>(ctx, argv)` which parses arguments using Node's `parseArgs`, validates them using `parsers.ts`, and calls the implementation.
-- `packages/ai-bridge/src/commands/<name>/impl.ts` — the implementation `function (this: LocalContext, flags, prompt)`. Impls own *policy* (prompt-craft, stdout contracts, exit codes) and contain ZERO backend process switches.
+- `packages/ai-bridge/src/cli.ts` — thin entry: builds context and calls `runCli(buildContext(process), process.argv.slice(2))` (from `app.ts`).
+- `packages/ai-bridge/src/app.ts` — defines route map and application (`buildApplication`), exports `app` and `runCli(ctx, argv)` wrapper which calls `run(app, argv, ctx)` and normalizes exit codes.
+- `packages/ai-bridge/src/context.ts` — `LocalContext extends CommandContext`, carrying `process`.
+- `packages/ai-bridge/src/exitCode.ts` — `normalizeExitCode`: normalizes stricli's negative `ExitCode`s to Unix-style exit codes (0/1/2/3).
+- `packages/ai-bridge/src/commands/<name>/command.ts` — command entry: exports stricli `buildCommand({ func, parameters, docs })` spec.
+- `packages/ai-bridge/src/commands/<name>/impl.ts` — the implementation `function (this: LocalContext, flags, ...args)`. Impls own *policy* (prompt-craft, stdout contracts, exit codes) and contain ZERO backend process switches.
 - `packages/ai-bridge/src/driver.ts` — structural `AgentCliDriver` interface.
 - `packages/ai-bridge/src/drivers.ts` — map `Backend` → `AgentCliDriver` implementations.
 - `packages/ai-bridge/src/delegate.ts` — thin delegation engine calling `driver.run(task)`.
-- `packages/{proc,agy,grok,codex,claude}` — workspace packages driving each backend CLI independently.
+- `packages/{proc,agy,grok,codex,claude}` — workspace packages driving each backend CLI independently (zero external runtime dependencies).
 
 ### Adding a subagent model
 
