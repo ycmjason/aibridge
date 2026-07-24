@@ -17,10 +17,10 @@ It's the execution layer behind the `aibridge` Claude Code skill — one router 
 | Package | Description |
 |---|---|
 | `@aibridge/proc` | Process helpers (spawn/capture/timeout) for aibridge backend drivers |
-| `@aibridge/agy` | Antigravity (`agy`) CLI driver for aibridge |
-| `@aibridge/grok` | xAI Grok CLI driver for aibridge |
-| `@aibridge/codex` | OpenAI Codex CLI driver for aibridge |
-| `@aibridge/claude` | Anthropic Claude CLI driver for aibridge |
+| `@aibridge/driver-agy` | Antigravity (`agy`) CLI driver for aibridge |
+| `@aibridge/driver-grok` | xAI Grok CLI driver for aibridge |
+| `@aibridge/driver-codex` | OpenAI Codex CLI driver for aibridge |
+| `@aibridge/driver-claude` | Anthropic Claude CLI driver for aibridge |
 | `@aibridge/cli` | CLI orchestration and commands (`aibridge`) |
 
 ## Requirements

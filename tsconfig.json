@@ -2,10 +2,10 @@
   "files": [],
   "references": [
     { "path": "./packages/proc" },
-    { "path": "./packages/agy" },
-    { "path": "./packages/grok" },
-    { "path": "./packages/codex" },
-    { "path": "./packages/claude" },
+    { "path": "./packages/driver-agy" },
+    { "path": "./packages/driver-grok" },
+    { "path": "./packages/driver-codex" },
+    { "path": "./packages/driver-claude" },
     { "path": "./packages/cli" }
   ]
 }

@@ -36,10 +36,10 @@
   },
   "dependencies": {
     "@aibridge/proc": "workspace:*",
-    "@aibridge/agy": "workspace:*",
-    "@aibridge/grok": "workspace:*",
-    "@aibridge/codex": "workspace:*",
-    "@aibridge/claude": "workspace:*",
+    "@aibridge/driver-agy": "workspace:*",
+    "@aibridge/driver-grok": "workspace:*",
+    "@aibridge/driver-codex": "workspace:*",
+    "@aibridge/driver-claude": "workspace:*",
     "@stricli/core": "catalog:"
   },
   "devDependencies": {

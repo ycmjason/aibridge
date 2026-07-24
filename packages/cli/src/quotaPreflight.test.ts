@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
-import type { AgyQuotaSnapshot } from '@aibridge/agy';
-import type { CodexQuotaSnapshot } from '@aibridge/codex';
+import type { AgyQuotaSnapshot } from '@aibridge/driver-agy';
+import type { CodexQuotaSnapshot } from '@aibridge/driver-codex';
 import { test } from 'vitest';
 import { evaluateAgyPreflight, evaluateCodexPreflight } from './quotaPreflight.ts';
 

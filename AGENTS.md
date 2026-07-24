@@ -86,7 +86,7 @@ Command orchestration uses **`@stricli/core`** (`buildCommand` / `buildRouteMap`
 - `packages/cli/src/driver.ts` — structural `AgentCliDriver` interface.
 - `packages/cli/src/drivers.ts` — map `Backend` → `AgentCliDriver` implementations.
 - `packages/cli/src/delegate.ts` — thin delegation engine calling `driver.run(task)`.
-- `packages/{proc,agy,grok,codex,claude}` — workspace packages driving each backend CLI independently (zero external runtime dependencies).
+- `packages/proc` + `packages/driver-{agy,grok,codex,claude}` — workspace packages driving each backend CLI independently (zero external runtime dependencies).
 
 ### Adding a subagent model
 

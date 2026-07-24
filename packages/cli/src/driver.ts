@@ -1,6 +1,6 @@
-import type { AgyQuotaSnapshot } from '@aibridge/agy';
-import type { ClaudeQuotaSnapshot } from '@aibridge/claude';
-import type { CodexQuotaSnapshot } from '@aibridge/codex';
+import type { AgyQuotaSnapshot } from '@aibridge/driver-agy';
+import type { ClaudeQuotaSnapshot } from '@aibridge/driver-claude';
+import type { CodexQuotaSnapshot } from '@aibridge/driver-codex';
 import type { Effort } from './models.ts';
 
 export type Availability =

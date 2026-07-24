@@ -1,5 +1,5 @@
 {
-  "name": "@aibridge/agy",
+  "name": "@aibridge/driver-agy",
   "version": "0.0.1",
   "description": "Antigravity (agy) CLI driver for aibridge",
   "type": "module",
@@ -15,7 +15,7 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/fishballapp/aibridge.git",
-    "directory": "packages/agy"
+    "directory": "packages/driver-agy"
   },
   "homepage": "https://github.com/fishballapp/aibridge#readme",
   "bugs": {

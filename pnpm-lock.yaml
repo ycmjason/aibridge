@@ -54,40 +54,20 @@ importers:
         specifier: 'catalog:'
         version: 4.1.9(@types/node@25.9.2)(vite@8.1.2(@types/node@25.9.2)(esbuild@0.28.1)(jiti@2.7.0))
 
-  packages/agy:
-    dependencies:
-      '@aibridge/proc':
-        specifier: workspace:*
-        version: link:../proc
-    devDependencies:
-      tsdown:
-        specifier: 'catalog:'
-        version: 0.22.14(typescript@5.9.3)
-
-  packages/claude:
-    dependencies:
-      '@aibridge/proc':
-        specifier: workspace:*
-        version: link:../proc
-    devDependencies:
-      tsdown:
-        specifier: 'catalog:'
-        version: 0.22.14(typescript@5.9.3)
-
   packages/cli:
     dependencies:
-      '@aibridge/agy':
+      '@aibridge/driver-agy':
         specifier: workspace:*
-        version: link:../agy
-      '@aibridge/claude':
+        version: link:../driver-agy
+      '@aibridge/driver-claude':
         specifier: workspace:*
-        version: link:../claude
-      '@aibridge/codex':
+        version: link:../driver-claude
+      '@aibridge/driver-codex':
         specifier: workspace:*
-        version: link:../codex
-      '@aibridge/grok':
+        version: link:../driver-codex
+      '@aibridge/driver-grok':
         specifier: workspace:*
-        version: link:../grok
+        version: link:../driver-grok
       '@aibridge/proc':
         specifier: workspace:*
         version: link:../proc
@@ -99,7 +79,7 @@ importers:
         specifier: 'catalog:'
         version: 0.22.14(typescript@5.9.3)
 
-  packages/codex:
+  packages/driver-agy:
     dependencies:
       '@aibridge/proc':
         specifier: workspace:*
@@ -109,7 +89,27 @@ importers:
         specifier: 'catalog:'
         version: 0.22.14(typescript@5.9.3)
 
-  packages/grok:
+  packages/driver-claude:
+    dependencies:
+      '@aibridge/proc':
+        specifier: workspace:*
+        version: link:../proc
+    devDependencies:
+      tsdown:
+        specifier: 'catalog:'
+        version: 0.22.14(typescript@5.9.3)
+
+  packages/driver-codex:
+    dependencies:
+      '@aibridge/proc':
+        specifier: workspace:*
+        version: link:../proc
+    devDependencies:
+      tsdown:
+        specifier: 'catalog:'
+        version: 0.22.14(typescript@5.9.3)
+
+  packages/driver-grok:
     dependencies:
       '@aibridge/proc':
         specifier: workspace:*

@@ -1,7 +1,7 @@
-import * as agy from '@aibridge/agy';
-import * as claude from '@aibridge/claude';
-import * as codex from '@aibridge/codex';
-import * as grok from '@aibridge/grok';
+import * as agy from '@aibridge/driver-agy';
+import * as claude from '@aibridge/driver-claude';
+import * as codex from '@aibridge/driver-codex';
+import * as grok from '@aibridge/driver-grok';
 import type { AgentCliDriver } from './driver.ts';
 import type { Backend } from './models.ts';
 

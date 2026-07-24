@@ -1,6 +1,6 @@
-import { type AgyQuotaSnapshot, fetchAgyQuota } from '@aibridge/agy';
-import { type ClaudeQuotaSnapshot, fetchClaudeQuota } from '@aibridge/claude';
-import { type CodexQuotaSnapshot, fetchCodexQuota } from '@aibridge/codex';
+import { type AgyQuotaSnapshot, fetchAgyQuota } from '@aibridge/driver-agy';
+import { type ClaudeQuotaSnapshot, fetchClaudeQuota } from '@aibridge/driver-claude';
+import { type CodexQuotaSnapshot, fetchCodexQuota } from '@aibridge/driver-codex';
 import type { LocalContext } from '../../context.ts';
 
 export interface QuotaFlags {

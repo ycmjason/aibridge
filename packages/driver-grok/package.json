@@ -1,7 +1,7 @@
 {
-  "name": "@aibridge/codex",
+  "name": "@aibridge/driver-grok",
   "version": "0.0.1",
-  "description": "OpenAI Codex CLI driver for aibridge",
+  "description": "xAI Grok CLI driver for aibridge",
   "type": "module",
   "license": "MIT",
   "engines": {
@@ -9,13 +9,13 @@
   },
   "keywords": [
     "aibridge",
-    "codex",
-    "openai"
+    "grok",
+    "xai"
   ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/fishballapp/aibridge.git",
-    "directory": "packages/codex"
+    "directory": "packages/driver-grok"
   },
   "homepage": "https://github.com/fishballapp/aibridge#readme",
   "bugs": {

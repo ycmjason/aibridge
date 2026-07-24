@@ -35,7 +35,7 @@ jobs:
           tmp="$(mktemp -d)"
           tsc_bin="$(pwd)/node_modules/.bin/tsc"
           types_node_ver="$(node -p "require('@types/node/package.json').version")"
-          for pkg in proc agy grok codex claude cli; do
+          for pkg in proc driver-agy driver-grok driver-codex driver-claude cli; do
             dir="packages/$pkg"
             tarball="$(cd "$dir" && pnpm pack --pack-destination "$tmp" | tail -n1)"
             tar -tf "$tarball" | grep -E '/dist/' >/dev/null
@@ -81,10 +81,10 @@ jobs:
 
           cat << 'EOF' > test-consumer.ts
           import { runCaptured } from '@aibridge/proc';
-          import { fetchAgyQuota } from '@aibridge/agy';
-          import { runGrokPrint } from '@aibridge/grok';
-          import { fetchCodexQuota } from '@aibridge/codex';
-          import { fetchClaudeQuota } from '@aibridge/claude';
+          import { fetchAgyQuota } from '@aibridge/driver-agy';
+          import { runGrokPrint } from '@aibridge/driver-grok';
+          import { fetchCodexQuota } from '@aibridge/driver-codex';
+          import { fetchClaudeQuota } from '@aibridge/driver-claude';
           import { app, runCli } from '@aibridge/cli';
 
           console.log(runCaptured, fetchAgyQuota, runGrokPrint, fetchCodexQuota, fetchClaudeQuota, app, runCli);
