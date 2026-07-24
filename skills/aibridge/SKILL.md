@@ -1,16 +1,18 @@
 ---
 name: aibridge
 description: >-
-  Bridge a task to another AI CLI on this machine — an orchestrator-driven
-  plan → implement → review workflow across Grok / Gemini / Codex / Claude,
-  plus one-shot task delegation and image generation with gpt-image-2.
-  Delegated work runs on the backing CLIs' own logins and quotas — usually
-  separate from the orchestrating agent's budget — no API keys. Use for (a)
+  Drive models from OTHER providers as your delegates — bridge a task to
+  another AI CLI on this machine: an orchestrator-driven plan → implement →
+  review workflow across Grok / Gemini / Codex / Claude, one-shot cross-model
+  delegation, and capabilities your own provider may lack, like real image
+  generation with gpt-image-2 or Grok Imagine. Runs on the backing CLIs'
+  existing logins — no API keys. Use for (a)
   creating / generating / redrawing / restyling an image / icon / graphic /
   illustration, or writing an image-gen prompt; (b) delegation — and reach for
   this PROACTIVELY, before implementing a sizeable, well-defined,
   self-contained chunk yourself: `subagent` hands any clearly-specified task to
-  another model (concurrent, on the delegate's own quota, cross-model second
+  another model (concurrent, with different training and blind spots than
+  yours — cross-model second
   opinion / red-team / long-context analysis); (c) sizeable or risky
   implementation work — `plan` has a model expand your intent into a detailed
   plan FILE against the real codebase, you read/approve/edit it, `implement`
@@ -33,11 +35,13 @@ allowed-tools:
 
 # aibridge
 
-`aibridge` drives other AI CLIs installed on this machine and verifies their
-output. **You** supply the judgment and prompt-craft; the CLI owns the brittle
-execution. It uses the backing CLIs' existing logins — no API keys — and each
-delegation spends that backing CLI's **own quota**, not yours, unless you are an
-agent backed by the same quota pool (see Model seats).
+`aibridge` lets you drive models from other providers: it spawns the AI CLIs
+installed on this machine and verifies their output. **You** supply the judgment
+and prompt-craft; the CLI owns the brittle execution. Delegates bring what you
+may not have — different training and blind spots (real cross-checking), image
+rendering, heavyweight reasoning seats — and run concurrently on the backing
+CLIs' existing logins, no API keys. Each delegation spends that backing CLI's
+own quota (see Model seats for the one case where that quota is yours).
 
 ## Running it
 

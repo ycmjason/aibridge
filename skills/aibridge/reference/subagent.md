@@ -31,7 +31,7 @@ Effort suffixes can be appended to slugs supporting them (e.g. `xai-grok/grok-4.
 
 ## B. When & how to delegate one task well
 
-**The point is leverage on two axes: speed and cost.** A delegated task runs on the backing CLI's own login and quota — typically separate from the orchestrating agent's. Default to delegating well-defined, self-contained work.
+**The point is reach: another provider's model, working concurrently.** A delegate sees the task with different training, different blind spots, and its own tools — use it for cross-model second opinions, red-teaming, long-context analysis, and fanning out well-defined, self-contained work. Default to delegating such work.
 
 Write prompts for a capable stranger:
 1. **Self-contained** — paste the code/spec to act on; never reference "what we discussed".
@@ -56,4 +56,4 @@ Keep work native when it requires:
 
 ## E. Driving delegates from an orchestration tool
 
-When running from an orchestrator, pass prompts to `aibridge subagent` via thin passthrough agents to perform delegated implementation work on the backends' own quotas while maintaining native control.
+When running from an orchestrator, pass prompts to `aibridge subagent` via thin passthrough agents to run implementation work on other providers' models while maintaining native control.

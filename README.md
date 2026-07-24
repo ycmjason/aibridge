@@ -3,7 +3,7 @@
 
   # aibridge
 
-  **Bridge any coding agent's tasks to the AI CLIs already on your machine** — plan, implement, review, delegate, and generate images across Grok, Gemini, Codex & Claude, each running on its own login and quota. No API keys.
+  **Let your coding agent drive the other AIs on your machine.** Cross-provider agent-to-agent delegation — plan, implement, review, red-team, and generate images across Grok, Gemini, Codex & Claude through the CLIs you already have. No API keys.
 
   [![skills.sh](https://skills.sh/b/ycmjason/aibridge)](https://skills.sh/ycmjason/aibridge)
   [![npm](https://img.shields.io/npm/v/%40aibridge%2Fcli)](https://www.npmjs.com/package/@aibridge/cli)
@@ -15,7 +15,7 @@
 
 ---
 
-Your agent is one model with one budget. Your machine probably has several more sitting behind CLIs you already pay for — `grok`, `agy` (Antigravity), `codex`, `claude`. **aibridge** turns them into seats your agent can drive: a planner that studies your repo, an implementer that edits it and runs your real tests, a reviewer that cross-checks the diff against the plan, one-shot delegates, and an image generator — with every delegated task spending the backing CLI's own quota, not your agent's.
+Your agent is one model, from one provider. Your machine probably has several more sitting behind CLIs you already use — `grok`, `agy` (Antigravity), `codex`, `claude`. **aibridge** turns them into seats your agent can drive: a planner that studies your repo, an implementer that edits it and runs your real tests, a reviewer from a *different* model family that cross-checks the diff against the plan, concurrent one-shot delegates — and capabilities your agent's own provider may not offer at all, like real image generation (gpt-image-2, Grok Imagine).
 
 ## Install
 
@@ -65,8 +65,8 @@ Plan files — not their contents — travel between stages, so the loop is near
 ## How it works
 
 - **The skill carries judgment; the CLI owns execution.** The skill teaches your agent prompt-craft, seat selection, and when to gate; the CLI deterministically drives the backing CLIs, captures their output, verifies results (a "generated image" under 100 KB is a code-drawn fake, an empty answer is a quota death), and logs every run.
-- **Every backend spends its own quota.** Delegation runs on the backing CLIs' existing logins — nothing here needs an API key. Quota is relative to whoever orchestrates: the skill treats any backend that shares *your agent's* quota pool as a last resort.
-- **Seats stay cross-model by default.** Grok plans and reviews, Gemini implements — a model never reviews its own diff.
+- **Seats stay cross-model by default.** Grok plans and reviews, Gemini implements — a model never reviews its own diff, and independent eyes catch what shared blind spots miss.
+- **No API keys.** Delegation runs on the backing CLIs' existing logins, each spending its own quota. (The skill treats a backend that shares your agent's own quota pool as a last resort.)
 - **Models are canonical slugs**: `<vendor>-<cli>/<model>[-<effort>]` — e.g. `xai-grok/grok-4.5`, `google-antigravity/gemini-3.6-flash`, `openai-codex/gpt-5.6-sol-high`, `anthropic-claude/opus`. No aliases; `aibridge <command> --help` lists every seat.
 
 ## Requirements
