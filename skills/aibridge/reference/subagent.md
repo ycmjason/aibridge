@@ -9,19 +9,10 @@
 aibridge subagent --model <slug> "<self-contained prompt>" [--timeout 600] [--no-tools] [--no-preflight] [--json]
 ```
 
-Pass a canonical slug to `--model` (required, no short aliases):
-
-| Canonical Slug | Backend | Description |
-|---|---|---|
-| `xai-grok/grok-4.5` | grok | xAI Grok 4.5 via grok CLI — RECOMMENDED FIRST CHOICE; own xAI login |
-| `google-antigravity/gemini-3.6-flash` | agy | Google Gemini 3.6 Flash via agy (default effort: high); own Antigravity login |
-| `google-antigravity/claude-sonnet-4-6` | agy | Claude Sonnet 4.6 (thinking) via agy; own Antigravity login |
-| `google-antigravity/claude-opus-4-6-thinking` | agy | Claude Opus 4.6 (thinking) via agy; own Antigravity login — heavyweight |
-| `google-antigravity/gpt-oss-120b-medium` | agy | GPT-OSS 120B (medium) via agy; own Antigravity login |
-| `openai-codex/gpt-5.6-sol` | codex | OpenAI Codex gpt-5.6-sol via codex CLI |
-| `anthropic-claude/sonnet-5` | claude | Claude Sonnet 5 via claude CLI — bills your Claude subscription |
-| `anthropic-claude/opus-5` | claude | Claude Opus 5 via claude CLI (default effort: high) — bills subscription |
-| `anthropic-claude/opus-5-1m` | claude | Claude Opus 5, 1M context via claude CLI — long-context work; bills subscription |
+Pass a canonical slug to `--model` (required, no short aliases). The seat table lives in
+[SKILL.md](../SKILL.md); `aibridge subagent --help` prints the live list. Whichever seat
+runs on the same provider as the agent you orchestrate from is your last resort — it
+spends the pool you are already burning.
 
 Effort suffixes can be appended to slugs supporting them (e.g. `xai-grok/grok-4.5-medium`, `google-antigravity/gemini-3.6-flash-low`, `anthropic-claude/sonnet-5-max`).
 

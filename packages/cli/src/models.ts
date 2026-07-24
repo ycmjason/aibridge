@@ -4,7 +4,7 @@
  * Models are registered by canonical, provider-qualified slug —
  * `<vendor>-<cli>/<model>[-<effort>]`, e.g. `openai-codex/gpt-5.6-sol-high`.
  * Canonical slugs only — no short aliases, by design. That holds on both sides:
- * `backendModel` is a pinned model id (`claude-opus-5`), never a moving vendor
+ * `backendModel` is a pinned model id (`claude-sonnet-5`), never a moving vendor
  * alias (`opus`), so a seat never silently changes model under you.
  */
 
@@ -31,7 +31,7 @@ export const MODELS: Record<string, ModelSpec> = {
     backend: 'grok',
     backendModel: 'grok-4.5',
     efforts: ['low', 'medium', 'high'],
-    brief: 'xAI Grok 4.5 via grok CLI — default for plan & review; own xAI login',
+    brief: 'xAI Grok 4.5 via grok CLI — recommended for plan & review; own xAI login',
   },
   'google-antigravity/gemini-3.6-flash': {
     slug: 'google-antigravity/gemini-3.6-flash',
@@ -40,7 +40,16 @@ export const MODELS: Record<string, ModelSpec> = {
     efforts: ['low', 'medium', 'high'],
     defaultEffort: 'high',
     brief:
-      'Google Gemini 3.6 Flash via agy — default for implement, also image-gen; own Antigravity login',
+      'Google Gemini 3.6 Flash via agy — recommended for implement, also image-gen; own Antigravity login',
+  },
+  'google-antigravity/gemini-3.1-pro': {
+    slug: 'google-antigravity/gemini-3.1-pro',
+    backend: 'agy',
+    // agy exposes only -high and -low for this class — there is no medium tier.
+    efforts: ['low', 'high'],
+    backendModel: 'gemini-3.1-pro',
+    defaultEffort: 'high',
+    brief: 'Google Gemini 3.1 Pro via agy — heavier reasoning tier; own Antigravity login',
   },
   'google-antigravity/claude-sonnet-4-6': {
     slug: 'google-antigravity/claude-sonnet-4-6',
@@ -68,30 +77,53 @@ export const MODELS: Record<string, ModelSpec> = {
     backend: 'codex',
     backendModel: 'gpt-5.6-sol',
     efforts: ['low', 'medium', 'high', 'xhigh'],
-    brief: 'OpenAI Codex gpt-5.6-sol via codex CLI',
+    brief: 'OpenAI gpt-5.6-sol via codex CLI — frontier agentic coding; own ChatGPT login',
+  },
+  'openai-codex/gpt-5.6-terra': {
+    slug: 'openai-codex/gpt-5.6-terra',
+    backend: 'codex',
+    backendModel: 'gpt-5.6-terra',
+    efforts: ['low', 'medium', 'high', 'xhigh'],
+    brief: 'OpenAI gpt-5.6-terra via codex CLI — balanced, everyday coding; own ChatGPT login',
+  },
+  'openai-codex/gpt-5.6-luna': {
+    slug: 'openai-codex/gpt-5.6-luna',
+    backend: 'codex',
+    backendModel: 'gpt-5.6-luna',
+    efforts: ['low', 'medium', 'high', 'xhigh'],
+    brief: 'OpenAI gpt-5.6-luna via codex CLI — fast and affordable coding; own ChatGPT login',
+  },
+  'anthropic-claude/fable-5': {
+    slug: 'anthropic-claude/fable-5',
+    backend: 'claude',
+    backendModel: 'claude-fable-5',
+    efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
+    defaultEffort: 'high',
+    brief:
+      'Claude Fable 5 via claude CLI — hardest, longest-running work; bills the claude CLI subscription',
+  },
+  'anthropic-claude/opus-5': {
+    slug: 'anthropic-claude/opus-5',
+    backend: 'claude',
+    backendModel: 'claude-opus-5[1m]',
+    efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
+    defaultEffort: 'high',
+    brief:
+      'Claude Opus 5, 1M context via claude CLI — everyday complex work; bills the claude CLI subscription',
   },
   'anthropic-claude/sonnet-5': {
     slug: 'anthropic-claude/sonnet-5',
     backend: 'claude',
     backendModel: 'claude-sonnet-5',
     efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
-    brief: 'Claude Sonnet 5 via claude CLI — bills your Claude subscription',
+    brief: 'Claude Sonnet 5 via claude CLI — routine work; bills the claude CLI subscription',
   },
-  'anthropic-claude/opus-5': {
-    slug: 'anthropic-claude/opus-5',
+  'anthropic-claude/haiku-4-5': {
+    slug: 'anthropic-claude/haiku-4-5',
     backend: 'claude',
-    backendModel: 'claude-opus-5',
+    backendModel: 'claude-haiku-4-5-20251001',
     efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
-    defaultEffort: 'high',
-    brief: 'Claude Opus 5 via claude CLI (default effort: high) — bills subscription',
-  },
-  'anthropic-claude/opus-5-1m': {
-    slug: 'anthropic-claude/opus-5-1m',
-    backend: 'claude',
-    backendModel: 'claude-opus-5[1m]',
-    efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
-    defaultEffort: 'high',
-    brief: 'Claude Opus 5, 1M context via claude CLI — long-context work; bills subscription',
+    brief: 'Claude Haiku 4.5 via claude CLI — quick answers; bills the claude CLI subscription',
   },
 } as const satisfies Record<string, ModelSpec>;
 

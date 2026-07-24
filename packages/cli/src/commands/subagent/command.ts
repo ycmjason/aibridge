@@ -8,8 +8,8 @@ const fullDescription = [
   '',
   'Available models (canonical slug):',
   ...listModelHelpLines(),
-  'Recommended first choice: xai-grok/grok-4.5 (off-budget). The claude-backend slugs are FALLBACKS for',
-  'when the off-budget CLIs are quota-exhausted — they bill your Claude subscription.',
+  'Recommended first choice: xai-grok/grok-4.5. Whichever seat runs on the same provider as the',
+  'agent you orchestrate from is your last resort — it spends the pool you are already burning.',
 ].join('\n');
 
 export const subagent = buildCommand({

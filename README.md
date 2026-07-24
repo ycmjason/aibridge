@@ -63,6 +63,36 @@ Plan files — not their contents — travel between stages, so the loop is near
 - **No API keys.** Delegation runs on the backing CLIs' existing logins, each spending its own quota. (The skill treats a backend that shares your agent's own quota pool as a last resort.)
 - **Models are canonical slugs**: `<vendor>-<cli>/<model>[-<effort>]` — e.g. `xai-grok/grok-4.5`, `google-antigravity/gemini-3.6-flash`, `openai-codex/gpt-5.6-sol-high`, `anthropic-claude/opus-5`. No aliases — not short ones, and not moving vendor aliases like `opus`: every seat pins an exact model version. `aibridge <command> --help` lists every seat.
 
+## Tell your agent when to reach for it
+
+aibridge doesn't decide when to delegate — your agent does, and left alone it will
+mostly keep the work for itself. Put the routing rule in whatever instructions file
+your agent already reads at the start of every session (`AGENTS.md`, `CLAUDE.md`,
+`.cursorrules`, …). Something like:
+
+```markdown
+## Delegation gate — decide before you implement
+
+The moment a task becomes implementation you could fully specify, say the call out
+loud — **solo** or **aibridge** — plus one line of why. Delegating is the default.
+Stay solo only when the edit is smaller than the spec would be, or the work needs
+live judgment, your own session's tools, or tight back-and-forth. Never default to
+solo silently.
+
+Route by size and risk:
+
+- tiny → solo
+- clearly specified and self-contained → `aibridge subagent`
+- large or risky → `aibridge plan` → read and approve the plan file →
+  `aibridge implement` → `aibridge review`
+
+Delegated work is yours to verify: re-run the real gates before trusting a diff.
+Prefer a reviewer from a different model family than whoever implemented.
+```
+
+Tune the seats and thresholds to your own quotas. The value is that the decision is
+explicit and made *before* the work starts, rather than rationalised afterwards.
+
 ## Requirements
 
 - **Node ≥ 24.11**

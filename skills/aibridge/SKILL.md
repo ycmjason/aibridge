@@ -104,11 +104,37 @@ Requires the backing CLIs on `PATH` and authed: **`grok`** (recommended planner/
 
 ## Model seats (recommended choices — pass them explicitly)
 
-- **Planner / reviewer seat: grok** (`xai-grok/grok-4.5`) — recommended for `plan`
-  and `review` — pass it explicitly. Runs on its own xAI login, but aggressively capped (~30
-  req/min, ~1k msgs/day, no local usage probe): run ONE grok stage at a time.
-- **Implementer seat: gemini** (`google-antigravity/gemini-3.6-flash`, effort
-  high) — recommended for `implement` — pass it explicitly. A pure do-er for fully-specified plans.
+`--model` is required on every command; nothing is chosen for you. Rough starting
+points — **not** benchmarks, just what tends to work:
+
+| slug | plan | implement | review | image-gen |
+|---|---|---|---|---|
+| `xai-grok/grok-4.5` | ✅ small–mid, well-scoped | ✅ any fidelity | ✅ | ○ JPEG |
+| `openai-codex/gpt-5.6-sol` | ✅ mid–big, ambiguous | ○ | ✅ | ✅ PNG |
+| `anthropic-claude/opus-5` | ✅ mid–big, ambiguous | ○ | ✅ | ✗ |
+| `google-antigravity/gemini-3.6-flash` | ○ | ✅ needs high–xhigh detail | ○ | ○ JPEG |
+| `anthropic-claude/sonnet-5` | ○ | ✅ needs high detail | ○ | ✗ |
+
+✅ recommended · ○ works · ✗ not supported. For `plan` the qualifier is how much
+ambiguity the seat absorbs; for `implement` it is how specified the plan must be.
+
+**These are rough recommendations, not measurements. If the task doesn't clearly
+fit a row — or the user has said how they want work routed — ask the user rather
+than guessing.**
+
+Other registered seats, same rules: `openai-codex/gpt-5.6-terra` / `-luna`
+(cheaper coding tiers), `anthropic-claude/fable-5` (hardest, longest-running
+work), `anthropic-claude/haiku-4-5` (quick answers),
+`google-antigravity/gemini-3.1-pro` (`-high`/`-low` only), and agy's
+`claude-sonnet-4-6` / `claude-opus-4-6-thinking` / `gpt-oss-120b-medium` —
+Claude- and GPT-grade work on Antigravity's quota, which matters when the
+same-provider seats are the ones you are avoiding. `aibridge <command> --help`
+lists every seat.
+
+- **grok is aggressively capped** (~30 req/min, ~1k msgs/day, no local usage
+  probe): run ONE grok stage at a time. It is the only seat that tolerates a
+  vague brief, so spend it where the input is unclear rather than where a
+  detailed plan already exists.
 - **Keep the reviewer cross-model from the implementer** — a model reviewing
   its own diff shares its own blind spots. The recommended seats already differ; if you
   override one seat, check the other. The same logic applies to you: for work
