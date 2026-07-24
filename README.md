@@ -72,6 +72,10 @@ Plan files — not their contents — travel between stages, so the loop is near
 
 Everything is published under the [`@aibridge`](https://www.npmjs.com/org/aibridge) scope: [`@aibridge/cli`](https://www.npmjs.com/package/@aibridge/cli) (the command), `@aibridge/proc` (spawn/capture), and one driver per backing CLI — `@aibridge/driver-agy`, `@aibridge/driver-grok`, `@aibridge/driver-codex`, `@aibridge/driver-claude` — reusable if you want to drive a single CLI from your own code.
 
+## Security
+
+aibridge executes real delegation — that's the product, and security scanners rightly notice: backing CLIs read/write files and run shell in tools mode, **at the same trust level as the agent you already run**. Nothing gains more access than you granted your agent and those CLIs when you installed them. Task content goes to the delegate's provider (use `--no-tools` for untrusted input — reasoning only, no file/shell access). All packages publish from this public repo via OIDC with [SLSA provenance](https://www.npmjs.com/package/@aibridge/cli), with no install-time scripts.
+
 ## Contributing & development
 
 Dev docs, architecture, and the working agreements for coding agents live in [`AGENTS.md`](AGENTS.md); design history in [`docs/`](docs/). Quick loop:

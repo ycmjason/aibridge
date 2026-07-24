@@ -122,3 +122,20 @@ Requires the backing CLIs on `PATH` and authed: **`grok`** (default planner/revi
   login) is the usual alternate for any seat.
 - Quota preflight runs automatically before every delegation;
   `aibridge quota` is the manual two-second check when planning a pipeline.
+
+## Security & trust model
+
+- aibridge performs real delegation by design: in tools mode the backing CLIs
+  read/write files and run shell — at the SAME trust level as the agent
+  running this skill. Nothing here grants more access than the user already
+  granted their agent and those CLIs when they installed and authed them.
+- Delegation sends the task prompt (and whatever the delegate chooses to read)
+  to the backing CLI's provider. Do not delegate content the user would not
+  send to that provider; use `--no-tools` for untrusted input — the delegate
+  gets no file or shell access, reasoning only.
+- The CLI is `@aibridge/cli` on npm, published with SLSA provenance via OIDC
+  from the public repo (https://github.com/ycmjason/aibridge). Its packages
+  have no install-time scripts and a single runtime dependency tree you can
+  audit.
+- Nothing runs until the user has installed this skill and the CLI executes
+  via npx/npm under their own account.
