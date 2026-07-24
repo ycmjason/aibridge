@@ -1,6 +1,6 @@
 # aibridge
 
-A TypeScript CLI that bridges tasks to non-Claude AI CLIs installed on your machine. Organized as a pnpm monorepo under `packages/*` and published to npm under `@aibridge/*`:
+A TypeScript CLI that bridges tasks to AI CLIs already installed and authed on your machine (Grok, Antigravity/Gemini, Codex, Claude). Organized as a pnpm monorepo under `packages/*` and published to npm under `@aibridge/*`:
 
 - `aibridge plan "<prompt>"` — produce a detailed implementation plan file for a task prompt.
 - `aibridge implement <plan.md>` — execute an implementation plan file with real typecheck + tests.
@@ -10,7 +10,7 @@ A TypeScript CLI that bridges tasks to non-Claude AI CLIs installed on your mach
 
 Models are named by canonical, effort-aware slugs — `<vendor>-<cli>/<model>[-<effort>]`, e.g. `xai-grok/grok-4.5` (default planner/reviewer, via the **Grok CLI**), `google-antigravity/gemini-3.6-flash` (default implementer, via the **Antigravity CLI**, `agy`), `openai-codex/gpt-5.6-sol-high`, `anthropic-claude/opus`. There are no short aliases — always pass the full canonical slug.
 
-It's the execution layer behind the `aibridge` Claude Code skill — one router skill with `plan`, `implement`, `review`, `subagent`, and `image-gen` subskills (see [`skills/`](skills/)): the skill carries the judgment and prompt-craft, this CLI owns the brittle execution (driving the external CLIs and verifying their output).
+It's the execution layer behind the `aibridge` agent skill (installable into Claude Code, Cursor, Codex, and 70+ other agents via the skills CLI) — one router skill with `plan`, `implement`, `review`, `subagent`, and `image-gen` subskills (see [`skills/`](skills/)): the skill carries the judgment and prompt-craft, this CLI owns the brittle execution (driving the external CLIs and verifying their output).
 
 ## Packages
 

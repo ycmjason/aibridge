@@ -13,11 +13,11 @@ Pass a canonical slug to `--model` (no short aliases):
 
 | Canonical Slug | Backend | Description |
 |---|---|---|
-| `xai-grok/grok-4.5` | grok | xAI Grok 4.5 via grok CLI — DEFAULT; off-budget |
-| `google-antigravity/gemini-3.6-flash` | agy | Google Gemini 3.6 Flash via agy (default effort: high); off-budget |
-| `google-antigravity/claude-sonnet-4-6` | agy | Claude Sonnet 4.6 (thinking) via agy; off-budget |
-| `google-antigravity/claude-opus-4-6-thinking` | agy | Claude Opus 4.6 (thinking) via agy; off-budget heavyweight |
-| `google-antigravity/gpt-oss-120b-medium` | agy | GPT-OSS 120B (medium) via agy; off-budget |
+| `xai-grok/grok-4.5` | grok | xAI Grok 4.5 via grok CLI — DEFAULT; own xAI login |
+| `google-antigravity/gemini-3.6-flash` | agy | Google Gemini 3.6 Flash via agy (default effort: high); own Antigravity login |
+| `google-antigravity/claude-sonnet-4-6` | agy | Claude Sonnet 4.6 (thinking) via agy; own Antigravity login |
+| `google-antigravity/claude-opus-4-6-thinking` | agy | Claude Opus 4.6 (thinking) via agy; own Antigravity login — heavyweight |
+| `google-antigravity/gpt-oss-120b-medium` | agy | GPT-OSS 120B (medium) via agy; own Antigravity login |
 | `openai-codex/gpt-5.6-sol` | codex | OpenAI Codex gpt-5.6-sol via codex CLI |
 | `anthropic-claude/sonnet` | claude | Claude Sonnet via claude CLI — bills your Claude subscription |
 | `anthropic-claude/opus` | claude | Claude Opus via claude CLI (default effort: high) — bills subscription |
@@ -31,7 +31,7 @@ Effort suffixes can be appended to slugs supporting them (e.g. `xai-grok/grok-4.
 
 ## B. When & how to delegate one task well
 
-**The point is leverage on two axes: speed and cost.** A delegated task runs off-budget on its own login. Default to delegating well-defined, self-contained work.
+**The point is leverage on two axes: speed and cost.** A delegated task runs on the backing CLI's own login and quota — typically separate from the orchestrating agent's. Default to delegating well-defined, self-contained work.
 
 Write prompts for a capable stranger:
 1. **Self-contained** — paste the code/spec to act on; never reference "what we discussed".
@@ -56,4 +56,4 @@ Keep work native when it requires:
 
 ## E. Driving delegates from an orchestration tool
 
-When running from an orchestrator, pass prompts to `aibridge subagent` via thin passthrough agents to perform off-budget implementation work while maintaining native control.
+When running from an orchestrator, pass prompts to `aibridge subagent` via thin passthrough agents to perform delegated implementation work on the backends' own quotas while maintaining native control.

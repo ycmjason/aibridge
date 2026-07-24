@@ -2,7 +2,7 @@
   "name": "aibridge",
   "version": "0.0.0",
   "private": true,
-  "description": "aibridge — Claude Code skill + TypeScript CLI that bridges tasks to non-Claude AI CLIs.",
+  "description": "aibridge — agent skill + TypeScript CLI that bridges tasks to AI CLIs installed on your machine.",
   "type": "module",
   "engines": {
     "node": ">=24.11"
