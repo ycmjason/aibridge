@@ -19,25 +19,19 @@ Your agent is one model, from one provider. Your machine probably has several mo
 
 ## Install
 
-**1. The CLI** (what does the work):
-
-```bash
-npm i -g @aibridge/cli
-```
-
-**2. The skill** (what teaches your agent to use it well):
+One step — install the skill into your agent(s):
 
 ```bash
 npx skills add ycmjason/aibridge
 ```
 
-That's it. Ask your agent to "use aibridge" — or invoke it yourself:
+That's it. The skill runs the CLI on demand via `npx -y @aibridge/cli` — nothing else to install. Ask your agent to "use aibridge", or try it yourself:
 
 ```bash
-aibridge subagent "summarize the architecture of this repo"
+npx -y @aibridge/cli subagent "summarize the architecture of this repo"
 ```
 
-<sup>No global install? Every command also runs as `npx -y @aibridge/cli <command>`.</sup>
+<sup>Want the `aibridge` command on your PATH for manual use? `npm i -g @aibridge/cli` (optional).</sup>
 
 ## Commands
 

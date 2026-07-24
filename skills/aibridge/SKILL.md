@@ -31,6 +31,7 @@ argument-hint: "[plan|implement|review|subagent|image-gen|runs|quota] [options]"
 user-invocable: true
 allowed-tools:
   - Bash(aibridge *)
+  - Bash(npx -y @aibridge/cli *)
 ---
 
 # aibridge
@@ -46,32 +47,28 @@ own quota (see Model seats for the one case where that quota is yours).
 ## Running it
 
 ```bash
-aibridge <command> [options]
+aibridge <command> [options]              # if `aibridge` is on PATH
+npx -y @aibridge/cli <command> [options]  # zero-install — works everywhere
 ```
 
-The CLI is installed on `PATH` via the `@aibridge/cli` npm package. Requires Node ≥24.11.
+No installation step is required: the second form fetches the CLI on demand from
+npm. The reference docs below write every command as `aibridge <command>` — if
+`aibridge` is not on PATH, substitute `npx -y @aibridge/cli` for `aibridge`;
+everything else is identical. Requires Node ≥24.11.
 
-### Setup
+### Setup (a one-time probe, not an install)
 
-- Minimum CLI version: **0.1.0**. The skill expects `aibridge` version ≥ 0.1.0.
-- Check installed version by running:
-  ```bash
-  aibridge --version
-  ```
-  Compare the printed version string against `0.1.0` using semver rules.
-- If `aibridge` is missing or the version is lower than `0.1.0`:
-  - Ask the user to install/upgrade the CLI globally:
-    ```bash
-    npm i -g @aibridge/cli
-    ```
-  - **Agents: ask the user before installing globally.** Do not run global installation commands silently.
-- If `node --version` is below `24.11`: reinstalling the CLI will not help — ask the
-  user to upgrade Node (e.g. via their version manager: `nvm install 24` / `mise use node@24`),
-  then re-check `aibridge --version`.
-- If global installs are unavailable or policy-blocked, ask the user before falling back to:
-  ```bash
-  npx -y @aibridge/cli <command> [options]
-  ```
+- Minimum CLI version: **0.1.0**.
+- Probe: run `aibridge --version`; if the command is missing, run
+  `npx -y @aibridge/cli --version` and use the npx form from then on. Compare
+  the printed version against `0.1.0` (semver).
+- Below minimum via npx (stale cache): re-run as `npx -y @aibridge/cli@latest`.
+  Below minimum via a global install: suggest the user update with
+  `npm i -g @aibridge/cli`.
+- If `node --version` is below `24.11`: the CLI cannot run — ask the user to
+  upgrade Node (e.g. `nvm install 24` / `mise use node@24`).
+- Optional, for users who want the `aibridge` command directly on PATH:
+  `npm i -g @aibridge/cli`. **Ask the user before running global installs.**
 
 Requires the backing CLIs on `PATH` and authed: **`grok`** (default planner/reviewer), **`agy`** (default implementer), **`codex`** (image-gen + `openai-codex/*` delegation), and optionally **`claude`** for the `anthropic-claude/*` delegation tier.
 
