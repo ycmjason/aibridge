@@ -55,19 +55,27 @@ importers:
         version: 4.1.9(@types/node@25.9.2)(vite@8.1.2(@types/node@25.9.2)(esbuild@0.28.1)(jiti@2.7.0))
 
   packages/agy:
-    devDependencies:
+    dependencies:
       '@aibridge/proc':
         specifier: workspace:*
         version: link:../proc
+    devDependencies:
+      tsdown:
+        specifier: 'catalog:'
+        version: 0.22.14(typescript@5.9.3)
 
   packages/claude:
-    devDependencies:
+    dependencies:
       '@aibridge/proc':
         specifier: workspace:*
         version: link:../proc
+    devDependencies:
+      tsdown:
+        specifier: 'catalog:'
+        version: 0.22.14(typescript@5.9.3)
 
   packages/cli:
-    devDependencies:
+    dependencies:
       '@aibridge/agy':
         specifier: workspace:*
         version: link:../agy
@@ -86,23 +94,36 @@ importers:
       '@stricli/core':
         specifier: 'catalog:'
         version: 1.3.0
+    devDependencies:
       tsdown:
         specifier: 'catalog:'
         version: 0.22.14(typescript@5.9.3)
 
   packages/codex:
-    devDependencies:
+    dependencies:
       '@aibridge/proc':
         specifier: workspace:*
         version: link:../proc
+    devDependencies:
+      tsdown:
+        specifier: 'catalog:'
+        version: 0.22.14(typescript@5.9.3)
 
   packages/grok:
-    devDependencies:
+    dependencies:
       '@aibridge/proc':
         specifier: workspace:*
         version: link:../proc
+    devDependencies:
+      tsdown:
+        specifier: 'catalog:'
+        version: 0.22.14(typescript@5.9.3)
 
-  packages/proc: {}
+  packages/proc:
+    devDependencies:
+      tsdown:
+        specifier: 'catalog:'
+        version: 0.22.14(typescript@5.9.3)
 
 packages:
 

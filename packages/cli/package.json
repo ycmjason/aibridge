@@ -1,21 +1,59 @@
 {
   "name": "@aibridge/cli",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.0.1",
+  "description": "CLI that bridges tasks to non-Claude AI CLIs (plan / implement / review / subagent / image-gen)",
   "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=24.11"
+  },
+  "keywords": [
+    "aibridge",
+    "cli"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fishballapp/aibridge.git",
+    "directory": "packages/cli"
+  },
+  "homepage": "https://github.com/fishballapp/aibridge#readme",
+  "bugs": {
+    "url": "https://github.com/fishballapp/aibridge/issues"
+  },
   "exports": {
     ".": "./src/index.ts"
   },
+  "bin": {
+    "aibridge": "./src/cli.ts"
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
   "scripts": {
     "build": "tsdown"
   },
-  "devDependencies": {
+  "dependencies": {
     "@aibridge/proc": "workspace:*",
     "@aibridge/agy": "workspace:*",
     "@aibridge/grok": "workspace:*",
     "@aibridge/codex": "workspace:*",
     "@aibridge/claude": "workspace:*",
-    "@stricli/core": "catalog:",
+    "@stricli/core": "catalog:"
+  },
+  "devDependencies": {
     "tsdown": "catalog:"
+  },
+  "publishConfig": {
+    "access": "public",
+    "bin": {
+      "aibridge": "./dist/cli.mjs"
+    },
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.mts",
+        "import": "./dist/index.mjs"
+      }
+    }
   }
 }

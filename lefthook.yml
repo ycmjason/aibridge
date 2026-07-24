@@ -6,9 +6,6 @@ pre-commit:
       glob: "*.{js,ts,cjs,mjs,d.cts,d.mts,jsx,tsx,json,jsonc,css}"
       run: pnpm biome check --write --no-errors-on-unmatched --files-ignore-unknown=true {staged_files}
       stage_fixed: true
-    build-skill:
-      glob: "{packages/**/*,package.json,pnpm-workspace.yaml,pnpm-lock.yaml}"
-      run: pnpm build:skill && git add skills/aibridge/scripts/cli.mjs
 
 pre-push:
   commands:

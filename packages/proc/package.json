@@ -1,9 +1,47 @@
 {
   "name": "@aibridge/proc",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.0.1",
+  "description": "Process helpers (spawn/capture/timeout) for aibridge backend drivers",
   "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=24.11"
+  },
+  "keywords": [
+    "aibridge",
+    "process",
+    "spawn"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fishballapp/aibridge.git",
+    "directory": "packages/proc"
+  },
+  "homepage": "https://github.com/fishballapp/aibridge#readme",
+  "bugs": {
+    "url": "https://github.com/fishballapp/aibridge/issues"
+  },
   "exports": {
     ".": "./src/index.ts"
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsdown"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "tsdown": "catalog:"
+  },
+  "publishConfig": {
+    "access": "public",
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.mts",
+        "import": "./dist/index.mjs"
+      }
+    }
   }
 }

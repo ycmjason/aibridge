@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import { runCli } from './app.ts';
 import { buildContext } from './context.ts';
 

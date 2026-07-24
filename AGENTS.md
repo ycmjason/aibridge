@@ -1,8 +1,8 @@
 # aibridge — AGENTS.md
 
-`aibridge` is a TypeScript CLI that bridges tasks to **non-Claude AI CLIs** already installed and authed on this machine. Workspace driver packages (`proc`, `agy`, `grok`, `codex`, `claude`) maintain zero external runtime dependencies; app package dependencies (`@stricli/core`) are inlined into the committed skill bundle (`skills/aibridge/scripts/cli.mjs`), keeping the skill artifact self-contained. The codebase is organized as a pnpm monorepo under `packages/*`:
+`aibridge` is a TypeScript CLI that bridges tasks to **non-Claude AI CLIs** already installed and authed on this machine. Workspace driver packages (`proc`, `agy`, `grok`, `codex`, `claude`) and app package (`cli`) are published to npm under `@aibridge/*`. The codebase is organized as a pnpm monorepo under `packages/*`:
 
-- **`node packages/cli/src/cli.ts plan`** (or skill artifact **`node skills/aibridge/scripts/cli.mjs plan`**) → a delegate model studies the repo and writes a detailed implementation plan to a FILE (default planner **`xai-grok/grok-4.5`**, off-budget). The orchestrator reads/edits/approves it — plans are passed between stages as paths, not content.
+- **`node packages/cli/src/cli.ts plan`** (or installed **`aibridge plan`**) → a delegate model studies the repo and writes a detailed implementation plan to a FILE (default planner **`xai-grok/grok-4.5`**, off-budget). The orchestrator reads/edits/approves it — plans are passed between stages as paths, not content.
 - **`node packages/cli/src/cli.ts implement`** → a delegate model implements a plan file in place, running the project's real typecheck/tests (default implementer **`google-antigravity/gemini-3.6-flash`** via `agy`, off-budget). Prints the delegate's summary + `git diff --stat`.
 - **`node packages/cli/src/cli.ts review`** → a delegate model reviews the working-tree diff against a base ref — with `--plan <file>` as the contract, over-reach is a finding — writing the full report to a file; stdout is just the verdict line (`PASS` / `FINDINGS: …`) + path. With a clean tree and `--plan`, it reviews the plan itself (pre-implementation gate).
 - **`node packages/cli/src/cli.ts subagent`** → delegate a self-contained task to another model through the canonical registry: default **`xai-grok/grok-4.5`** via the **Grok CLI** (off-budget on its xAI login; ~30 req/min + ~1k msgs/day caps, one run at a time); **`google-antigravity/gemini-3.6-flash`** via the **Antigravity CLI** (`agy`, off-budget) when grok is capped/dead; **`openai-codex/gpt-5.6-sol`** via the **Codex CLI** (off-budget, ChatGPT login); last-resort **`anthropic-claude/sonnet`** / **`anthropic-claude/opus`** via the **claude CLI** (bill the Claude subscription — for when the off-budget CLIs are quota-dead).
@@ -10,7 +10,7 @@
 
 Model slugs are canonical `<vendor>-<cli>/<model>[-<effort>]` (e.g. `openai-codex/gpt-5.6-sol-high`); there are NO short aliases — always pass the full slug. Effort in the slug maps to each backend's own knob; an un-suffixed slug uses the backend's default.
 
-It is the execution layer for the `aibridge` agent skill — one router skill with `plan` + `implement` + `review` + `subagent` + `image-gen` subskills (under [`skills/`](skills/), dispatched from `skills/aibridge/reference/`): the skill carries the *judgment / prompt-craft*, this CLI owns the *brittle execution* — driving the external CLIs and verifying their output. The skill ships a committed, self-contained ESM bundle at `skills/aibridge/scripts/cli.mjs` built with `pnpm build:skill`.
+It is the execution layer for the `aibridge` agent skill — one router skill with `plan` + `implement` + `review` + `subagent` + `image-gen` subskills (under [`skills/`](skills/), dispatched from `skills/aibridge/reference/`): the skill carries the *judgment / prompt-craft*, while the CLI on `PATH` (`@aibridge/cli`) owns the *brittle execution* — driving the external CLIs and verifying their output.
 
 ## Working style — act as Jason's CTO (orchestrated three-verb flow)
 
@@ -40,21 +40,24 @@ say so unprompted and propose the cleanup — don't wait to be asked.
 
 ## Hard rules
 
-- **Node 24.11+, native TypeScript in packages. NO build step for dev (`node packages/cli/src/cli.ts`), NO `tsx`, NO `ts-node`.** Run `.ts` files directly with `node` (type-stripping is on by default in Node 24). `tsc` is for type-checking only (`pnpm typecheck`).
-- **Committed skill bundle (`skills/aibridge/scripts/cli.mjs`).** Generated via `pnpm build:skill` (`tsdown`), self-contained for Vercel skills copy deployment.
-- **App runtime dependencies must be inlined in the skill bundle.** Any dependency of `@aibridge/cli` must be listed in `tsdown.config.ts` under `deps.alwaysBundle` so the generated `cli.mjs` remains fully self-contained. `onlyImport: []` enforces this in CI.
+- **Node 24.11+, native TypeScript in packages for dev. NO build step for dev (`node packages/cli/src/cli.ts`), NO `tsx`, NO `ts-node`.** Run `.ts` files directly with `node` (type-stripping is on by default in Node 24). `tsc` is for type-checking only (`pnpm typecheck`).
 - **Erasable syntax only** — Node strips types, it does not transform them: no `enum`, no `namespace` with runtime members, no parameter properties, no decorators. `tsconfig` enforces this via `erasableSyntaxOnly`.
 - **ESM with explicit `.ts` import extensions** (e.g. `import { app } from "./app.ts"`). `verbatimModuleSyntax` is on → use `import type` for type-only imports.
 - **pnpm only, via corepack.** `corepack use pnpm@latest` manages the pinned `packageManager`. Don't use npm or yarn here.
+- **Published packages use real `dependencies`.** Dependencies use `workspace:*` / `catalog:` in workspace manifests and are rewritten to concrete versions on publish.
+- **Per-package `dist/` builds.** Each package builds to `dist/` via tsdown. `publishConfig` overrides exports and bin for published packages.
+- **Root stays `private: true`. Version bump = release trigger** for the OIDC publish workflow on `main`.
+- **Skill is prose-only.** The skill wraps the `aibridge` CLI on `PATH`.
 
 ## Commands
 
 | | |
 |---|---|
-| Run the CLI (dev) | `node packages/cli/src/cli.ts <args>` or `pnpm aibridge <args>` |
-| Run the skill bundle | `node skills/aibridge/scripts/cli.mjs <args>` |
+| Run CLI (dev) | `node packages/cli/src/cli.ts <args>` or `pnpm aibridge <args>` |
+| Run CLI (global link) | `aibridge <args>` after one-time `pnpm link --global` from `packages/cli` |
+| Run CLI (published) | `aibridge <args>` or `npx -y @aibridge/cli <args>` |
 | Help | `node packages/cli/src/cli.ts --help` |
-| Build skill bundle | `pnpm build:skill` |
+| Build all dists | `pnpm build` |
 | Plan | `pnpm aibridge plan "<task prompt>" [--out <file>]` |
 | Implement | `pnpm aibridge implement <plan.md>` |
 | Review | `pnpm aibridge review [--plan <plan.md>] [--base <ref>]` |
@@ -63,12 +66,19 @@ say so unprompted and propose the cleanup — don't wait to be asked.
 | Quota (all backends) | `pnpm aibridge quota [--json]` — agy group windows (weekly+5h) & per-model, codex 5h/weekly, claude session/weekly. Check BEFORE delegating: agy quota is shared per model GROUP (all Gemini tiers drain together) |
 | Check / Type-check / Repo / Test | `pnpm check` · `pnpm typecheck` · `pnpm repojj:check` · `pnpm test` |
 
+## Dev-flow
+
+- One-time from repo: `cd packages/cli && pnpm link --global` -> global `aibridge` bin points at `./src/cli.ts` (shebang). Node realpath escapes `node_modules`, so native type-stripping works with no rebuild loop.
+- `pnpm aibridge` root script remains for repo-local invocation without a global link.
+- `pnpm build` builds dist outputs for publish/CI smoke testing.
+- `post-commit` hook refreshes global skill install when `skills/aibridge/` changes.
+
 ## Architecture (@stricli/core + workspace packages)
 
 Command orchestration uses **`@stricli/core`** (`buildCommand` / `buildRouteMap` / `buildApplication` / `run`). Strict layering — each layer only imports downward:
 
 - `packages/cli/src/cli.ts` — thin entry: builds context and calls `runCli(buildContext(process), process.argv.slice(2))` (from `app.ts`).
-- `packages/cli/src/app.ts` — defines route map and application (`buildApplication`), exports `app` and `runCli(ctx, argv)` wrapper which calls `run(app, argv, ctx)` and normalizes exit codes.
+- `packages/cli/src/app.ts` — defines route map and application (`buildApplication`), exports `app` and `runCli(ctx, argv)` wrapper which calls `run(app, argv, ctx)` and normalizes exit codes. `@stricli/core` is a real runtime dependency of `@aibridge/cli`.
 - `packages/cli/src/context.ts` — `LocalContext extends CommandContext`, carrying `process`.
 - `packages/cli/src/exitCode.ts` — `normalizeExitCode`: normalizes stricli's negative `ExitCode`s to Unix-style exit codes (0/1/2/3).
 - `packages/cli/src/commands/<name>/command.ts` — command entry: exports stricli `buildCommand({ func, parameters, docs })` spec.
@@ -103,7 +113,7 @@ This repo's remote is **`git@github.com:fishballapp/aibridge.git`** (branch `mai
 
 **After any meaningful change, commit and push — you do not need to ask.** Keep commits small and messages clear.
 
-- **The global skill install auto-refreshes on commit.** A `post-commit` hook re-runs `pnpm skill:install` (backgrounded, logged to `/tmp/aibridge-skill-install.log`) whenever a commit touches `skills/aibridge/`; run it manually to sync uncommitted edits. Hooks are wired on `pnpm install` via the `prepare` script: a `pre-commit` hook runs `biome check` and `build-skill` on staged files, and a `pre-push` hook runs `pnpm typecheck`.
+- **The global skill install auto-refreshes on commit.** A `post-commit` hook re-runs `pnpm skill:install` (backgrounded, logged to `/tmp/aibridge-skill-install.log`) whenever a commit touches `skills/aibridge/`; run it manually to sync uncommitted edits. Hooks are wired on `pnpm install` via the `prepare` script: a `pre-commit` hook runs `biome check` on staged files, and a `pre-push` hook runs `pnpm typecheck`.
 
 End commit messages with a `Co-Authored-By` trailer naming the agent/model that did the work, e.g.:
 

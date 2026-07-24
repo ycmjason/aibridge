@@ -1,12 +1,49 @@
 {
   "name": "@aibridge/codex",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.0.1",
+  "description": "OpenAI Codex CLI driver for aibridge",
   "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=24.11"
+  },
+  "keywords": [
+    "aibridge",
+    "codex",
+    "openai"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fishballapp/aibridge.git",
+    "directory": "packages/codex"
+  },
+  "homepage": "https://github.com/fishballapp/aibridge#readme",
+  "bugs": {
+    "url": "https://github.com/fishballapp/aibridge/issues"
+  },
   "exports": {
     ".": "./src/index.ts"
   },
-  "devDependencies": {
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsdown"
+  },
+  "dependencies": {
     "@aibridge/proc": "workspace:*"
+  },
+  "devDependencies": {
+    "tsdown": "catalog:"
+  },
+  "publishConfig": {
+    "access": "public",
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.mts",
+        "import": "./dist/index.mjs"
+      }
+    }
   }
 }

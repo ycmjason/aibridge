@@ -1,3 +1,4 @@
+import { createRequire } from 'node:module';
 import { buildApplication, buildRouteMap, run } from '@stricli/core';
 import { imageGen } from './commands/image-gen/command.ts';
 import { implement } from './commands/implement/command.ts';
@@ -8,6 +9,9 @@ import { runs } from './commands/runs/command.ts';
 import { subagent } from './commands/subagent/command.ts';
 import type { LocalContext } from './context.ts';
 import { normalizeExitCode } from './exitCode.ts';
+
+const require = createRequire(import.meta.url);
+const { version } = require('../package.json') as { version: string };
 
 const BRIEF =
   'Bridge tasks to non-Claude AI CLIs — a plan → implement → review workflow, task delegation, and image generation (codex gpt-image-2 / grok Imagine).';
@@ -29,6 +33,9 @@ const routes = buildRouteMap({
 
 export const app = buildApplication(routes, {
   name: 'aibridge',
+  versionInfo: {
+    currentVersion: version,
+  },
   scanner: {
     // Accept --no-preflight / --no-tools while flag keys stay camelCase in TS
     caseStyle: 'allow-kebab-for-camel',

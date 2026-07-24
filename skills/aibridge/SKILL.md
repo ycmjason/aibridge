@@ -25,7 +25,7 @@ description: >-
 argument-hint: "[plan|implement|review|subagent|image-gen|runs|quota] [options]"
 user-invocable: true
 allowed-tools:
-  - Bash(node *)
+  - Bash(aibridge *)
 ---
 
 # aibridge
@@ -37,23 +37,35 @@ token budget**.
 
 ## Running it
 
-The CLI ships **inside this skill** as a committed, self-contained ESM bundle that
-**Node ≥24** runs directly with zero dependencies. Invoke it from this
-skill's own directory:
-
 ```bash
-node <skill-dir>/scripts/cli.mjs <command> [options]
+aibridge <command> [options]
 ```
 
-Bundled third-party code is listed in [THIRD-PARTY-LICENSES](THIRD-PARTY-LICENSES).
+The CLI is installed on `PATH` via the `@aibridge/cli` npm package. Requires Node ≥24.11.
 
-`<skill-dir>` is the directory this `SKILL.md` lives in (resolve it to an absolute
-path). For brevity the reference files below write the command as
-`aibridge <command> …` — **substitute the `node <skill-dir>/scripts/cli.mjs`
-invocation**. Requires the backing CLIs on `PATH` and authed: **`grok`** (default
-planner/reviewer), **`agy`** (default implementer), **`codex`** (image-gen +
-`openai-codex/*` delegation), and optionally **`claude`** for the on-budget
-fallback tier.
+### Setup
+
+- Minimum CLI version: **0.1.0**. The skill expects `aibridge` version ≥ 0.1.0.
+- Check installed version by running:
+  ```bash
+  aibridge --version
+  ```
+  Compare the printed version string against `0.1.0` using semver rules.
+- If `aibridge` is missing or the version is lower than `0.1.0`:
+  - Ask the user to install/upgrade the CLI globally:
+    ```bash
+    npm i -g @aibridge/cli
+    ```
+  - **Agents: ask the user before installing globally.** Do not run global installation commands silently.
+- If `node --version` is below `24.11`: reinstalling the CLI will not help — ask the
+  user to upgrade Node (e.g. via their version manager: `nvm install 24` / `mise use node@24`),
+  then re-check `aibridge --version`.
+- If global installs are unavailable or policy-blocked, ask the user before falling back to:
+  ```bash
+  npx -y @aibridge/cli <command> [options]
+  ```
+
+Requires the backing CLIs on `PATH` and authed: **`grok`** (default planner/reviewer), **`agy`** (default implementer), **`codex`** (image-gen + `openai-codex/*` delegation), and optionally **`claude`** for the on-budget fallback tier.
 
 ## Subcommands
 
@@ -83,8 +95,7 @@ fallback tier.
      itself.
 
    If genuinely ambiguous, show the table above and ask.
-3. **Unsure of the current flags?** Run `node <skill-dir>/scripts/cli.mjs <command>
-   --help` — the surface grows over time (new models, new flags).
+3. **Unsure of the current flags?** Run `aibridge <command> --help` — the surface grows over time (new models, new flags).
 
 ## Model seats (defaults encode this — keep it)
 

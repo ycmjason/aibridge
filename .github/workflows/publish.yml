@@ -1,13 +1,15 @@
-name: CI
+name: Publish
 
 on:
-  pull_request:
   push:
-    branches:
-      - main
+    branches: [main]
+
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  ci:
+  verify:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -104,3 +106,73 @@ jobs:
 
           npm install -D "@types/node@$types_node_ver"
           "$tsc_bin" -p tsconfig.json
+      - name: Actionlint
+        uses: rhysd/actionlint-action@471329cd5014389622d10c05fe2cbebe9eb2aa02 # v1.17.0
+
+  publish:
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # OIDC npm provenance
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@39370e3970a6d050c380004172534081dd144d93 # v4.1.0
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      - name: Enable Corepack
+        run: corepack enable
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Build all packages
+        run: pnpm build
+      - name: Publish packages (dependency order)
+        run: |
+          # First-ever publish of each package CANNOT use OIDC trusted publishing:
+          # npm requires the package to already exist before a Trusted Publisher can
+          # be configured. Bootstrap once from a logged-in machine:
+          #   pnpm publish --access public --no-git-checks
+          # from each package dir (order: proc agy grok codex claude cli), then in
+          # each package's npmjs.com settings add Trusted Publisher:
+          #   repo fishballapp/aibridge, workflow publish.yml
+          # Subsequent version bumps on main publish automatically via this job.
+          set -euo pipefail
+          for pkg in proc agy grok codex claude cli; do
+            dir="packages/$pkg"
+            name="$(node -p "require('./$dir/package.json').name")"
+            version="$(node -p "require('./$dir/package.json').version")"
+
+            echo "Checking registry for package $name..."
+            set +e
+            pkg_info="$(npm view "$name" version --json 2>&1)"
+            view_status=$?
+            set -e
+
+            if [ $view_status -ne 0 ]; then
+              if echo "$pkg_info" | grep -q "E404"; then
+                echo "skip $name (never published — manual bootstrap required)"
+                continue
+              else
+                echo "Error checking package $name on npm: $pkg_info"
+                exit 1
+              fi
+            fi
+
+            set +e
+            ver_info="$(npm view "$name@$version" version --json 2>&1)"
+            ver_status=$?
+            set -e
+
+            if [ $ver_status -eq 0 ]; then
+              echo "skip $name@$version (already on registry)"
+            else
+              if echo "$ver_info" | grep -q "E404"; then
+                echo "publish $name@$version"
+                (cd "$dir" && pnpm publish --provenance --access public --no-git-checks)
+              else
+                echo "Error checking $name@$version on npm: $ver_info"
+                exit 1
+              fi
+            fi
+          done

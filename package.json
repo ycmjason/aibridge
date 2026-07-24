@@ -9,7 +9,7 @@
   },
   "scripts": {
     "aibridge": "node packages/cli/src/cli.ts",
-    "build:skill": "pnpm --filter @aibridge/cli build",
+    "build": "pnpm -r build",
     "check": "biome check .",
     "check:fix": "biome check --write .",
     "typecheck": "tsc -b",

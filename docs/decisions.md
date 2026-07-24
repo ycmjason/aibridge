@@ -13,16 +13,15 @@ router skill (`skills/aibridge/`) exposing subskills (loaded on demand from `ref
 - `subagent` → delegate a self-contained task to a non-Claude model via canonical registry.
 - `image-gen` → generate an image with gpt-image-2.
 
-The skill carries the *judgment / prompt-craft*; this CLI owns the *brittle execution* (driving external CLIs and verifying their output).
+The skill carries the *judgment / prompt-craft*; the CLI on `PATH` (`@aibridge/cli`) owns the *brittle execution* (driving external CLIs and verifying their output).
 
 > **Note:** The original welded plan-gate (which combined review, expansion, and implementation into one recursive codex call) was replaced by the decoupled three-verb workflow (`plan` → `implement` → `review`).
 
-## Why a skill + bundled CLI, and NOT an MCP server
+## Why a skill + CLI on PATH, and NOT an MCP server
 
-We evaluated three shapes: prose-only skill, **skill + bundled CLI** (the
-`impeccable` / `seo-audit` pattern), and an MCP server. We chose skill + CLI.
+We evaluated three shapes: prose-only skill, **skill + CLI on PATH**, and an MCP server. We chose skill + CLI on PATH.
 
-| | prose-only | **skill + bundled CLI** | MCP server |
+| | prose-only | **skill + CLI on PATH** | MCP server |
 |---|---|---|---|
 | Brittle logic in deterministic code | ✗ | ✓ (this CLI) | ✓ |
 | Prompt-craft as rich, on-demand context | ✓ | ✓ (`skills/`) | ✗ tool descriptions only, always in context |
@@ -36,7 +35,7 @@ Decisive points:
   routinely run minutes. Keeping a call alive needs the timeout raised *before*
   session start plus server-emitted progress notifications that Claude Code
   "displays but doesn't auto-extend the timeout" for — fragile. The Bash tool
-  runs a multi-minute `node …` with no such ceremony.
+  runs a multi-minute `aibridge …` with no such ceremony.
 - MCP's one unique win — cross-client reuse (Desktop/IDE) — isn't needed; these
   are Claude Code skills.
 - Anthropic's own guidance matches the split **[web]**: *the Skill teaches HOW; the
@@ -48,16 +47,19 @@ same CLI in a thin MCP server then — the execution core stays unchanged.
 
 ## Decisions worth knowing (easy to revisit)
 
-- **`@stricli/core` for command orchestration** (superseded **node:util parseArgs**, 2026-07-24 — see the reversal entry below); run directly as `node packages/cli/src/cli.ts <command>`.
-- **Node 24+ native TypeScript** — `.ts` run directly, no `tsx`/build step. See
+- **Two-step distribution: npm CLI + prose skill** (2026-07-24) — Supersedes committed `skills/aibridge/scripts/cli.mjs` bundle and Vercel copy-only constraint.
+  - *Rationale:* User transparency (user knows what binary they install), standard "skill wraps CLI on `PATH`" pattern, and eliminates build/freshness-gate apparatus (`pre-commit.build-skill`, CI bare-copy & `import.meta` ban, `THIRD-PARTY-LICENSES` duplication).
+  - *Architecture:* Six public `@aibridge/*` packages (`proc`, `agy`, `grok`, `codex`, `claude`, `cli`) published to npm with real `dependencies` and per-package `dist/` builds via `tsdown`. `@stricli/core` is a real runtime dependency of `@aibridge/cli` (not inlined).
+  - *Publishing:* OIDC version-triggered publishing workflow on `main` (`.github/workflows/publish.yml`), modeled on `fishballapp/acme`. Skip-if-exists publishing allows independent package releases via version bumps. First publish requires a one-time manual 0.0.1 bootstrap before Trusted Publisher configuration.
+- **`@stricli/core` for command orchestration** (superseded **node:util parseArgs**, 2026-07-24 — see the reversal entry below); run directly as `node packages/cli/src/cli.ts <command>` or `aibridge <command>`.
+- **Node 24+ native TypeScript** — `.ts` run directly in dev, no `tsx`/build step. See
   `AGENTS.md` for the hard rules (erasable syntax only, `.ts` import extensions).
 - **Canonical Model Registry** (`packages/cli/src/models.ts`) — mapping canonical provider slugs (e.g. `xai-grok/grok-4.5`, `google-antigravity/gemini-3.6-flash`, `openai-codex/gpt-5.6-sol`) to backend CLI execution specifications.
-- **Skills live in-repo** (`skills/`) as the single source; wire them into
-  `~/.claude/skills/` (symlink) once the impls land.
-- **Zero-dependency drivers + inlined stricli app** — workspace driver packages remain zero external runtime dependencies; command orchestration in `@aibridge/cli` uses `@stricli/core@1.3.0` inlined via `tsdown` into `skills/aibridge/scripts/cli.mjs`.
+- **Skills live in-repo** (`skills/`) as the single source; installed via `skills add` or global skill installation.
+- **Zero-dependency drivers + stricli app** — workspace driver packages remain zero external runtime dependencies; `@aibridge/cli` depends on drivers and `@stricli/core`. > **Superseded (bundle side) by Two-step distribution (2026-07-24)**
 - **Three-verb reshape** (2026-07-24) — the welded `plan` gate (reviewer reviews + expands + recursively delegates the build in ONE codex/grok call) was replaced by orchestrator-driven `plan` → `implement` → `review`. Rationale: the orchestrating agent never saw the expanded plan before code was written, and review was welded to the pre-implementation position (no post-implementation cross-model review existed). Stages now pass FILE PATHS, not content — the orchestrator's output tokens are the scarce resource. Same change introduced the canonical effort-aware slugs (`<vendor>-<cli>/<model>[-<effort>]`, effort mapped per backend: agy bakes it into the model id, grok `--reasoning-effort`, claude `--effort`, codex `-c model_reasoning_effort=`), the shared `delegate.ts` engine (impls contain zero backend switches), and codex as a first-class delegation backend instead of a special-cased reviewer.
-- **Monorepo split into workspace packages + committed skill bundle** (2026-07-24) — Split CLI into workspace packages under `packages/*` (`proc`, `agy`, `grok`, `codex`, `claude`, `aibridge`). `skills/aibridge/` remains a judgment-only skill directory containing a single committed, self-contained ESM bundle `scripts/cli.mjs` built with `tsdown`. Rationale: Vercel skills CLI copies only the skill directory from git, requiring a zero-node_modules bundle; monorepo structure cleanly separates driver mechanics from CLI orchestration via a structural `AgentCliDriver` contract. `AGY_CANONICAL_TO_NATIVE` lives in `@aibridge/agy` to avoid circular dependencies with quota fetchers.
-- **Reverse drop of `@stricli/core` (2026-07-24).** Originally dropped so the skill-internal CLI stayed source-level zero-dep for Vercel copy. Monorepo + `tsdown` committed bundle removed that constraint: app depends on `@stricli/core@1.3.0` (catalog exact), inlined into the skill bundle via `alwaysBundle`; drivers/proc remain zero-dep; artifact remains self-contained (CI bare-copy smoke). Restored typed `buildCommand` routing, deleted hand-rolled help/`parseArgs`. Exit-code contract preserved via post-`run` normalization of stricli's negative `ExitCode`s to 2 (with operational failures mapped to 1). Unexpected positionals on `review` are now rejected (exit 2). Approved additive spellings from stricli's scanner: positive `--preflight` / `--tools`, `--flag=value` forms, and `--helpAll`/`--help-all`/`-H`; negation is suppressed (`withNegated: false`) on `json`/`watch`, so `--no-json`/`--no-watch` still exit 2.
+- **Monorepo split into workspace packages** (2026-07-24) — Split CLI into workspace packages under `packages/*` (`proc`, `agy`, `grok`, `codex`, `claude`, `cli`). `skills/aibridge/` is a prose-only skill directory. > **Superseded (bundle side) by Two-step distribution (2026-07-24)**
+- **Reverse drop of `@stricli/core` (2026-07-24).** > **Superseded (inlining aspect) by Two-step distribution (2026-07-24)**: `@stricli/core` restored as standard npm dependency rather than inlined bundle asset.
 
 ## Status
 
@@ -75,4 +77,4 @@ same CLI in a thin MCP server then — the execution core stays unchanged.
   historical findings). The new verbs share `delegate.ts` and were smoke-tested
   live (grok reviewing a real working-tree diff against a plan contract).
 
-Shared plumbing lives in `packages/` (`proc` spawn/capture/timeout; `agy`, `grok`, `codex`, `claude` drivers; `aibridge` CLI and orchestration).
+Shared plumbing lives in `packages/` (`proc` spawn/capture/timeout; `agy`, `grok`, `codex`, `claude` drivers; `cli` CLI and orchestration).
