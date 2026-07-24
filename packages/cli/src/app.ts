@@ -14,7 +14,7 @@ const require = createRequire(import.meta.url);
 const { version } = require('../package.json') as { version: string };
 
 const BRIEF =
-  'Bridge tasks to non-Claude AI CLIs — a plan → implement → review workflow, task delegation, and image generation (codex gpt-image-2 / grok Imagine).';
+  'Bridge tasks to non-Claude AI CLIs — a plan → implement → review workflow, task delegation, and image generation (codex / agy / grok seats).';
 
 const routes = buildRouteMap({
   routes: {

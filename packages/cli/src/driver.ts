@@ -35,7 +35,7 @@ export interface ImageGenRequest {
   readonly workDir: string;
   readonly backendModel: string;
   readonly effort: Effort | undefined;
-  readonly size: { readonly w: number; readonly h: number } | undefined;
+  readonly aspectRatio: string | undefined;
   readonly imagePaths: readonly string[];
   readonly timeoutSec: number;
   readonly forceful: boolean;

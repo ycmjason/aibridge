@@ -10,7 +10,7 @@ export interface ImageGenRequest {
   readonly workDir: string;
   readonly backendModel: string;
   readonly effort?: string | undefined;
-  readonly size: { readonly w: number; readonly h: number } | undefined;
+  readonly aspectRatio: string | undefined;
   readonly imagePaths: readonly string[];
   readonly timeoutSec: number;
   readonly forceful: boolean;
@@ -34,24 +34,19 @@ export async function generateImage(
   const agy = await probe(exec);
   if (!agy.ok) return { kind: 'error', reason: agy.error };
 
-  const aspect = req.size ? aspectRatioFor(req.size.w, req.size.h) : undefined;
-  const sizeNote = req.size
-    ? ` Prefer a composition that fits ~${req.size.w}x${req.size.h} (exact pixels are resized later).`
-    : '';
-
   let instruction: string;
   if (req.imagePaths.length > 0) {
     const refs = req.imagePaths.map(p => JSON.stringify(p)).join(', ');
     instruction =
       `Call the generate_image tool once with ImageName="aibridge-render", Prompt=${JSON.stringify(req.prompt)}, and ImagePaths=[${refs}]. ` +
       `Change only what the instruction asks, using the references for subject/identity.` +
-      `${aspect ? ` Pass AspectRatio='${aspect}' only if applicable.` : ''}` +
-      `${sizeNote} After the tool returns, print ONLY the absolute filesystem path of the saved image on a single line. No other text.`;
+      `${req.aspectRatio ? ` Pass AspectRatio='${req.aspectRatio}' only if applicable.` : ''}` +
+      ` After the tool returns, print ONLY the absolute filesystem path of the saved image on a single line. No other text.`;
   } else {
     instruction =
       `Call the generate_image tool once with ImageName="aibridge-render" and Prompt=${JSON.stringify(req.prompt)}.` +
-      `${aspect ? ` Pass AspectRatio='${aspect}'.` : ''}` +
-      `${sizeNote} After the tool returns, print ONLY the absolute filesystem path of the saved image on a single line. No other text.`;
+      `${req.aspectRatio ? ` Pass AspectRatio='${req.aspectRatio}'.` : ''}` +
+      ` After the tool returns, print ONLY the absolute filesystem path of the saved image on a single line. No other text.`;
   }
 
   const beforePaths = brainImagePaths();
@@ -152,30 +147,6 @@ function newestNewBrainImage(before: Set<string>): Render | null {
   if (hits.length === 0) return null;
   hits.sort((a, b) => mtime(b.path) - mtime(a.path));
   return hits[0] ?? null;
-}
-
-function aspectRatioFor(w: number, h: number): string {
-  const ratio = w / h;
-  const options: ReadonlyArray<{ readonly label: string; readonly r: number }> = [
-    { label: '1:1', r: 1 },
-    { label: '16:9', r: 16 / 9 },
-    { label: '9:16', r: 9 / 16 },
-    { label: '4:3', r: 4 / 3 },
-    { label: '3:4', r: 3 / 4 },
-    { label: '3:2', r: 3 / 2 },
-    { label: '2:3', r: 2 / 3 },
-  ];
-  let best = options[0];
-  if (!best) return '1:1';
-  let bestDist = Math.abs(ratio - best.r);
-  for (const o of options.slice(1)) {
-    const d = Math.abs(ratio - o.r);
-    if (d < bestDist) {
-      best = o;
-      bestDist = d;
-    }
-  }
-  return best.label;
 }
 
 function safeReaddir(dir: string): string[] {

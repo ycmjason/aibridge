@@ -26,7 +26,7 @@ import {
 export interface ImageGenFlags {
   readonly model?: string;
   readonly out?: string;
-  readonly size?: string;
+  readonly aspectRatio?: string;
   readonly image?: string;
   readonly timeout?: number;
   readonly json: boolean;
@@ -52,21 +52,17 @@ export default async function imageGen(
 
   if (model.spec.backend === 'codex' && model.effort) {
     return fail(
-      `effort "-${model.effort}" has no effect on image-gen (gpt-image-2 renders, not the seat model); use ${DEFAULT_IMAGE_GEN}.`,
+      `effort "-${model.effort}" has no effect on image-gen (the image tool renders, not the seat model); use ${DEFAULT_IMAGE_GEN}.`,
     );
   }
 
-  let size: { w: number; h: number } | undefined;
-  if (flags.size !== undefined) {
-    const m = flags.size.match(/^(\d+)\s*x\s*(\d+)$/i);
-    if (!m) return fail(`invalid --size "${flags.size}" (expected e.g. 1024x1024)`);
-    size = { w: Number(m[1]), h: Number(m[2]) };
-    if (model.spec.backend === 'codex') {
-      const constraint = sizeConstraintError(size.w, size.h);
-      if (constraint) return fail(`invalid --size ${size.w}x${size.h}: ${constraint}`);
-    } else if (size.w < 1 || size.h < 1) {
-      return fail(`invalid --size ${size.w}x${size.h}: dimensions must be positive`);
+  let aspectRatio: string | undefined;
+  if (flags.aspectRatio !== undefined) {
+    const m = flags.aspectRatio.match(/^(\d+)\s*:\s*(\d+)$/);
+    if (!m || Number(m[1]) < 1 || Number(m[2]) < 1) {
+      return fail(`invalid --aspect-ratio "${flags.aspectRatio}" (expected e.g. 16:9)`);
     }
+    aspectRatio = `${Number(m[1])}:${Number(m[2])}`;
   }
 
   const timeoutSec = flags.timeout ?? 600;
@@ -98,7 +94,7 @@ export default async function imageGen(
       workDir: work,
       backendModel: backendModelId(model),
       effort: model.effort,
-      size,
+      aspectRatio,
       imagePaths,
       timeoutSec,
       forceful: false,
@@ -111,7 +107,7 @@ export default async function imageGen(
         workDir: work,
         backendModel: backendModelId(model),
         effort: model.effort,
-        size,
+        aspectRatio,
         imagePaths,
         timeoutSec,
         forceful: true,
@@ -138,18 +134,7 @@ export default async function imageGen(
     const local = join(work, 'result.bin');
     copyFileSync(outcome.path, local);
 
-    let dims = imageSize(local);
-    if (size && dims && (dims.width !== size.w || dims.height !== size.h)) {
-      const resized = await magick([local, '-resize', `${size.w}x${size.h}!`, local]);
-      if (resized) {
-        dims = imageSize(local) ?? dims;
-      } else {
-        this.process.stderr.write(
-          `aibridge image-gen: rendered ${dims.width}x${dims.height}, wanted ${size.w}x${size.h}, ` +
-            'and ImageMagick (magick/convert) is unavailable to resize.\n',
-        );
-      }
-    }
+    const dims = imageSize(local);
 
     const outExt = /\.png$/i.test(outPath) ? 'png' : /\.jpe?g$/i.test(outPath) ? 'jpg' : null;
     const actualFmt = pngSize(local) ? 'png' : jpegSize(local) ? 'jpg' : null;
@@ -173,7 +158,7 @@ export default async function imageGen(
           bytes,
           width: dims?.width ?? null,
           height: dims?.height ?? null,
-          sizeRequested: flags.size ?? null,
+          aspectRatio: flags.aspectRatio ?? null,
           model: model.spec.slug,
           backend: model.spec.backend,
           real: true,
@@ -187,17 +172,6 @@ export default async function imageGen(
   } finally {
     rmSync(work, { recursive: true, force: true });
   }
-}
-
-function sizeConstraintError(w: number, h: number): string | null {
-  if (w % 16 !== 0 || h % 16 !== 0) return 'each edge must be divisible by 16';
-  const long = Math.max(w, h);
-  const short = Math.min(w, h);
-  if (long / short > 3) return 'aspect ratio must be within 1:3–3:1';
-  if (long > 3840) return 'longest edge must be <= 3840px';
-  const px = w * h;
-  if (px < 655_360 || px > 8_294_400) return 'total pixels must be 655,360–8,294,400';
-  return null;
 }
 
 function imageSize(path: string): { width: number; height: number } | null {

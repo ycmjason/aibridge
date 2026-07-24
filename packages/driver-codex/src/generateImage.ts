@@ -9,7 +9,7 @@ export interface ImageGenRequest {
   readonly workDir: string;
   readonly backendModel: string;
   readonly effort?: string | undefined;
-  readonly size: { readonly w: number; readonly h: number } | undefined;
+  readonly aspectRatio: string | undefined;
   readonly imagePaths: readonly string[];
   readonly timeoutSec: number;
   readonly forceful: boolean;
@@ -35,9 +35,7 @@ export async function generateImage(
     };
   }
 
-  const sizeClause = req.size
-    ? ` The image must be exactly ${req.size.w}x${req.size.h} pixels.`
-    : '';
+  const aspectClause = req.aspectRatio ? ` Compose it with a ${req.aspectRatio} aspect ratio.` : '';
   const refClause = req.imagePaths.length
     ? 'Use the attached image(s) as the visual reference for the subject/identity, ' +
       'changing only what the instruction asks. '
@@ -50,7 +48,7 @@ export async function generateImage(
       'redraw, trace, or reproduce it with code (no PIL/Pillow/ImageMagick/matplotlib) — write the raw ' +
       'image_gen result as-is, even if imperfect.';
 
-  const prompt = `$imagegen ${refClause}${req.prompt}.${sizeClause} ${guard}`;
+  const prompt = `$imagegen ${refClause}${req.prompt}.${aspectClause} ${guard}`;
 
   const before = cacheRenderPaths();
 

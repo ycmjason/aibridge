@@ -7,7 +7,7 @@ matters even if you only hand the prompt back.
 
 ```bash
 aibridge image-gen "<full prompt — see Part B>" \
-  [--model <slug>] [--out out.png] [--size 1024x1024] [--image ref.png] \
+  [--model <slug>] [--out out.png] [--aspect-ratio 16:9] [--image ref.png] \
   [--timeout 600] [--json]
 ```
 
@@ -25,10 +25,7 @@ Other seats fail fast with a list of capable models.
 Notes:
 
 - `--out` defaults to `./aibridge-image.png`. **agy** renders JPEG, so saving to `--out foo.png` uses ImageMagick (`magick`/`convert`) to convert; if unavailable, the CLI warns and writes raw bytes as-is.
-- `--size WxH` — on **codex**, validated against its render limits (each edge
-  divisible by 16, ratio 1:3–3:1, 0.65–8.3 MP). On **agy** and **grok**, mapped to the
-  nearest aspect ratio (`1:1`, `16:9`, …); exact pixels are resized
-  afterwards when ImageMagick is available.
+- `--aspect-ratio N:M` (e.g. `16:9`, `1:1`) — passed through as a real tool parameter on **agy** and **grok**, and as a prompt hint on **codex**. The CLI no longer resizes renders; output dimensions are whatever the model rendered.
 - `--image` attaches reference image(s) (comma-separated paths) — every seat
   routes them to its edit path. See **Reference images** below.
 - **There is no quality flag.** No backend's image tool takes a quality
@@ -36,7 +33,7 @@ Notes:
   `num_last_images_to_include`; grok: `prompt`, `aspect_ratio`; agy: `Prompt`,
   `ImageName`, `AspectRatio`, `ImagePaths`) — put any quality wording in the
   prompt itself, where it actually reaches the model.
-- `--json` prints `{ out, bytes, width, height, sizeRequested, model, backend, real }`.
+- `--json` prints `{ out, bytes, width, height, aspectRatio, model, backend, real }`.
 
 ### Reference images (`--image`)
 
@@ -45,11 +42,11 @@ inventing from scratch — e.g. keep the same subject, change only what you ask:
 
 ```bash
 aibridge image-gen "the same woman, now in a denim shirt in a bright kitchen, waist-up" \
-  --image avatar.png --size 768x1344
+  --image avatar.png --aspect-ratio 9:16
 
 # same brief, on a different seat
 aibridge image-gen "the same woman, now in a denim shirt in a bright kitchen, waist-up" \
-  --model xai-grok/grok-4.5 --image avatar.png --size 768x1344
+  --model xai-grok/grok-4.5 --image avatar.png --aspect-ratio 9:16
 ```
 
 With a reference, write the prompt as a **diff** — say only what should *change*
@@ -60,8 +57,7 @@ and style. Multiple refs: `--image face.png,style.png`.
 
 1. **Don't state the image's purpose** (no "app icon", "hero banner") — describe
    what it *looks like*, not its job.
-2. **Always specify dimensions.** Exact `WxH`, both edges divisible by 16, ratio
-   1:3–3:1, 0.65–8.3 MP when targeting codex (e.g. `1024x1024`, `1536x640`).
+2. **Specify the aspect ratio** via `--aspect-ratio` and/or the prompt text (e.g. `16:9`, `1:1`). Exact pixel counts are not controllable on any seat.
 3. **Always specify the background** — a concrete colour with hex, or
    `opaque`/`auto`. (No seat emits transparency — grok and agy render opaque
    JPEGs; key the alpha out of a flat colour afterwards if you need it.)
@@ -74,11 +70,11 @@ and style. Multiple refs: `--image face.png,style.png`.
 
 ### Worked example
 
-> `1024x1024, square. Solid warm cream #F7F1EA background. A single flat-design
+> `Square 1:1 aspect ratio. Solid warm cream #F7F1EA background. A single flat-design
 > fanned stack of three rounded-corner cards in coral orange #FF5A1F, centered,
 > ~55% of the frame, soft drop shadow. Calm, minimal, modern. No text, no border,
 > no gradient.`
 
-It locks size, background hex, subject, brand orange, and the no-text/border/
+It locks aspect ratio, background hex, subject, brand orange, and the no-text/border/
 gradient constraints — and leaves the fan angle, shadow softness, and spacing to
 the model.

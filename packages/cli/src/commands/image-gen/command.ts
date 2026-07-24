@@ -4,12 +4,12 @@ import { nonEmptyPrompt, positiveIntSeconds } from '../../parsers.ts';
 import imageGenImpl from './impl.ts';
 
 const fullDescription = [
-  "Renders an image by driving the seat's CLI (codex → gpt-image-2, grok →",
-  'Imagine), then verifies the result is a real render before returning it.',
+  "Renders an image by driving the seat's own CLI, then verifies the result is",
+  'a real render before returning it.',
   '',
   'Image-gen seats (canonical slug):',
   ...listModelHelpLines({ imageOnly: true }),
-  `Default: ${DEFAULT_IMAGE_GEN} (gpt-image-2 via codex; historical default).`,
+  `Default: ${DEFAULT_IMAGE_GEN}.`,
 ].join('\n');
 
 export const imageGen = buildCommand({
@@ -28,12 +28,11 @@ export const imageGen = buildCommand({
         optional: true,
         brief: 'Path to write the image (default: ./aibridge-image.png)',
       },
-      size: {
+      aspectRatio: {
         kind: 'parsed',
         parse: String,
         optional: true,
-        brief:
-          'WIDTHxHEIGHT (codex: each edge ÷16; grok: mapped to aspect_ratio, then optionally resized)',
+        brief: 'Aspect ratio N:M, e.g. 16:9 (agy/grok: real tool param; codex: prompt hint)',
       },
       image: {
         kind: 'parsed',

@@ -20,7 +20,7 @@
 - **Sandbox matrix**: tools-mode delegation needs `--dangerously-bypass-approvals-and-sandbox` — the sandbox blocks both the network and OS-keyring access that downstream CLIs (e.g. agy) require, even with `network_access=true`. `image-gen` keeps `--full-auto` (its `image_gen` tool is codex-internal, not a sandboxed shell). No-tools delegation uses `read-only`.
 - `--output-schema` uses OpenAI strict structured outputs: `additionalProperties: false` AND every property in `required` — optional fields must be nullable, not omitted. A lax schema 400s.
 - `-i ref.png` (reference images) is space-variadic — prompt goes BEFORE `-i`, multiple refs comma-separated.
-- **No quality/size parameters anywhere.** Verified tool schemas: codex `prompt`, `referenced_image_paths`, `num_last_images_to_include`; grok `image_gen` `prompt`, `aspect_ratio`; agy `generate_image` `Prompt`, `ImageName`, `AspectRatio`, `ImagePaths`. There is no `--quality` flag as a result (removed 2026-07-24 — it only appended prose to the codex prompt); `--size` is a prompt hint + client-side validation + post-hoc ImageMagick resize.
+- **No quality/size parameters anywhere.** Verified tool schemas: codex `prompt`, `referenced_image_paths`, `num_last_images_to_include`; grok `image_gen` `prompt`, `aspect_ratio`; agy `generate_image` `Prompt`, `ImageName`, `AspectRatio`, `ImagePaths`. There is no `--quality` flag as a result (removed 2026-07-24 — it only appended prose to the codex prompt); `--size` was replaced by `--aspect-ratio` (2026-07-24) and aibridge no longer resizes renders.
 
 ## grok / claude
 

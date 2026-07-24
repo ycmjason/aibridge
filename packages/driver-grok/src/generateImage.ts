@@ -9,7 +9,7 @@ export interface ImageGenRequest {
   readonly workDir: string;
   readonly backendModel: string;
   readonly effort?: string | undefined;
-  readonly size: { readonly w: number; readonly h: number } | undefined;
+  readonly aspectRatio: string | undefined;
   readonly imagePaths: readonly string[];
   readonly timeoutSec: number;
   readonly forceful: boolean;
@@ -33,11 +33,7 @@ export async function generateImage(
   const grok = await ensureGrok(exec);
   if (!grok.ok) return { kind: 'error', reason: grok.error };
 
-  const aspect = req.size ? aspectRatioFor(req.size.w, req.size.h) : undefined;
-  const aspectClause = aspect ? ` aspect_ratio='${aspect}'.` : '';
-  const sizeNote = req.size
-    ? ` Prefer a composition that fits ~${req.size.w}x${req.size.h} (exact pixels are resized later).`
-    : '';
+  const aspectClause = req.aspectRatio ? ` aspect_ratio='${req.aspectRatio}'.` : '';
 
   let instruction: string;
   let tools: string;
@@ -46,13 +42,13 @@ export async function generateImage(
     const refs = req.imagePaths.map(p => JSON.stringify(p)).join(', ');
     instruction =
       `Call the image_edit tool once with image=[${refs}] and prompt=${JSON.stringify(req.prompt)}.` +
-      `${aspect ? ` Pass aspect_ratio='${aspect}' only if the tool accepts it for multi-image edits.` : ''}` +
-      `${sizeNote} After the tool returns, print ONLY the absolute filesystem path of the saved image on a single line. No other text.`;
+      `${req.aspectRatio ? ` Pass aspect_ratio='${req.aspectRatio}' only if the tool accepts it for multi-image edits.` : ''}` +
+      ` After the tool returns, print ONLY the absolute filesystem path of the saved image on a single line. No other text.`;
   } else {
     tools = 'image_gen';
     instruction =
       `Call the image_gen tool once with prompt=${JSON.stringify(req.prompt)}.${aspectClause}` +
-      `${sizeNote} After the tool returns, print ONLY the absolute filesystem path of the saved image on a single line. No other text.`;
+      ` After the tool returns, print ONLY the absolute filesystem path of the saved image on a single line. No other text.`;
   }
 
   let result: RunResult;
@@ -152,30 +148,6 @@ function newestSessionImage(workCwd: string): Render | null {
   if (hits.length === 0) return null;
   hits.sort((a, b) => mtime(b.path) - mtime(a.path));
   return hits[0] ?? null;
-}
-
-function aspectRatioFor(w: number, h: number): string {
-  const ratio = w / h;
-  const options: ReadonlyArray<{ readonly label: string; readonly r: number }> = [
-    { label: '1:1', r: 1 },
-    { label: '16:9', r: 16 / 9 },
-    { label: '9:16', r: 9 / 16 },
-    { label: '4:3', r: 4 / 3 },
-    { label: '3:4', r: 3 / 4 },
-    { label: '3:2', r: 3 / 2 },
-    { label: '2:3', r: 2 / 3 },
-  ];
-  let best = options[0];
-  if (!best) return '1:1';
-  let bestDist = Math.abs(ratio - best.r);
-  for (const o of options.slice(1)) {
-    const d = Math.abs(ratio - o.r);
-    if (d < bestDist) {
-      best = o;
-      bestDist = d;
-    }
-  }
-  return best.label;
 }
 
 function safeReaddir(dir: string): string[] {

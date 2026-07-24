@@ -10,7 +10,7 @@ describe('generateImage', () => {
     prompt: 'A futuristic city skyline',
     workDir: '/tmp/work',
     backendModel: 'gemini-3.6-flash-high',
-    size: undefined,
+    aspectRatio: undefined,
     imagePaths: [],
     timeoutSec: 600,
     forceful: false,
@@ -38,7 +38,7 @@ describe('generateImage', () => {
 
     const req: ImageGenRequest = {
       ...baseReq,
-      size: { w: 1920, h: 1080 },
+      aspectRatio: '16:9',
     };
 
     await generateImage(req, fakeExec);
@@ -55,6 +55,29 @@ describe('generateImage', () => {
     expect(promptArg).toContain('generate_image');
     expect(promptArg).toContain('16:9');
     expect(promptArg).toContain('print ONLY the absolute filesystem path');
+  });
+
+  it('omits AspectRatio clause when aspectRatio is undefined', async () => {
+    let capturedPrompt = '';
+
+    const fakeExec = async (_cmd: string, args: readonly string[]): Promise<RunResult> => {
+      if (args.includes('--version')) {
+        return {
+          code: 0,
+          signal: null,
+          stdout: 'agy version 1.0.0\n',
+          stderr: '',
+          timedOut: false,
+        };
+      }
+      const promptIdx = args.indexOf('-p');
+      capturedPrompt = args[promptIdx + 1] ?? '';
+      return { code: 0, signal: null, stdout: '', stderr: '', timedOut: false };
+    };
+
+    await generateImage(baseReq, fakeExec);
+
+    expect(capturedPrompt).not.toContain('AspectRatio');
   });
 
   it('includes ImagePaths in prompt when reference images are provided', async () => {
