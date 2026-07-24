@@ -22,7 +22,17 @@ describe('models registry', () => {
   });
 
   it('rejects short aliases — canonical slugs only', () => {
-    for (const alias of ['grok', 'gemini', 'codex', 'sonnet', 'opus', 'gemini-3.6', 'gpt-oss']) {
+    for (const alias of [
+      'grok',
+      'gemini',
+      'codex',
+      'sonnet',
+      'opus',
+      'gemini-3.6',
+      'gpt-oss',
+      'anthropic-claude/sonnet',
+      'anthropic-claude/opus',
+    ]) {
       expect(resolveModel(alias)).toBeUndefined();
     }
   });
@@ -32,8 +42,8 @@ describe('models registry', () => {
     expect(grokMedium?.spec.slug).toBe('xai-grok/grok-4.5');
     expect(grokMedium?.effort).toBe('medium');
 
-    const sonnetMax = resolveModel('anthropic-claude/sonnet-max');
-    expect(sonnetMax?.spec.slug).toBe('anthropic-claude/sonnet');
+    const sonnetMax = resolveModel('anthropic-claude/sonnet-5-max');
+    expect(sonnetMax?.spec.slug).toBe('anthropic-claude/sonnet-5');
     expect(sonnetMax?.effort).toBe('max');
   });
 
@@ -71,9 +81,9 @@ describe('models registry', () => {
     if (!grok) throw new Error('grok resolution failed');
     expect(backendModelId(grok)).toBe('grok-4.5');
 
-    const sonnet = resolveModel('anthropic-claude/sonnet');
+    const sonnet = resolveModel('anthropic-claude/sonnet-5');
     if (!sonnet) throw new Error('sonnet resolution failed');
-    expect(backendModelId(sonnet)).toBe('sonnet');
+    expect(backendModelId(sonnet)).toBe('claude-sonnet-5');
   });
 
   it('marks only codex and grok seats as image-gen capable', () => {

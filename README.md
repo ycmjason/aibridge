@@ -61,7 +61,7 @@ Plan files — not their contents — travel between stages, so the loop is near
 - **The skill carries judgment; the CLI owns execution.** The skill teaches your agent prompt-craft, seat selection, and when to gate; the CLI deterministically drives the backing CLIs, captures their output, verifies results (a "generated image" under 100 KB is a code-drawn fake, an empty answer is a quota death), and logs every run.
 - **Seats stay cross-model by default.** Grok plans and reviews, Gemini implements — a model never reviews its own diff, and independent eyes catch what shared blind spots miss.
 - **No API keys.** Delegation runs on the backing CLIs' existing logins, each spending its own quota. (The skill treats a backend that shares your agent's own quota pool as a last resort.)
-- **Models are canonical slugs**: `<vendor>-<cli>/<model>[-<effort>]` — e.g. `xai-grok/grok-4.5`, `google-antigravity/gemini-3.6-flash`, `openai-codex/gpt-5.6-sol-high`, `anthropic-claude/opus`. No aliases; `aibridge <command> --help` lists every seat.
+- **Models are canonical slugs**: `<vendor>-<cli>/<model>[-<effort>]` — e.g. `xai-grok/grok-4.5`, `google-antigravity/gemini-3.6-flash`, `openai-codex/gpt-5.6-sol-high`, `anthropic-claude/opus-5`. No aliases — not short ones, and not moving vendor aliases like `opus`: every seat pins an exact model version. `aibridge <command> --help` lists every seat.
 
 ## Requirements
 

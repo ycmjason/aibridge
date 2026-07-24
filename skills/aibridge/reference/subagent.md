@@ -19,12 +19,13 @@ Pass a canonical slug to `--model` (no short aliases):
 | `google-antigravity/claude-opus-4-6-thinking` | agy | Claude Opus 4.6 (thinking) via agy; own Antigravity login — heavyweight |
 | `google-antigravity/gpt-oss-120b-medium` | agy | GPT-OSS 120B (medium) via agy; own Antigravity login |
 | `openai-codex/gpt-5.6-sol` | codex | OpenAI Codex gpt-5.6-sol via codex CLI |
-| `anthropic-claude/sonnet` | claude | Claude Sonnet via claude CLI — bills your Claude subscription |
-| `anthropic-claude/opus` | claude | Claude Opus via claude CLI, `opus` alias (default effort: high) — bills subscription |
-| `anthropic-claude/opus-5` | claude | Claude Opus 5 (pinned) via claude CLI (default effort: high) — bills subscription |
+| `anthropic-claude/sonnet-5` | claude | Claude Sonnet 5 via claude CLI — bills your Claude subscription |
+| `anthropic-claude/opus-5` | claude | Claude Opus 5 via claude CLI (default effort: high) — bills subscription |
 | `anthropic-claude/opus-5-1m` | claude | Claude Opus 5, 1M context via claude CLI — long-context work; bills subscription |
 
-Effort suffixes can be appended to slugs supporting them (e.g. `xai-grok/grok-4.5-medium`, `google-antigravity/gemini-3.6-flash-low`, `anthropic-claude/sonnet-max`).
+Effort suffixes can be appended to slugs supporting them (e.g. `xai-grok/grok-4.5-medium`, `google-antigravity/gemini-3.6-flash-low`, `anthropic-claude/sonnet-5-max`).
+
+Every seat pins an exact model version — no vendor aliases like `opus`, which move under you when a new release lands.
 
 - `--json` emits machine-readable JSON using the **canonical** slug (e.g. `{"model": "grok-4.5", "slug": "xai-grok/grok-4.5", ...}`).
 - `--timeout <seconds>` sets max execution time (default: 600).

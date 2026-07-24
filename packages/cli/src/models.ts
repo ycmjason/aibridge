@@ -3,7 +3,9 @@
  *
  * Models are registered by canonical, provider-qualified slug —
  * `<vendor>-<cli>/<model>[-<effort>]`, e.g. `openai-codex/gpt-5.6-sol-high`.
- * Canonical slugs only — no short aliases, by design.
+ * Canonical slugs only — no short aliases, by design. That holds on both sides:
+ * `backendModel` is a pinned model id (`claude-opus-5`), never a moving vendor
+ * alias (`opus`), so a seat never silently changes model under you.
  */
 
 export type Backend = 'agy' | 'claude' | 'codex' | 'grok';
@@ -67,20 +69,12 @@ export const MODELS: Record<string, ModelSpec> = {
     efforts: ['low', 'medium', 'high', 'xhigh'],
     brief: 'OpenAI Codex gpt-5.6-sol via codex CLI',
   },
-  'anthropic-claude/sonnet': {
-    slug: 'anthropic-claude/sonnet',
+  'anthropic-claude/sonnet-5': {
+    slug: 'anthropic-claude/sonnet-5',
     backend: 'claude',
-    backendModel: 'sonnet',
+    backendModel: 'claude-sonnet-5',
     efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
-    brief: 'Claude Sonnet via claude CLI — bills your Claude subscription',
-  },
-  'anthropic-claude/opus': {
-    slug: 'anthropic-claude/opus',
-    backend: 'claude',
-    backendModel: 'opus',
-    efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
-    defaultEffort: 'high',
-    brief: 'Claude Opus via claude CLI, `opus` alias (default effort: high) — bills subscription',
+    brief: 'Claude Sonnet 5 via claude CLI — bills your Claude subscription',
   },
   'anthropic-claude/opus-5': {
     slug: 'anthropic-claude/opus-5',
@@ -88,7 +82,7 @@ export const MODELS: Record<string, ModelSpec> = {
     backendModel: 'claude-opus-5',
     efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
     defaultEffort: 'high',
-    brief: 'Claude Opus 5 (pinned) via claude CLI (default effort: high) — bills subscription',
+    brief: 'Claude Opus 5 via claude CLI (default effort: high) — bills subscription',
   },
   'anthropic-claude/opus-5-1m': {
     slug: 'anthropic-claude/opus-5-1m',

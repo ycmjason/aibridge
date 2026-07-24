@@ -33,7 +33,7 @@ export async function run(
   task: DelegationTask,
   exec: typeof runCaptured = runCaptured,
 ): Promise<DelegationResult> {
-  const modelId = task.backendModel ?? 'sonnet';
+  const modelId = task.backendModel ?? 'claude-sonnet-5';
   const args = buildClaudePrintArgs(task.prompt, {
     model: modelId,
     effort: task.effort,
