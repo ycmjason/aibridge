@@ -39,7 +39,8 @@ export const MODELS: Record<string, ModelSpec> = {
     backendModel: 'gemini-3.6-flash',
     efforts: ['low', 'medium', 'high'],
     defaultEffort: 'high',
-    brief: 'Google Gemini 3.6 Flash via agy — default for implement; own Antigravity login',
+    brief:
+      'Google Gemini 3.6 Flash via agy — default for implement, also image-gen; own Antigravity login',
   },
   'google-antigravity/claude-sonnet-4-6': {
     slug: 'google-antigravity/claude-sonnet-4-6',
@@ -98,7 +99,7 @@ export const DEFAULT_MODEL = 'xai-grok/grok-4.5';
 export const DEFAULT_IMPLEMENTER = 'google-antigravity/gemini-3.6-flash';
 export const DEFAULT_IMAGE_GEN = 'openai-codex/gpt-5.6-sol';
 
-const IMAGE_GEN_BACKENDS: ReadonlySet<Backend> = new Set(['codex', 'grok']);
+const IMAGE_GEN_BACKENDS: ReadonlySet<Backend> = new Set(['agy', 'codex', 'grok']);
 
 export function supportsImageGen(resolved: ResolvedModel): boolean {
   return IMAGE_GEN_BACKENDS.has(resolved.spec.backend);

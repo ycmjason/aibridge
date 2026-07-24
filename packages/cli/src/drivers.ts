@@ -9,6 +9,7 @@ const agyDriver: AgentCliDriver = {
   probe: () => agy.probe(),
   run: task => agy.run(task),
   quota: () => agy.fetchAgyQuota(),
+  generateImage: req => agy.generateImage(req),
 };
 
 const grokDriver: AgentCliDriver = {

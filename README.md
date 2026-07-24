@@ -15,7 +15,7 @@
 
 ---
 
-Your agent is one model, from one provider. Your machine probably has several more sitting behind CLIs you already use — `grok`, `agy` (Antigravity), `codex`, `claude`. **aibridge** turns them into seats your agent can drive: a planner that studies your repo, an implementer that edits it and runs your real tests, a reviewer from a *different* model family that cross-checks the diff against the plan, concurrent one-shot delegates — and capabilities your agent's own provider may not offer at all, like real image generation (gpt-image-2, Grok Imagine).
+Your agent is one model, from one provider. Your machine probably has several more sitting behind CLIs you already use — `grok`, `agy` (Antigravity), `codex`, `claude`. **aibridge** turns them into seats your agent can drive: a planner that studies your repo, an implementer that edits it and runs your real tests, a reviewer from a *different* model family that cross-checks the diff against the plan, concurrent one-shot delegates — and capabilities your agent's own provider may not offer at all, like real image generation (Codex, Antigravity, or Grok seats).
 
 ## Install
 
@@ -41,7 +41,7 @@ npx -y @aibridge/cli subagent "summarize the architecture of this repo"
 | `aibridge implement <plan.md>` | You have an approved plan file and want it executed in place — with your project's **real typecheck and tests** run until green |
 | `aibridge review [--plan <plan.md>]` | You want a **different model** to pressure-test the working-tree diff against the plan contract (over-reach is a finding) — or to review the plan itself before implementing |
 | `aibridge subagent "<task>"` | A self-contained task deserves a concurrent delegate, a cross-model second opinion, or a red-team pass |
-| `aibridge image-gen "<prompt>"` | You need a real raster image — gpt-image-2 (default) or Grok Imagine, with render verification |
+| `aibridge image-gen "<prompt>"` | You need a real raster image — on a Codex (default), Antigravity, or Grok seat, with render verification |
 | `aibridge quota` | Two-second check of every backend's remaining quota before you pipeline work |
 | `aibridge runs` | Inspect or watch past delegation runs (`~/.aibridge/runs`) |
 

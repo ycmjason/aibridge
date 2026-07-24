@@ -11,6 +11,7 @@
 - stdout capture works headless (piped, no TTY) as of agy 1.0.6 — no `node-pty` needed. If a future agy regresses (symptom: hangs to `--print-timeout`, 0 bytes), fall back to a pseudo-TTY or answer-file-only capture.
 - **Quota death shows up as an empty answer, exit 0** (~6s). The quota preflight guards this. Quota is per model GROUP (all Gemini tiers share weekly+5h windows); each request injects ~24k system tokens, so don't loop trivia. **[web]**
 - `--continue` resumes the most-recent conversation GLOBALLY — cross-contaminates concurrent runs; never use it for parallel calls.
+- **Image generation**: agy exposes a `generate_image` tool with parameters `Prompt`, `ImageName`, `AspectRatio` (`1:1`, `16:9`, etc.), and `ImagePaths` (for image-to-image/reference edits). Renders land outside the cwd in `~/.gemini/antigravity-cli/brain/<uuid>/<name>_<epochms>.jpg` (JPEG, ~550 KB at 1024x1024). agy has no image quality knob.
 
 ## codex (Codex CLI)
 
@@ -19,6 +20,7 @@
 - **Sandbox matrix**: tools-mode delegation needs `--dangerously-bypass-approvals-and-sandbox` — the sandbox blocks both the network and OS-keyring access that downstream CLIs (e.g. agy) require, even with `network_access=true`. `image-gen` keeps `--full-auto` (its `image_gen` tool is codex-internal, not a sandboxed shell). No-tools delegation uses `read-only`.
 - `--output-schema` uses OpenAI strict structured outputs: `additionalProperties: false` AND every property in `required` — optional fields must be nullable, not omitted. A lax schema 400s.
 - `-i ref.png` (reference images) is space-variadic — prompt goes BEFORE `-i`, multiple refs comma-separated.
+- **No quality/size parameters anywhere.** Verified tool schemas: codex `prompt`, `referenced_image_paths`, `num_last_images_to_include`; grok `image_gen` `prompt`, `aspect_ratio`; agy `generate_image` `Prompt`, `ImageName`, `AspectRatio`, `ImagePaths`. `--quality` is prose aibridge appends to the codex prompt; `--size` is a prompt hint + client-side validation + post-hoc ImageMagick resize.
 
 ## grok / claude
 

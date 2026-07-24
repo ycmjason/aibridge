@@ -15,6 +15,7 @@ import type { LocalContext } from '../../context.ts';
 import type { ImageResult } from '../../driver.ts';
 import { getDriver } from '../../drivers.ts';
 import {
+  backendModelId,
   DEFAULT_IMAGE_GEN,
   formatImageGenModelError,
   formatUnknownModelError,
@@ -33,7 +34,7 @@ export interface ImageGenFlags {
 }
 
 const MIN_REAL_BYTES_CODEX = 100_000;
-const MIN_REAL_BYTES_GROK = 10_000;
+const MIN_REAL_BYTES_TOOL = 10_000;
 
 export default async function imageGen(
   this: LocalContext,
@@ -94,14 +95,14 @@ export default async function imageGen(
     return fail(formatImageGenModelError(inputSlug, model));
   }
 
-  const minBytes = model.spec.backend === 'codex' ? MIN_REAL_BYTES_CODEX : MIN_REAL_BYTES_GROK;
+  const minBytes = model.spec.backend === 'codex' ? MIN_REAL_BYTES_CODEX : MIN_REAL_BYTES_TOOL;
   const work = mkdtempSync(join(tmpdir(), 'aibridge-imagegen-'));
 
   try {
     let outcome: ImageResult = await driver.generateImage({
       prompt,
       workDir: work,
-      backendModel: model.spec.backendModel,
+      backendModel: backendModelId(model),
       effort: model.effort,
       quality,
       size,
@@ -115,7 +116,7 @@ export default async function imageGen(
       outcome = await driver.generateImage({
         prompt,
         workDir: work,
-        backendModel: model.spec.backendModel,
+        backendModel: backendModelId(model),
         effort: model.effort,
         quality,
         size,
@@ -133,9 +134,11 @@ export default async function imageGen(
     if (outcome.kind === 'error') return fail(outcome.reason);
     if (outcome.kind === 'suspect') {
       return fail(
-        model.spec.backend === 'grok'
-          ? 'grok produced no usable image. Check SuperGrok image access and re-run with a simpler prompt.'
-          : 'codex produced only a tiny/code-drawn image, not a real gpt-image-2 render. ' +
+        model.spec.backend === 'agy'
+          ? 'agy produced no usable image. Re-run with a simpler prompt, or check Antigravity image access.'
+          : model.spec.backend === 'grok'
+            ? 'grok produced no usable image. Check SuperGrok image access and re-run with a simpler prompt.'
+            : 'codex produced only a tiny/code-drawn image, not a real gpt-image-2 render. ' +
               'Try --quality high or a clearer, simpler prompt.',
       );
     }

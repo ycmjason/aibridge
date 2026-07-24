@@ -86,32 +86,36 @@ describe('models registry', () => {
     expect(backendModelId(sonnet)).toBe('claude-sonnet-5');
   });
 
-  it('marks only codex and grok seats as image-gen capable', () => {
+  it('marks codex, grok, and gemini-3.6-flash seats as image-gen capable', () => {
     const codex = resolveModel('openai-codex/gpt-5.6-sol');
     const grok = resolveModel('xai-grok/grok-4.5');
     const gemini = resolveModel('google-antigravity/gemini-3.6-flash');
-    if (!codex || !grok || !gemini) throw new Error('resolution failed');
+    const claudeSonnet = resolveModel('anthropic-claude/sonnet-5');
+    if (!codex || !grok || !gemini || !claudeSonnet) throw new Error('resolution failed');
     expect(supportsImageGen(codex)).toBe(true);
     expect(supportsImageGen(grok)).toBe(true);
-    expect(supportsImageGen(gemini)).toBe(false);
+    expect(supportsImageGen(gemini)).toBe(true);
+    expect(supportsImageGen(claudeSonnet)).toBe(false);
   });
 
   it('lists only image-capable seats when imageOnly', () => {
     const lines = listModelHelpLines({ imageOnly: true }).join('\n');
     expect(lines).toContain('xai-grok/grok-4.5');
     expect(lines).toContain('openai-codex/gpt-5.6-sol');
-    expect(lines).not.toContain('google-antigravity/gemini-3.6-flash');
+    expect(lines).toContain('google-antigravity/gemini-3.6-flash');
+    expect(lines).not.toContain('anthropic-claude/sonnet-5');
   });
 
   it('formats image-gen model errors with capable seats only', () => {
-    const gemini = resolveModel('google-antigravity/gemini-3.6-flash');
-    if (!gemini) throw new Error('gemini resolution failed');
-    const err = formatImageGenModelError('google-antigravity/gemini-3.6-flash', gemini);
+    const claudeSonnet = resolveModel('anthropic-claude/sonnet-5');
+    if (!claudeSonnet) throw new Error('claudeSonnet resolution failed');
+    const err = formatImageGenModelError('anthropic-claude/sonnet-5', claudeSonnet);
     expect(err).toContain('cannot generate images');
-    expect(err).toContain('backend "agy"');
+    expect(err).toContain('backend "claude"');
     expect(err).toContain('xai-grok/grok-4.5');
     expect(err).toContain('openai-codex/gpt-5.6-sol');
+    expect(err).toContain('google-antigravity/gemini-3.6-flash');
     const seatsSection = err.slice(err.indexOf('Image-gen seats'));
-    expect(seatsSection).not.toContain('google-antigravity/gemini-3.6-flash');
+    expect(seatsSection).not.toContain('anthropic-claude/sonnet-5');
   });
 });

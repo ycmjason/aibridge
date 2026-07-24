@@ -45,7 +45,7 @@ export const imageGen = buildCommand({
         kind: 'parsed',
         parse: String,
         optional: true,
-        brief: 'low | medium | high (codex/gpt-image-2; default high)',
+        brief: 'low | medium | high — prompt hint, codex only (default high)',
       },
       timeout: {
         kind: 'parsed',

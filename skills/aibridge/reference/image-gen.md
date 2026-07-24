@@ -14,25 +14,28 @@ aibridge image-gen "<full prompt — see Part B>" \
 `--model` uses the **same canonical slugs as every other command**
 (`resolveModel`; no short aliases). Image-capable seats today:
 
-| slug | engine |
+| slug | backend CLI |
 |---|---|
-| `openai-codex/gpt-5.6-sol` (default) | gpt-image-2 via the Codex CLI |
-| `xai-grok/grok-4.5` | Imagine via the Grok CLI (`image_gen` / `image_edit` tools) |
+| `openai-codex/gpt-5.6-sol` (default) | Codex CLI |
+| `google-antigravity/gemini-3.6-flash` | Antigravity CLI (`agy`) |
+| `xai-grok/grok-4.5` | Grok CLI |
 
 Other seats fail fast with a list of capable models.
 
 Notes:
 
-- `--out` defaults to `./aibridge-image.png`.
-- `--size WxH` — on **codex**, validated against gpt-image-2 limits (each edge
-  divisible by 16, ratio 1:3–3:1, 0.65–8.3 MP). On **grok**, mapped to the
-  nearest Imagine `aspect_ratio` (`1:1`, `16:9`, …); exact pixels are resized
+- `--out` defaults to `./aibridge-image.png`. **agy** renders JPEG, so saving to `--out foo.png` uses ImageMagick (`magick`/`convert`) to convert; if unavailable, the CLI warns and writes raw bytes as-is.
+- `--size WxH` — on **codex**, validated against its render limits (each edge
+  divisible by 16, ratio 1:3–3:1, 0.65–8.3 MP). On **agy** and **grok**, mapped to the
+  nearest aspect ratio (`1:1`, `16:9`, …); exact pixels are resized
   afterwards when ImageMagick is available.
-- `--image` attaches reference image(s) (comma-separated paths). Codex passes
-  them as visual refs to `$imagegen`; grok routes through `image_edit` instead
-  of `image_gen`. See **Reference images** below.
-- `--quality` is `low | medium | high` (default `high`) and only affects codex /
-  gpt-image-2. Grok/Imagine has no quality tier — the flag is ignored there.
+- `--image` attaches reference image(s) (comma-separated paths) — every seat
+  routes them to its edit path. See **Reference images** below.
+- `--quality` is `low | medium | high` (default `high`) — a **prompt hint, not an
+  API knob**: aibridge appends it to the codex prompt only. No backend's image
+  tool takes a quality parameter (codex: `prompt`, `referenced_image_paths`,
+  `num_last_images_to_include`; grok: `prompt`, `aspect_ratio`; agy: `Prompt`,
+  `ImageName`, `AspectRatio`, `ImagePaths`). agy and grok ignore the flag.
 - `--json` prints `{ out, bytes, width, height, quality, model, backend, real }`.
 
 ### Reference images (`--image`)
@@ -44,7 +47,7 @@ inventing from scratch — e.g. keep the same subject, change only what you ask:
 aibridge image-gen "the same woman, now in a denim shirt in a bright kitchen, waist-up" \
   --image avatar.png --size 768x1344
 
-# same brief, rendered with Imagine instead of gpt-image-2
+# same brief, on a different seat
 aibridge image-gen "the same woman, now in a denim shirt in a bright kitchen, waist-up" \
   --model xai-grok/grok-4.5 --image avatar.png --size 768x1344
 ```
@@ -60,8 +63,8 @@ and style. Multiple refs: `--image face.png,style.png`.
 2. **Always specify dimensions.** Exact `WxH`, both edges divisible by 16, ratio
    1:3–3:1, 0.65–8.3 MP when targeting codex (e.g. `1024x1024`, `1536x640`).
 3. **Always specify the background** — a concrete colour with hex, or
-   `opaque`/`auto`. (gpt-image-2 can't emit transparency; key it out of a flat
-   colour afterwards if you need alpha. Imagine outputs are opaque JPEGs.)
+   `opaque`/`auto`. (No seat emits transparency — grok and agy render opaque
+   JPEGs; key the alpha out of a flat colour afterwards if you need it.)
 4. **Specify what matters**: subject, composition, palette, style/medium, mood,
    lighting.
 5. **Abstraction dial** — *lock* the critical (verbatim text in straight quotes,

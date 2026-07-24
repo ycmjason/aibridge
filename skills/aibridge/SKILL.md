@@ -5,7 +5,7 @@ description: >-
   another AI CLI on this machine: an orchestrator-driven plan → implement →
   review workflow across Grok / Gemini / Codex / Claude, one-shot cross-model
   delegation, and capabilities your own provider may lack, like real image
-  generation with gpt-image-2 or Grok Imagine. Runs on the backing CLIs'
+  generation on a Codex, Antigravity, or Grok seat. Runs on the backing CLIs'
   existing logins — no API keys. Use for (a)
   creating / generating / redrawing / restyling an image / icon / graphic /
   illustration, or writing an image-gen prompt; (b) delegation — and reach for
@@ -80,7 +80,7 @@ Requires the backing CLIs on `PATH` and authed: **`grok`** (default planner/revi
 | `implement` | Implement a plan file in place (edits the working tree, runs real gates) | [reference/implement.md](reference/implement.md) |
 | `review` | Review the working-tree diff (or a plan) against a plan contract | [reference/review.md](reference/review.md) |
 | `subagent` | Delegate a self-contained task to another model | [reference/subagent.md](reference/subagent.md) |
-| `image-gen` | Generate a raster image via a model seat (codex backend → gpt-image-2, grok backend → Imagine) | [reference/image-gen.md](reference/image-gen.md) |
+| `image-gen` | Generate a raster image via a model seat (codex, agy, or grok backend) | [reference/image-gen.md](reference/image-gen.md) |
 | `runs` | Monitor and inspect execution runs | — |
 | `quota` | Show backend quota and reset times (agy, codex, claude) | — |
 
