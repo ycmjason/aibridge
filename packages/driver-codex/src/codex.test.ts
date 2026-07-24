@@ -6,6 +6,7 @@ describe('buildCodexExecArgs', () => {
     const args = buildCodexExecArgs('do something', {
       cwd: '/repo',
       approval: 'full-auto',
+      model: 'gpt-5.6-sol',
       timeoutMs: 1000,
     });
     expect(args).toEqual([
@@ -14,6 +15,8 @@ describe('buildCodexExecArgs', () => {
       '--skip-git-repo-check',
       '-C',
       '/repo',
+      '-m',
+      'gpt-5.6-sol',
       'do something',
     ]);
   });
@@ -22,6 +25,7 @@ describe('buildCodexExecArgs', () => {
     const args = buildCodexExecArgs('do something', {
       cwd: '/repo',
       approval: 'bypass',
+      model: 'gpt-5.6-sol',
       timeoutMs: 1000,
     });
     expect(args).toEqual([
@@ -30,6 +34,8 @@ describe('buildCodexExecArgs', () => {
       '--skip-git-repo-check',
       '-C',
       '/repo',
+      '-m',
+      'gpt-5.6-sol',
       'do something',
     ]);
   });
@@ -38,6 +44,7 @@ describe('buildCodexExecArgs', () => {
     const args = buildCodexExecArgs('do something', {
       cwd: '/repo',
       approval: 'read-only',
+      model: 'gpt-5.6-sol',
       timeoutMs: 1000,
     });
     expect(args).toEqual([
@@ -47,6 +54,8 @@ describe('buildCodexExecArgs', () => {
       '--skip-git-repo-check',
       '-C',
       '/repo',
+      '-m',
+      'gpt-5.6-sol',
       'do something',
     ]);
   });

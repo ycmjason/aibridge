@@ -20,7 +20,7 @@ export type CodexApproval = 'full-auto' | 'bypass' | 'read-only';
 export interface CodexExecOptions {
   readonly cwd: string;
   readonly approval: CodexApproval;
-  readonly model?: string;
+  readonly model: string;
   readonly images?: readonly string[];
   readonly outputLastMessage?: string;
   readonly outputSchema?: string;
@@ -67,7 +67,7 @@ export function buildCodexExecArgs(prompt: string, opts: CodexExecOptions): stri
   }
 
   args.push('--skip-git-repo-check', '-C', opts.cwd);
-  if (opts.model) args.push('-m', opts.model);
+  args.push('-m', opts.model);
   for (const c of opts.config ?? []) args.push('-c', c);
   if (opts.outputSchema) args.push('--output-schema', opts.outputSchema);
   if (opts.outputLastMessage) args.push('--output-last-message', opts.outputLastMessage);

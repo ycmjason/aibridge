@@ -62,8 +62,7 @@ export async function preflightModel(resolved: ResolvedModel): Promise<Preflight
 
   try {
     const snapshot = await fetchAgyQuota();
-    const modelId = backendModelId(resolved) ?? '';
-    return evaluateAgyPreflight(snapshot, modelId);
+    return evaluateAgyPreflight(snapshot, backendModelId(resolved));
   } catch (err) {
     return {
       ok: true,

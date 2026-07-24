@@ -9,7 +9,7 @@ export interface DelegationTask {
   readonly tools: boolean;
   readonly timeoutSec: number;
   readonly cwd: string;
-  readonly backendModel: string | undefined;
+  readonly backendModel: string;
   readonly effort?: string | undefined;
   readonly onStdout?: (chunk: string) => void;
   readonly onStderr?: (chunk: string) => void;
@@ -54,9 +54,8 @@ export async function run(
     addDirs.push(task.cwd, tempDir);
   }
 
-  const modelId = task.backendModel ?? '';
   const args = buildAgyPrintArgs(taskPrompt, {
-    model: modelId,
+    model: task.backendModel,
     printTimeoutSec: task.timeoutSec,
     skipPermissions: task.tools,
     addDirs: addDirs.length > 0 ? addDirs : undefined,

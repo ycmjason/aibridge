@@ -9,7 +9,7 @@ export interface DelegationTask {
   readonly tools: boolean;
   readonly timeoutSec: number;
   readonly cwd: string;
-  readonly backendModel: string | undefined;
+  readonly backendModel: string;
   readonly effort?: string | undefined;
   readonly onStdout?: (chunk: string) => void;
   readonly onStderr?: (chunk: string) => void;

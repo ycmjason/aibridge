@@ -7,7 +7,7 @@ import { buildCodexExecArgs, ensureCodex, MIN_CODEX_IMAGE } from './codex.ts';
 export interface ImageGenRequest {
   readonly prompt: string;
   readonly workDir: string;
-  readonly backendModel: string | undefined;
+  readonly backendModel: string;
   readonly effort?: string | undefined;
   readonly quality: string;
   readonly size: { readonly w: number; readonly h: number } | undefined;
@@ -60,6 +60,7 @@ export async function generateImage(
     const args = buildCodexExecArgs(prompt, {
       cwd: req.workDir,
       approval: 'full-auto',
+      model: req.backendModel,
       images: req.imagePaths,
       timeoutMs: req.timeoutSec * 1000,
     });

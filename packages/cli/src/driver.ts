@@ -12,7 +12,7 @@ export interface DelegationTask {
   readonly tools: boolean;
   readonly timeoutSec: number;
   readonly cwd: string;
-  readonly backendModel: string | undefined;
+  readonly backendModel: string;
   readonly effort: Effort | undefined;
   readonly onStdout?: (chunk: string) => void;
   readonly onStderr?: (chunk: string) => void;
@@ -33,7 +33,7 @@ export type QuotaSnapshot = AgyQuotaSnapshot | CodexQuotaSnapshot | ClaudeQuotaS
 export interface ImageGenRequest {
   readonly prompt: string;
   readonly workDir: string;
-  readonly backendModel: string | undefined;
+  readonly backendModel: string;
   readonly effort: Effort | undefined;
   readonly quality: string;
   readonly size: { readonly w: number; readonly h: number } | undefined;

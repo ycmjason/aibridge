@@ -41,7 +41,7 @@ export async function ensureGrok(run: typeof runCaptured = runCaptured): Promise
 }
 
 export interface GrokPrintArgs {
-  readonly model?: string;
+  readonly model: string;
   readonly effort?: GrokEffort;
   readonly skipPermissions?: boolean;
   readonly jsonSchema?: string;
@@ -49,9 +49,9 @@ export interface GrokPrintArgs {
   readonly maxTurns?: number;
 }
 
-export function buildGrokPrintArgs(prompt: string, opts: GrokPrintArgs = {}): string[] {
+export function buildGrokPrintArgs(prompt: string, opts: GrokPrintArgs): string[] {
   const args = ['-p', prompt];
-  if (opts.model) args.push('--model', opts.model);
+  args.push('--model', opts.model);
   if (opts.effort) args.push('--reasoning-effort', opts.effort);
   if (opts.skipPermissions) args.push('--permission-mode', 'bypassPermissions');
   if (opts.jsonSchema) args.push('--json-schema', opts.jsonSchema);

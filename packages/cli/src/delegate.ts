@@ -29,7 +29,7 @@ export async function delegate(
     tools: opts.tools,
     timeoutSec: opts.timeoutSec,
     cwd: opts.cwd,
-    backendModel: backendModelId(opts.model) ?? opts.model.spec.backendModel,
+    backendModel: backendModelId(opts.model),
     effort: opts.model.effort,
     onStdout: c => opts.run.stdout(c),
     onStderr: c => opts.run.stderr(c),

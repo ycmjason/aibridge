@@ -72,10 +72,9 @@ export default async function subagent(
   }
 
   if (flags.json) {
-    const modelId = backendModelId(model) ?? null;
     this.process.stdout.write(
       `${JSON.stringify({
-        model: modelId,
+        model: backendModelId(model),
         slug: model.spec.slug,
         response: outcome.response,
         exitCode: outcome.exitCode,

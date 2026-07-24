@@ -14,7 +14,7 @@ export type Effort = 'low' | 'medium' | 'high' | 'xhigh' | 'max';
 export interface ModelSpec {
   readonly slug: string; // canonical, effort-less
   readonly backend: Backend;
-  readonly backendModel: string | undefined; // undefined = CLI default
+  readonly backendModel: string; // always explicit — never "whatever the CLI defaults to"
   readonly efforts: readonly Effort[] | null;
   readonly defaultEffort?: Effort; // only when backend REQUIRES one (agy gemini)
   readonly brief: string;
@@ -132,10 +132,7 @@ export function resolveModel(input: string): ResolvedModel | undefined {
   return undefined;
 }
 
-export function backendModelId(resolved: ResolvedModel): string | undefined {
-  if (!resolved.spec.backendModel) {
-    return undefined;
-  }
+export function backendModelId(resolved: ResolvedModel): string {
   if (resolved.spec.backend === 'agy') {
     const effort = resolved.effort ?? resolved.spec.defaultEffort;
     if (effort) {
