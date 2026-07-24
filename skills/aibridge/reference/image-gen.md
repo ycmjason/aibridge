@@ -25,11 +25,11 @@ Other seats fail fast with a list of capable models.
 Notes:
 
 - `--out` is required, and its extension must match the seat's format (see the
-  table above). A mismatch is rejected before anything runs. You get the model's
-  own bytes — aibridge never converts or resizes.
-- `--aspect-ratio N:M` (e.g. `16:9`, `1:1`) — the only geometry control. Output
-  dimensions are whatever the model renders at that ratio; exact pixel counts
-  aren't controllable, so resize downstream if you need them.
+  table above). A mismatch is rejected before anything runs. The file holds the
+  model's own bytes, verbatim.
+- `--aspect-ratio N:M` (e.g. `16:9`, `1:1`) sets the geometry. Output dimensions
+  are whatever the model renders at that ratio — resize downstream for exact
+  pixels.
 - `--image` attaches reference image(s) (comma-separated paths) — every seat
   routes them to its edit path. See **Reference images** below.
 - `--json` prints `{ out, bytes, width, height, aspectRatio, model, backend, real }`.
@@ -56,10 +56,11 @@ and style. Multiple refs: `--image face.png,style.png`.
 
 1. **Don't state the image's purpose** (no "app icon", "hero banner") — describe
    what it *looks like*, not its job.
-2. **Specify the aspect ratio** via `--aspect-ratio` and/or the prompt text (e.g. `16:9`, `1:1`). Exact pixel counts are not controllable on any seat.
+2. **Specify the aspect ratio** via `--aspect-ratio` and/or the prompt text
+   (e.g. `16:9`, `1:1`).
 3. **Always specify the background** — a concrete colour with hex, or
-   `opaque`/`auto`. (No seat emits transparency — codex PNGs and grok/agy JPEGs
-   are all opaque; key the alpha out of a flat colour afterwards if you need it.)
+   `opaque`/`auto`. Renders come back opaque, so key the alpha out of a flat
+   colour afterwards if you need it.
 4. **Specify what matters**: subject, composition, palette, style/medium, mood,
    lighting.
 5. **Abstraction dial** — *lock* the critical (verbatim text in straight quotes,
