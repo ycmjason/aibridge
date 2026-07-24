@@ -1,89 +1,93 @@
-# aibridge
+<div align="center">
+  <img src="assets/logo.png" alt="aibridge logo" width="140" />
 
-A TypeScript CLI that bridges tasks to AI CLIs already installed and authed on your machine (Grok, Antigravity/Gemini, Codex, Claude). Organized as a pnpm monorepo under `packages/*` and published to npm under `@aibridge/*`:
+  # aibridge
 
-- `aibridge plan "<prompt>"` — produce a detailed implementation plan file for a task prompt.
-- `aibridge implement <plan.md>` — execute an implementation plan file with real typecheck + tests.
-- `aibridge review [--plan <plan.md>]` — review working tree diffs or plan contracts for over-reach and defects.
-- `aibridge subagent "<prompt>" [--model <slug>]` — delegate a self-contained task to another model.
-- `aibridge image-gen "<prompt>"` — generate an image via a model seat (`openai-codex/gpt-5.6-sol` → gpt-image-2, the default; `xai-grok/grok-4.5` → Imagine).
+  **Bridge any coding agent's tasks to the AI CLIs already on your machine** — plan, implement, review, delegate, and generate images across Grok, Gemini, Codex & Claude, each running on its own login and quota. No API keys.
 
-Models are named by canonical, effort-aware slugs — `<vendor>-<cli>/<model>[-<effort>]`, e.g. `xai-grok/grok-4.5` (default planner/reviewer, via the **Grok CLI**), `google-antigravity/gemini-3.6-flash` (default implementer, via the **Antigravity CLI**, `agy`), `openai-codex/gpt-5.6-sol-high`, `anthropic-claude/opus`. There are no short aliases — always pass the full canonical slug.
+  [![skills.sh](https://skills.sh/b/ycmjason/aibridge)](https://skills.sh/ycmjason/aibridge)
+  [![npm](https://img.shields.io/npm/v/%40aibridge%2Fcli)](https://www.npmjs.com/package/@aibridge/cli)
+  [![node](https://img.shields.io/node/v/%40aibridge%2Fcli)](https://www.npmjs.com/package/@aibridge/cli)
+  [![license](https://img.shields.io/github/license/ycmjason/aibridge)](LICENSE)
 
-It's the execution layer behind the `aibridge` agent skill (installable into Claude Code, Cursor, Codex, and 70+ other agents via the skills CLI) — one router skill with `plan`, `implement`, `review`, `subagent`, and `image-gen` subskills (see [`skills/`](skills/)): the skill carries the judgment and prompt-craft, this CLI owns the brittle execution (driving the external CLIs and verifying their output).
+  Works in **Claude Code**, **Cursor**, **Codex**, **Gemini CLI**, **OpenCode**, and 70+ other agents via [the skills CLI](https://github.com/vercel-labs/skills).
+</div>
 
-## Packages
+---
 
-| Package | Description |
-|---|---|
-| `@aibridge/proc` | Process helpers (spawn/capture/timeout) for aibridge backend drivers |
-| `@aibridge/driver-agy` | Antigravity (`agy`) CLI driver for aibridge |
-| `@aibridge/driver-grok` | xAI Grok CLI driver for aibridge |
-| `@aibridge/driver-codex` | OpenAI Codex CLI driver for aibridge |
-| `@aibridge/driver-claude` | Anthropic Claude CLI driver for aibridge |
-| `@aibridge/cli` | CLI orchestration and commands (`aibridge`) |
+Your agent is one model with one budget. Your machine probably has several more sitting behind CLIs you already pay for — `grok`, `agy` (Antigravity), `codex`, `claude`. **aibridge** turns them into seats your agent can drive: a planner that studies your repo, an implementer that edits it and runs your real tests, a reviewer that cross-checks the diff against the plan, one-shot delegates, and an image generator — with every delegated task spending the backing CLI's own quota, not your agent's.
 
-## Requirements
+## Install
 
-- **Node 24.11+** — TypeScript runs directly in packages for dev.
-- **pnpm via corepack**: `corepack enable && corepack use pnpm@latest`.
-- The backing CLIs on `PATH` and authed (no API keys): `agy`, `grok`, `codex`, `claude`.
-
-## Installation
-
-### 1. Install the CLI
+**1. The CLI** (what does the work):
 
 ```bash
 npm i -g @aibridge/cli
 ```
 
-*(Alternatively, run on demand with `npx -y @aibridge/cli <command>`)*
-
-### 2. Install the Skill
+**2. The skill** (what teaches your agent to use it well):
 
 ```bash
-npx skills add ycmjason/aibridge -g -y \
-  -a amp antigravity antigravity-cli cline codex cursor deepagents gemini-cli \
-     github-copilot kimi-code-cli opencode warp zed claude-code
+npx skills add ycmjason/aibridge
 ```
 
-Or from a local clone:
+That's it. Ask your agent to "use aibridge" — or invoke it yourself:
 
 ```bash
-npx skills add /absolute/path/to/aibridge -g -y \
-  -a amp antigravity antigravity-cli cline codex cursor deepagents gemini-cli \
-     github-copilot kimi-code-cli opencode warp zed claude-code
+aibridge subagent "summarize the architecture of this repo"
 ```
 
-## Develop
+<sup>No global install? Every command also runs as `npx -y @aibridge/cli <command>`.</sup>
+
+## Commands
+
+| Command | Use when |
+|---|---|
+| `aibridge plan "<task>"` | You want a delegate model to study the repo and expand a task into a detailed, reviewable **plan file** before any code is written |
+| `aibridge implement <plan.md>` | You have an approved plan file and want it executed in place — with your project's **real typecheck and tests** run until green |
+| `aibridge review [--plan <plan.md>]` | You want a **different model** to pressure-test the working-tree diff against the plan contract (over-reach is a finding) — or to review the plan itself before implementing |
+| `aibridge subagent "<task>"` | A self-contained task deserves a concurrent delegate, a cross-model second opinion, or a red-team pass |
+| `aibridge image-gen "<prompt>"` | You need a real raster image — gpt-image-2 (default) or Grok Imagine, with render verification |
+| `aibridge quota` | Two-second check of every backend's remaining quota before you pipeline work |
+| `aibridge runs` | Inspect or watch past delegation runs (`~/.aibridge/runs`) |
+
+The three verbs compose into an orchestrator-driven loop your agent stays in charge of:
+
+```
+aibridge plan "add rate limiting to the API"   # delegate writes plan.md
+# → your agent reads, edits, approves the plan
+aibridge implement plan.md                     # another model executes it, runs your gates
+aibridge review --plan plan.md                 # a third seat cross-checks the diff
+```
+
+Plan files — not their contents — travel between stages, so the loop is nearly free on your agent's context.
+
+## How it works
+
+- **The skill carries judgment; the CLI owns execution.** The skill teaches your agent prompt-craft, seat selection, and when to gate; the CLI deterministically drives the backing CLIs, captures their output, verifies results (a "generated image" under 100 KB is a code-drawn fake, an empty answer is a quota death), and logs every run.
+- **Every backend spends its own quota.** Delegation runs on the backing CLIs' existing logins — nothing here needs an API key. Quota is relative to whoever orchestrates: the skill treats any backend that shares *your agent's* quota pool as a last resort.
+- **Seats stay cross-model by default.** Grok plans and reviews, Gemini implements — a model never reviews its own diff.
+- **Models are canonical slugs**: `<vendor>-<cli>/<model>[-<effort>]` — e.g. `xai-grok/grok-4.5`, `google-antigravity/gemini-3.6-flash`, `openai-codex/gpt-5.6-sol-high`, `anthropic-claude/opus`. No aliases; `aibridge <command> --help` lists every seat.
+
+## Requirements
+
+- **Node ≥ 24.11**
+- The backing CLIs you want to use, on `PATH` and authed: [`grok`](https://github.com/superagent-ai/grok-cli), `agy` (Antigravity), [`codex`](https://github.com/openai/codex), [`claude`](https://claude.com/claude-code) — any subset works; commands fail fast with install hints for missing ones.
+
+## Packages
+
+Everything is published under the [`@aibridge`](https://www.npmjs.com/org/aibridge) scope: [`@aibridge/cli`](https://www.npmjs.com/package/@aibridge/cli) (the command), `@aibridge/proc` (spawn/capture), and one driver per backing CLI — `@aibridge/driver-agy`, `@aibridge/driver-grok`, `@aibridge/driver-codex`, `@aibridge/driver-claude` — reusable if you want to drive a single CLI from your own code.
+
+## Contributing & development
+
+Dev docs, architecture, and the working agreements for coding agents live in [`AGENTS.md`](AGENTS.md); design history in [`docs/`](docs/). Quick loop:
 
 ```bash
 pnpm install
-pnpm check && pnpm typecheck && pnpm repojj:check && pnpm test
-pnpm build
+pnpm check && pnpm typecheck && pnpm test
 node packages/cli/src/cli.ts --help
-aibridge --help
 ```
 
-## Usage
+## License
 
-```bash
-# Produce a detailed implementation plan file for a task prompt
-aibridge plan "<prompt>" [--model <slug>] [--out plan.md] [--timeout <seconds>]
-
-# Execute an implementation plan file
-aibridge implement <plan-file> [--model <slug>] [--timeout <seconds>]
-
-# Review working tree diff or plan contract
-aibridge review [--plan <plan-file>] [--base HEAD] [--out review.md] [--model <slug>]
-
-# Delegate a self-contained task to another model
-aibridge subagent "<prompt>" [--model <slug>] [--timeout <seconds>] [--no-tools] [--json]
-
-# Generate an image (default seat: gpt-image-2 via codex; pass --model xai-grok/grok-4.5 for Imagine)
-aibridge image-gen "<prompt>" [--model <slug>] [--out out.png] [--size 1024x1024] [--quality high]
-```
-
-The three verbs compose into an orchestrator-driven workflow: `plan` writes a plan file, the orchestrating agent reads and approves it, `implement` executes it, and `review` cross-checks the resulting diff against the plan contract (over-reach is a finding). File paths — not file contents — travel between stages. `subagent` and delegation-backed verbs let the delegate read/write files and run shell by default (auto-approved); `subagent --no-tools` restricts it to reasoning-only, e.g. for untrusted input. `image-gen` takes the same `--model` slugs as other commands (image seats: `openai-codex/gpt-5.6-sol`, `xai-grok/grok-4.5`); the codex path verifies a real gpt-image-2 render (> 100 KB), not a tiny code-drawn substitute.
-
-> Status: **implemented & live-tested** — the commands drive their backing CLIs and verify output. See [`AGENTS.md`](AGENTS.md) and [`docs/`](docs/).
+[MIT](LICENSE) © Jason Yu
