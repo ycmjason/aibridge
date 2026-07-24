@@ -1,6 +1,6 @@
 {
   "name": "@aibridge/proc",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Process helpers (spawn/capture/timeout) for aibridge backend drivers",
   "type": "module",
   "license": "MIT",

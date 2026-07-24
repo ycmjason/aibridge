@@ -1,6 +1,6 @@
 {
   "name": "@aibridge/cli",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "CLI that bridges tasks to AI CLIs on your machine (plan / implement / review / subagent / image-gen)",
   "type": "module",
   "license": "MIT",
