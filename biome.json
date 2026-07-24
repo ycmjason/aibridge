@@ -6,7 +6,7 @@
     "useIgnoreFile": true
   },
   "files": {
-    "includes": ["**", "!**/routeTree.gen.ts"]
+    "includes": ["**", "!**/routeTree.gen.ts", "!skills/ai-bridge/scripts/cli.mjs"]
   },
   "linter": {
     "enabled": true,

@@ -48,14 +48,15 @@ same CLI in a thin MCP server then — the execution core stays unchanged.
 
 ## Decisions worth knowing (easy to revisit)
 
-- **node:util parseArgs** for command orchestration; a native argument parser and router layer, run directly as `node skills/ai-bridge/scripts/cli.ts <command>`.
+- **node:util parseArgs** for command orchestration; a native argument parser and router layer, run directly as `node packages/ai-bridge/src/cli.ts <command>`.
 - **Node 24+ native TypeScript** — `.ts` run directly, no `tsx`/build step. See
-  `CLAUDE.md` for the hard rules (erasable syntax only, `.ts` import extensions).
-- **Canonical Model Registry** (`skills/ai-bridge/scripts/lib/models.ts`) — mapping canonical provider slugs (e.g. `xai-grok/grok-4.5`, `google-antigravity/gemini-3.6-flash`, `openai-codex/gpt-5.6-sol`) to backend CLI execution specifications.
+  `AGENTS.md` for the hard rules (erasable syntax only, `.ts` import extensions).
+- **Canonical Model Registry** (`packages/ai-bridge/src/models.ts`) — mapping canonical provider slugs (e.g. `xai-grok/grok-4.5`, `google-antigravity/gemini-3.6-flash`, `openai-codex/gpt-5.6-sol`) to backend CLI execution specifications.
 - **Skills live in-repo** (`skills/`) as the single source; wire them into
   `~/.claude/skills/` (symlink) once the impls land.
-- **Zero-dependency, skill-internal CLI** — dropped `@stricli/core` to build the command orchestration layer entirely on Node's native `node:util` `parseArgs`, and moved the CLI code directly inside the skill (`skills/ai-bridge/scripts/`). This makes the skill a self-contained, no-build, no-PATH, portable deliverable ready to open-source. The tradeoff is hand-rolled argument parsing and manual help text generation vs. using a framework, which is acceptable since the CLI surface is small. Note that backing CLIs (`agy`, `grok`, `codex`, `claude`) remain external machine prerequisites, so absolute "zero external tools" was never the goal.
-- **Three-verb reshape** (2026-07-24) — the welded `plan` gate (reviewer reviews + expands + recursively delegates the build in ONE codex/grok call) was replaced by orchestrator-driven `plan` → `implement` → `review`. Rationale: the orchestrating agent never saw the expanded plan before code was written, and review was welded to the pre-implementation position (no post-implementation cross-model review existed). Stages now pass FILE PATHS, not content — the orchestrator's output tokens are the scarce resource. Same change introduced the canonical effort-aware slugs (`<vendor>-<cli>/<model>[-<effort>]`, effort mapped per backend: agy bakes it into the model id, grok `--reasoning-effort`, claude `--effort`, codex `-c model_reasoning_effort=`), the shared `lib/delegate.ts` engine (impls contain zero backend switches), and codex as a first-class delegation backend instead of a special-cased reviewer.
+- **Zero-dependency, skill-internal CLI** — dropped `@stricli/core` to build the command orchestration layer entirely on Node's native `node:util` `parseArgs`.
+- **Three-verb reshape** (2026-07-24) — the welded `plan` gate (reviewer reviews + expands + recursively delegates the build in ONE codex/grok call) was replaced by orchestrator-driven `plan` → `implement` → `review`. Rationale: the orchestrating agent never saw the expanded plan before code was written, and review was welded to the pre-implementation position (no post-implementation cross-model review existed). Stages now pass FILE PATHS, not content — the orchestrator's output tokens are the scarce resource. Same change introduced the canonical effort-aware slugs (`<vendor>-<cli>/<model>[-<effort>]`, effort mapped per backend: agy bakes it into the model id, grok `--reasoning-effort`, claude `--effort`, codex `-c model_reasoning_effort=`), the shared `delegate.ts` engine (impls contain zero backend switches), and codex as a first-class delegation backend instead of a special-cased reviewer.
+- **Monorepo split into workspace packages + committed skill bundle** (2026-07-24) — Split CLI into workspace packages under `packages/*` (`proc`, `agy`, `grok`, `codex`, `claude`, `ai-bridge`). `skills/ai-bridge/` remains a judgment-only skill directory containing a single committed, self-contained ESM bundle `scripts/cli.mjs` built with `tsdown`. Rationale: Vercel skills CLI copies only the skill directory from git, requiring a zero-node_modules bundle; monorepo structure cleanly separates driver mechanics from CLI orchestration via a structural `AgentCliDriver` contract. `AGY_CANONICAL_TO_NATIVE` lives in `@ai-bridge/agy` to avoid circular dependencies with quota fetchers.
 
 ## Status
 
@@ -70,9 +71,7 @@ same CLI in a thin MCP server then — the execution core stays unchanged.
   1024×1024 ~600 KB render.
 - `plan` / `implement` / `review` (2026-07-24) replaced the welded three-tier gate
   (2026-07-01, live-tested end-to-end in its day — see `plan-codex.md` for the
-  historical findings). The new verbs share `lib/delegate.ts` and were smoke-tested
+  historical findings). The new verbs share `delegate.ts` and were smoke-tested
   live (grok reviewing a real working-tree diff against a plan contract).
 
-Shared plumbing lives in `skills/ai-bridge/scripts/lib/` (`proc.ts` spawn/capture/timeout + version
-gate; `parsers.ts` validating flag parsers; `models.ts` the canonical registry; `delegate.ts` the
-delegation engine; `agy.ts` / `grok.ts` / `claude.ts` / `codex.ts` the per-CLI drivers).
+Shared plumbing lives in `packages/` (`proc` spawn/capture/timeout; `agy`, `grok`, `codex`, `claude` drivers; `ai-bridge` CLI and orchestration).

@@ -26,3 +26,20 @@ jobs:
         run: pnpm repojj:check
       - name: Run tests
         run: pnpm test
+      - name: Skill bundle freshness
+        run: |
+          pnpm build:skill
+          git diff --exit-code skills/
+          test -z "$(git status --porcelain skills/)"
+          test "$(ls skills/ai-bridge/scripts)" = "cli.mjs"
+      - name: Skill artifact is self-contained (Vercel copy model)
+        run: |
+          tmp="$(mktemp -d)"
+          cp -R skills/ai-bridge "$tmp/skill"
+          cd "$tmp/skill" && node scripts/cli.mjs --help
+      - name: Ban import.meta / __dirname in package sources
+        run: |
+          if grep -rEn 'import\.meta|__dirname' packages/*/src --include='*.ts' --exclude='*.test.ts'; then
+            echo 'import.meta / __dirname break bundled skill semantics; remove them.'
+            exit 1
+          fi

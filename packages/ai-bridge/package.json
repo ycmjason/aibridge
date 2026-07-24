@@ -1,0 +1,16 @@
+{
+  "name": "@ai-bridge/ai-bridge",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@ai-bridge/proc": "workspace:*",
+    "@ai-bridge/agy": "workspace:*",
+    "@ai-bridge/grok": "workspace:*",
+    "@ai-bridge/codex": "workspace:*",
+    "@ai-bridge/claude": "workspace:*"
+  }
+}

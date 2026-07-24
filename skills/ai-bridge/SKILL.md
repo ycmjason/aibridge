@@ -37,17 +37,17 @@ token budget**.
 
 ## Running it
 
-The CLI ships **inside this skill** — a zero-dependency TypeScript program that
-**Node ≥24** runs directly (no build, no `PATH` install). Invoke it from this
+The CLI ships **inside this skill** as a committed, self-contained ESM bundle that
+**Node ≥24** runs directly with zero dependencies. Invoke it from this
 skill's own directory:
 
 ```bash
-node <skill-dir>/scripts/cli.ts <command> [options]
+node <skill-dir>/scripts/cli.mjs <command> [options]
 ```
 
 `<skill-dir>` is the directory this `SKILL.md` lives in (resolve it to an absolute
 path). For brevity the reference files below write the command as
-`ai-bridge <command> …` — **substitute the `node <skill-dir>/scripts/cli.ts`
+`ai-bridge <command> …` — **substitute the `node <skill-dir>/scripts/cli.mjs`
 invocation**. Requires the backing CLIs on `PATH` and authed: **`grok`** (default
 planner/reviewer), **`agy`** (default implementer), **`codex`** (image-gen +
 `openai-codex/*` delegation), and optionally **`claude`** for the on-budget
@@ -81,7 +81,7 @@ fallback tier.
      itself.
 
    If genuinely ambiguous, show the table above and ask.
-3. **Unsure of the current flags?** Run `node <skill-dir>/scripts/cli.ts <command>
+3. **Unsure of the current flags?** Run `node <skill-dir>/scripts/cli.mjs <command>
    --help` — the surface grows over time (new models, new flags).
 
 ## Model seats (defaults encode this — keep it)

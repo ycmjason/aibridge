@@ -1,6 +1,6 @@
 # pnpm 11 reads settings from here, not the package.json "pnpm" field.
-# Root-only workspace: skill + CLI live under skills/ai-bridge (no package.json).
-packages: []
+packages:
+  - 'packages/*'
 
 catalogMode: strict
 cleanupUnusedCatalogs: true
@@ -18,3 +18,7 @@ catalog:
   '@types/node': ^25.9.2
   lefthook: ^2.1.9
   vitest: ^4.0.0
+  tsdown: 0.22.14
+
+minimumReleaseAgeExclude:
+  - tsdown@0.22.14

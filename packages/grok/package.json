@@ -1,0 +1,12 @@
+{
+  "name": "@ai-bridge/grok",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@ai-bridge/proc": "workspace:*"
+  }
+}

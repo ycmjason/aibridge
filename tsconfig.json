@@ -1,4 +1,11 @@
 {
   "files": [],
-  "references": [{ "path": "./skills/ai-bridge" }]
+  "references": [
+    { "path": "./packages/proc" },
+    { "path": "./packages/agy" },
+    { "path": "./packages/grok" },
+    { "path": "./packages/codex" },
+    { "path": "./packages/claude" },
+    { "path": "./packages/ai-bridge" }
+  ]
 }
