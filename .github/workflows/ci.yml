@@ -67,7 +67,7 @@ jobs:
           mkdir -p "$tmp/consumer"
           cd "$tmp/consumer"
           node -e 'fs.writeFileSync("package.json", JSON.stringify({ name: "consumer", type: "module" }));'
-          npm install "$tmp"/aibridge-proc-*.tgz "$tmp"/aibridge-agy-*.tgz "$tmp"/aibridge-grok-*.tgz "$tmp"/aibridge-codex-*.tgz "$tmp"/aibridge-claude-*.tgz "$tmp"/aibridge-cli-*.tgz
+          npm install "$tmp"/aibridge-*.tgz
           ./node_modules/.bin/aibridge --version
           ./node_modules/.bin/aibridge --help
 
