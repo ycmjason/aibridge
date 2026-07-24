@@ -62,6 +62,7 @@ say so unprompted and propose the cleanup — don't wait to be asked.
 | Implement | `pnpm aibridge implement --model google-antigravity/gemini-3.6-flash <plan.md>` |
 | Review | `pnpm aibridge review --model xai-grok/grok-4.5 --out review.md [--plan <plan.md>] [--base <ref>]` |
 | Subagent | `pnpm aibridge subagent --model xai-grok/grok-4.5 "<prompt>"` |
+| Models | `pnpm aibridge models [--json]` — list every model seat in the registry (efforts, image format, pinned backend model id) |
 | Monitor runs | `pnpm aibridge runs [--watch]` (logs in `~/.aibridge/runs`) |
 | Quota (all backends) | `pnpm aibridge quota [--json]` — agy group windows (weekly+5h) & per-model, codex 5h/weekly, claude session/weekly. Check BEFORE delegating: agy quota is shared per model GROUP (all Gemini tiers drain together) |
 | Check / Type-check / Repo / Test | `pnpm check` · `pnpm typecheck` · `pnpm repojj:check` · `pnpm test` |

@@ -31,7 +31,7 @@ export const MODELS: Record<string, ModelSpec> = {
     backend: 'grok',
     backendModel: 'grok-4.5',
     efforts: ['low', 'medium', 'high'],
-    brief: 'xAI Grok 4.5 via grok CLI — recommended for plan & review; own xAI login',
+    brief: 'xAI Grok 4.5 via grok CLI — own xAI login; ~30 req/min, ~1k msgs/day, single-flight',
   },
   'google-antigravity/gemini-3.6-flash': {
     slug: 'google-antigravity/gemini-3.6-flash',
@@ -40,7 +40,7 @@ export const MODELS: Record<string, ModelSpec> = {
     efforts: ['low', 'medium', 'high'],
     defaultEffort: 'high',
     brief:
-      'Google Gemini 3.6 Flash via agy — recommended for implement, also image-gen; own Antigravity login',
+      'Google Gemini 3.6 Flash via agy — own Antigravity login; quota shared across all Gemini tiers',
   },
   'google-antigravity/gemini-3.1-pro': {
     slug: 'google-antigravity/gemini-3.1-pro',
@@ -49,7 +49,8 @@ export const MODELS: Record<string, ModelSpec> = {
     efforts: ['low', 'high'],
     backendModel: 'gemini-3.1-pro',
     defaultEffort: 'high',
-    brief: 'Google Gemini 3.1 Pro via agy — heavier reasoning tier; own Antigravity login',
+    brief:
+      'Google Gemini 3.1 Pro via agy — own Antigravity login; quota shared across all Gemini tiers',
   },
   'google-antigravity/claude-sonnet-4-6': {
     slug: 'google-antigravity/claude-sonnet-4-6',

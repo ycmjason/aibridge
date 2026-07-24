@@ -83,6 +83,7 @@ Requires the backing CLIs on `PATH` and authed: **`grok`** (recommended planner/
 | `image-gen` | Generate a raster image via a model seat (codex, agy, or grok backend) | [reference/image-gen.md](reference/image-gen.md) |
 | `runs` | Monitor and inspect execution runs | — |
 | `quota` | Show backend quota and reset times (agy, codex, claude) | — |
+| `models` | List every model seat in the registry (slug, efforts, image format) | — |
 
 ## Routing
 
@@ -128,7 +129,7 @@ work), `anthropic-claude/haiku-4-5` (quick answers),
 `google-antigravity/gemini-3.1-pro` (`-high`/`-low` only), and agy's
 `claude-sonnet-4-6` / `claude-opus-4-6-thinking` / `gpt-oss-120b-medium` —
 Claude- and GPT-grade work on Antigravity's quota, which matters when the
-same-provider seats are the ones you are avoiding. `aibridge <command> --help`
+same-provider seats are the ones you are avoiding. Run `aibridge models [--json]` for exact per-seat facts (accepted efforts, image format, pinned model ID). `aibridge <command> --help`
 lists every seat.
 
 - **grok is aggressively capped** (~30 req/min, ~1k msgs/day, no local usage

@@ -42,6 +42,7 @@ npx -y @aibridge/cli subagent --model xai-grok/grok-4.5 "summarize the architect
 | `aibridge review --model xai-grok/grok-4.5 --out review.md [--plan <plan.md>]` | You want a **different model** to pressure-test the working-tree diff against the plan contract (over-reach is a finding) — or to review the plan itself before implementing |
 | `aibridge subagent --model xai-grok/grok-4.5 "<task>"` | A self-contained task deserves a concurrent delegate, a cross-model second opinion, or a red-team pass |
 | `aibridge image-gen --model openai-codex/gpt-5.6-sol --out out.png "<prompt>"` | You need a real raster image — on a Codex, Antigravity, or Grok seat, with render verification |
+| `aibridge models [--json]` | You need the exact facts for every registered model seat (accepted efforts, image format, pinned model ID) |
 | `aibridge quota` | Two-second check of every backend's remaining quota before you pipeline work |
 | `aibridge runs` | Inspect or watch past delegation runs (`~/.aibridge/runs`) |
 

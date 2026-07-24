@@ -2,6 +2,7 @@ import { createRequire } from 'node:module';
 import { buildApplication, buildRouteMap, run } from '@stricli/core';
 import { imageGen } from './commands/image-gen/command.ts';
 import { implement } from './commands/implement/command.ts';
+import { models } from './commands/models/command.ts';
 import { plan } from './commands/plan/command.ts';
 import { quota } from './commands/quota/command.ts';
 import { review } from './commands/review/command.ts';
@@ -25,6 +26,7 @@ const routes = buildRouteMap({
     'image-gen': imageGen,
     runs,
     quota,
+    models,
   },
   docs: {
     brief: BRIEF,
