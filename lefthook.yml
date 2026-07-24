@@ -1,0 +1,27 @@
+# Git hooks (installed on `pnpm install` via the package.json `prepare` script).
+
+pre-commit:
+  commands:
+    check:
+      glob: "*.{js,ts,cjs,mjs,d.cts,d.mts,jsx,tsx,json,jsonc,css}"
+      run: pnpm biome check --write --no-errors-on-unmatched --files-ignore-unknown=true {staged_files}
+      stage_fixed: true
+
+pre-push:
+  commands:
+    typecheck:
+      run: pnpm typecheck
+
+# Keep the globally-installed skill in sync with the source. A global local
+# `skills add` install is an untracked copy — it does NOT update itself when
+# the skill changes, so refresh it after any commit that touches the skill.
+post-commit:
+  commands:
+    refresh-skill:
+      # Only when the just-created commit actually touched the skill.
+      run: |
+        if git diff-tree --no-commit-id --name-only -r HEAD | grep -q '^skills/ai-bridge/'; then
+          echo "→ ai-bridge skill changed; refreshing global install in the background…"
+          # Detached + backgrounded so the commit returns immediately; log for debugging.
+          (pnpm skill:install >/tmp/ai-bridge-skill-install.log 2>&1 &)
+        fi

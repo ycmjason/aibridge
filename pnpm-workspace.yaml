@@ -1,0 +1,20 @@
+# pnpm 11 reads settings from here, not the package.json "pnpm" field.
+# Root-only workspace: skill + CLI live under skills/ai-bridge (no package.json).
+packages: []
+
+catalogMode: strict
+cleanupUnusedCatalogs: true
+
+# `allowBuilds` (pnpm >= 10.26) permits a dependency's lifecycle/build scripts.
+# lefthook needs its postinstall to fetch the platform binary; esbuild is pulled by vitest/vite.
+allowBuilds:
+  esbuild: true
+  lefthook: true
+
+catalog:
+  typescript: ~5.9.2
+  '@biomejs/biome': ^2.4.15
+  repojj: ^2026.1.35
+  '@types/node': ^25.9.2
+  lefthook: ^2.1.9
+  vitest: ^4.0.0

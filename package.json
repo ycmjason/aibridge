@@ -1,0 +1,31 @@
+{
+  "name": "ai-bridge",
+  "version": "0.0.0",
+  "private": true,
+  "description": "ai-bridge — Claude Code skill + zero-dependency TypeScript CLI that bridges tasks to non-Claude AI CLIs (skills/ai-bridge/scripts, Node 24 native TypeScript, no build).",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "ai-bridge": "node skills/ai-bridge/scripts/cli.ts",
+    "check": "biome check .",
+    "check:fix": "biome check --write .",
+    "typecheck": "tsc -b",
+    "repojj:check": "repojj check",
+    "repojj:check:fix": "repojj check --fix",
+    "repojj:postfix": "biome check --write .",
+    "skill:install": "npx --yes skills add \"$PWD\" -g -y -a amp antigravity antigravity-cli cline codex cursor deepagents gemini-cli github-copilot kimi-code-cli opencode warp zed claude-code",
+    "prepare": "lefthook install",
+    "test": "vitest run -c skills/ai-bridge/vitest.config.ts"
+  },
+  "packageManager": "pnpm@11.5.2+sha512.71c631e382066efc25625d5cf029075de07b61b37f6e27350fbd84b1bda5864c8c1967adc280776b45c30a715c0359a3be08fef42d5bb09e2b99029979692916",
+  "devDependencies": {
+    "@biomejs/biome": "catalog:",
+    "@types/node": "catalog:",
+    "lefthook": "catalog:",
+    "repojj": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

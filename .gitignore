@@ -1,0 +1,11 @@
+.claude/
+.DS_Store
+.env
+.env.*
+.tmp/
+*.local
+*.log
+*.tsbuildinfo
+/tmp/
+dist/
+node_modules/
