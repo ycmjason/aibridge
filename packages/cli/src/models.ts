@@ -80,7 +80,23 @@ export const MODELS: Record<string, ModelSpec> = {
     backendModel: 'opus',
     efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
     defaultEffort: 'high',
-    brief: 'Claude Opus via claude CLI (default effort: high) — bills subscription',
+    brief: 'Claude Opus via claude CLI, `opus` alias (default effort: high) — bills subscription',
+  },
+  'anthropic-claude/opus-5': {
+    slug: 'anthropic-claude/opus-5',
+    backend: 'claude',
+    backendModel: 'claude-opus-5',
+    efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
+    defaultEffort: 'high',
+    brief: 'Claude Opus 5 (pinned) via claude CLI (default effort: high) — bills subscription',
+  },
+  'anthropic-claude/opus-5-1m': {
+    slug: 'anthropic-claude/opus-5-1m',
+    backend: 'claude',
+    backendModel: 'claude-opus-5[1m]',
+    efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
+    defaultEffort: 'high',
+    brief: 'Claude Opus 5, 1M context via claude CLI — long-context work; bills subscription',
   },
 } as const satisfies Record<string, ModelSpec>;
 
