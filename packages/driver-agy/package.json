@@ -1,6 +1,6 @@
 {
   "name": "@aibridge/driver-agy",
-  "version": "0.0.2",
+  "version": "0.1.0",
   "description": "Antigravity (agy) CLI driver for aibridge",
   "type": "module",
   "license": "MIT",
