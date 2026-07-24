@@ -1,80 +1,21 @@
 # Architecture & decisions
 
-> Provenance: research + live testing on macOS (Darwin 24.5.0), 2026-06-08, by Claude (Opus 4.8). Findings marked **[verified]** were reproduced on this machine; **[web]** came from documentation research and may drift; **[skill]** carried over from the pre-existing `image-gen` skill.
+> Working log since 2026-06-08. Operational backend facts live in [`backends.md`](backends.md); current dev docs in [`AGENTS.md`](../AGENTS.md).
 
-## What this is
+## Active decisions
 
-`aibridge` is the **execution layer** for the `aibridge` Claude Code skill — a
-router skill (`skills/aibridge/`) exposing subskills (loaded on demand from `reference/`):
+- **Skill + CLI, not an MCP server.** The skill carries judgment/prompt-craft as on-demand context; the CLI owns brittle execution. MCP's ~60s default tool timeout fights multi-minute delegations, and cross-client reuse wasn't needed. If another surface ever needs these tools, wrap this same CLI in a thin MCP server.
+- **Two-step distribution** (2026-07-24): `@aibridge/*` packages on npm + a prose-only skill that runs `npx -y @aibridge/cli` zero-install. Transparency (users see exactly what's installed), standard skill-wraps-a-CLI pattern, and it deleted the entire committed-bundle gate apparatus.
+- **OIDC version-triggered publishing** (modeled on fishballapp/acme): bump a package version, merge to main → `publish.yml` verify job (full gates + pack/consumer smoke) then OIDC publish with provenance, skip-if-exists. First-ever publish of a NEW package needs a one-time manual bootstrap + Trusted Publisher config.
+- **Monorepo layout**: `packages/proc` (spawn/capture) ← `packages/driver-{agy,grok,codex,claude}` (per-CLI drivers: args, capture protocol, quota, probe) ← `packages/cli` (stricli app, models registry, backend-switch-free delegate). Structural `AgentCliDriver` contract (`probe`/`run`/`quota?`/`generateImage?`) defined in the cli package; drivers conform structurally — no shared contracts package. `AGY_CANONICAL_TO_NATIVE` lives in `driver-agy` to avoid a dependency cycle.
+- **`@stricli/core` for command orchestration** — typed `buildCommand` routing, generated help; exit-code contract (0 ok / 1 operational / 2 bad args / 3 quota refusal) preserved by normalizing stricli's framework codes post-`run`, locked by in-process tests on both the dev entry and published bin.
+- **Canonical model slugs** `<vendor>-<cli>/<model>[-<effort>]`, no aliases; effort maps to each backend's own knob. Registry in `packages/cli/src/models.ts`.
+- **Cross-model seats**: grok plans/reviews, gemini implements — a model never reviews its own diff.
+- **Node ≥24.11, native TS dev loop** — packages' `exports` point at `src/*.ts`; Node runs workspace-linked TS directly (no build in dev). Erasable syntax only; tsdown builds `dist/` for publishing; `prepack` self-builds.
 
-- `plan` → produce a detailed implementation plan file for a task prompt.
-- `implement` → execute an implementation plan file with real typecheck + tests.
-- `review` → review working tree diffs or plan contracts for over-reach and defects.
-- `subagent` → delegate a self-contained task to a non-Claude model via canonical registry.
-- `image-gen` → generate an image with gpt-image-2.
+## History (superseded, kept as one-liners)
 
-The skill carries the *judgment / prompt-craft*; the CLI on `PATH` (`@aibridge/cli`) owns the *brittle execution* (driving external CLIs and verifying their output).
-
-> **Note:** The original welded plan-gate (which combined review, expansion, and implementation into one recursive codex call) was replaced by the decoupled three-verb workflow (`plan` → `implement` → `review`).
-
-## Why a skill + CLI on PATH, and NOT an MCP server
-
-We evaluated three shapes: prose-only skill, **skill + CLI on PATH**, and an MCP server. We chose skill + CLI on PATH.
-
-| | prose-only | **skill + CLI on PATH** | MCP server |
-|---|---|---|---|
-| Brittle logic in deterministic code | ✗ | ✓ (this CLI) | ✓ |
-| Prompt-craft as rich, on-demand context | ✓ | ✓ (`skills/`) | ✗ tool descriptions only, always in context |
-| Long-running (agy/codex take minutes) | ✓ Bash tool handles it | ✓ Bash tool handles it | ✗ needs timeout/progress engineering |
-| Extra process / registration | none | none | yes |
-| Reusable outside Claude Code | ✗ | ✗ | ✓ |
-
-Decisive points:
-
-- **MCP's default tool-call timeout is 60s** (`MCP_TOOL_TIMEOUT`) **[web]**; agy/codex
-  routinely run minutes. Keeping a call alive needs the timeout raised *before*
-  session start plus server-emitted progress notifications that Claude Code
-  "displays but doesn't auto-extend the timeout" for — fragile. The Bash tool
-  runs a multi-minute `aibridge …` with no such ceremony.
-- MCP's one unique win — cross-client reuse (Desktop/IDE) — isn't needed; these
-  are Claude Code skills.
-- Anthropic's own guidance matches the split **[web]**: *the Skill teaches HOW; the
-  MCP provides tools/resources.* Prompt-craft belongs in the skill layer, never
-  buried in a tool description.
-
-If we ever want these tools in Claude Desktop / an IDE / another agent, wrap this
-same CLI in a thin MCP server then — the execution core stays unchanged.
-
-## Decisions worth knowing (easy to revisit)
-
-- **Two-step distribution: npm CLI + prose skill** (2026-07-24) — Supersedes committed `skills/aibridge/scripts/cli.mjs` bundle and Vercel copy-only constraint.
-  - *Rationale:* User transparency (user knows what binary they install), standard "skill wraps CLI on `PATH`" pattern, and eliminates build/freshness-gate apparatus (`pre-commit.build-skill`, CI bare-copy & `import.meta` ban, `THIRD-PARTY-LICENSES` duplication).
-  - *Architecture:* Six public `@aibridge/*` packages (`proc`, `agy`, `grok`, `codex`, `claude`, `cli`) published to npm with real `dependencies` and per-package `dist/` builds via `tsdown`. `@stricli/core` is a real runtime dependency of `@aibridge/cli` (not inlined).
-  - *Publishing:* OIDC version-triggered publishing workflow on `main` (`.github/workflows/publish.yml`), modeled on `fishballapp/acme`. Skip-if-exists publishing allows independent package releases via version bumps. First publish requires a one-time manual 0.0.1 bootstrap before Trusted Publisher configuration.
-- **`@stricli/core` for command orchestration** (superseded **node:util parseArgs**, 2026-07-24 — see the reversal entry below); run directly as `node packages/cli/src/cli.ts <command>` or `aibridge <command>`.
-- **Node 24+ native TypeScript** — `.ts` run directly in dev, no `tsx`/build step. See
-  `AGENTS.md` for the hard rules (erasable syntax only, `.ts` import extensions).
-- **Canonical Model Registry** (`packages/cli/src/models.ts`) — mapping canonical provider slugs (e.g. `xai-grok/grok-4.5`, `google-antigravity/gemini-3.6-flash`, `openai-codex/gpt-5.6-sol`) to backend CLI execution specifications.
-- **Skills live in-repo** (`skills/`) as the single source; installed via `skills add` or global skill installation.
-- **Zero-dependency drivers + stricli app** — workspace driver packages remain zero external runtime dependencies; `@aibridge/cli` depends on drivers and `@stricli/core`. > **Superseded (bundle side) by Two-step distribution (2026-07-24)**
-- **Three-verb reshape** (2026-07-24) — the welded `plan` gate (reviewer reviews + expands + recursively delegates the build in ONE codex/grok call) was replaced by orchestrator-driven `plan` → `implement` → `review`. Rationale: the orchestrating agent never saw the expanded plan before code was written, and review was welded to the pre-implementation position (no post-implementation cross-model review existed). Stages now pass FILE PATHS, not content — the orchestrator's output tokens are the scarce resource. Same change introduced the canonical effort-aware slugs (`<vendor>-<cli>/<model>[-<effort>]`, effort mapped per backend: agy bakes it into the model id, grok `--reasoning-effort`, claude `--effort`, codex `-c model_reasoning_effort=`), the shared `delegate.ts` engine (impls contain zero backend switches), and codex as a first-class delegation backend instead of a special-cased reviewer.
-- **Monorepo split into workspace packages** (2026-07-24) — Split CLI into workspace packages under `packages/*` (`proc`, `agy`, `grok`, `codex`, `claude`, `cli`). `skills/aibridge/` is a prose-only skill directory. > **Superseded (bundle side) by Two-step distribution (2026-07-24)**
-- **Reverse drop of `@stricli/core` (2026-07-24).** > **Superseded (inlining aspect) by Two-step distribution (2026-07-24)**: `@stricli/core` restored as standard npm dependency rather than inlined bundle asset.
-
-## Status
-
-- `subagent` (2026-06-08) drives `agy` and captures stdout directly — the old "agy
-  needs a TTY" gotcha did **not** reproduce on agy 1.0.6 (see `subagent-agy.md`), so
-  no `node-pty` / file-output workaround was needed. Verified: plain + `--json`.
-  (2026-07-01: fixed a workspace bug — it now runs the delegate in the caller's repo,
-  not a throwaway temp dir; see `subagent-agy.md`.)
-- `image-gen` (2026-06-08) drives `codex exec`, attributes the render via a pre-spawn
-  cache snapshot diff, and verifies a real (> 100 KB) gpt-image-2 PNG with one
-  anti-redraw retry only on a genuine code-drawn substitute. Verified: a real
-  1024×1024 ~600 KB render.
-- `plan` / `implement` / `review` (2026-07-24) replaced the welded three-tier gate
-  (2026-07-01, live-tested end-to-end in its day — see `plan-codex.md` for the
-  historical findings). The new verbs share `delegate.ts` and were smoke-tested
-  live (grok reviewing a real working-tree diff against a plan contract).
-
-Shared plumbing lives in `packages/` (`proc` spawn/capture/timeout; `agy`, `grok`, `codex`, `claude` drivers; `cli` CLI and orchestration).
+- *Welded plan gate* (one recursive codex call doing review+expand+build) → replaced by the decoupled `plan` → `implement` → `review` flow with the orchestrator approving the plan file between stages (2026-07-24).
+- *Zero-dependency `node:util parseArgs` CLI inside the skill dir* → stricli + npm packages once bundling/publishing removed the zero-dep constraint (2026-07-24). Same change: `review` now rejects stray positionals (exit 2); stricli's additive flag spellings (`--flag=value`, `--help-all`) accepted.
+- *Committed self-contained skill bundle* (`skills/aibridge/scripts/cli.mjs` + freshness/bare-copy/import.meta CI gates) → two-step npm distribution (2026-07-24).
+- *Original repo/scope names* `fishballapp/ai-bridge`, `@ai-bridge/*`, `@aibridge/{agy,…}` → `ycmjason/aibridge`, `@aibridge/*`, `@aibridge/driver-*` (2026-07-24).

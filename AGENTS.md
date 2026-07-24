@@ -96,14 +96,12 @@ Edit `packages/cli/src/models.ts`: add an entry to `MODELS` mapping a canonical 
 
 Full verified findings and per-command implementation recipes live in [`docs/`](docs/):
 
-- [`docs/decisions.md`](docs/decisions.md) — architecture & why skill+CLI (not MCP) & monorepo restructure.
-- [`docs/subagent-agy.md`](docs/subagent-agy.md) — agy facts + how to implement `subagent`.
-- [`docs/image-gen-codex.md`](docs/image-gen-codex.md) — codex facts + how to implement `image-gen`.
-- [`docs/plan-codex.md`](docs/plan-codex.md) — the SUPERSEDED three-tier `plan` gate findings.
+- [`docs/decisions.md`](docs/decisions.md) — active decisions + one-liner history.
+- [`docs/backends.md`](docs/backends.md) — operational backend facts (agy workspace/TTY/quota, codex sandbox/redraw/schema, grok/claude caps).
 
 ## Critical runtime gotchas (read before implementing the impls)
 
-- **`agy` stdout capture — no TTY workaround needed (re-verified agy 1.0.6).** An earlier note claimed `agy -p` only emits to a TTY and hangs when piped/redirected (Antigravity issue #76). Re-tested on agy 1.0.6 from this repo: **false here** — agy emits clean text to a piped, redirected, or fully-headless stdout (`runCaptured` in `@aibridge/proc`). See [`docs/subagent-agy.md`](docs/subagent-agy.md).
+- **`agy` stdout capture — no TTY workaround needed (re-verified agy 1.0.6).** An earlier note claimed `agy -p` only emits to a TTY and hangs when piped/redirected (Antigravity issue #76). Re-tested on agy 1.0.6 from this repo: **false here** — agy emits clean text to a piped, redirected, or fully-headless stdout (`runCaptured` in `@aibridge/proc`). See [`docs/backends.md`](docs/backends.md).
 - **Verify codex image renders.** A real gpt-image-2 PNG is hundreds of KB–MB; a code-drawn (PIL) substitute is tiny (~10–30 KB). Always check output file size (> ~100 KB) before declaring success; raw renders are cached under `~/.codex/generated_images/<uuid>/ig_*.png`.
 - **agy quota death shows up as an empty answer.** An exhausted model makes `agy -p` return an empty answer after ~6s (the CLI exits 0). Quota preflight is the guard: `preflightModel` refuses before spawning when agy snapshot says model group is exhausted.
 

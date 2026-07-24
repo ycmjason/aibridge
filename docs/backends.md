@@ -1,0 +1,25 @@
+# Backend facts (operational — the drivers embody these; this explains WHY)
+
+> Live-verified on macOS unless marked **[web]**. Re-verify versions before relying on details.
+
+## agy (Antigravity CLI)
+
+- Google's terminal agent, successor to Gemini CLI. Auth = the user's Google login (OS keyring), no API key. Config under `~/.gemini/antigravity-cli/`.
+- **Effort is baked into the model id** (`gemini-3.6-flash-high|-medium|-low`; no un-suffixed id). The registry stores the base id + `defaultEffort`; `backendModelId()` appends the suffix. `agy models` lists current ids.
+- Headless: `agy -p "<prompt>"` (+ `--model`, `--dangerously-skip-permissions` for tools, `--add-dir`, `--print-timeout`, default 5m). **No JSON output mode.**
+- **agy ignores its spawn cwd** — it treats the FIRST `--add-dir` as the workspace. Delegation must pass the caller's repo as the first `--add-dir` (temp answer dir second) or all edits land in the wrong directory and vanish.
+- stdout capture works headless (piped, no TTY) as of agy 1.0.6 — no `node-pty` needed. If a future agy regresses (symptom: hangs to `--print-timeout`, 0 bytes), fall back to a pseudo-TTY or answer-file-only capture.
+- **Quota death shows up as an empty answer, exit 0** (~6s). The quota preflight guards this. Quota is per model GROUP (all Gemini tiers share weekly+5h windows); each request injects ~24k system tokens, so don't loop trivia. **[web]**
+- `--continue` resumes the most-recent conversation GLOBALLY — cross-contaminates concurrent runs; never use it for parallel calls.
+
+## codex (Codex CLI)
+
+- `$imagegen` in a `codex exec` prompt renders with gpt-image-2 on the ChatGPT login — no `OPENAI_API_KEY`. Version gates: `MIN_CODEX_IMAGE` (image), `MIN_CODEX_STRUCTURED` (`--output-schema`/`--output-last-message`); a stale codex silently hangs on `$imagegen`.
+- **`codex exec` is an agent and will silently substitute a code-drawn (PIL) image** for the real render if it judges the output imperfect. Always forbid redraw in the prompt, and size-check the file: a real gpt-image-2 PNG is hundreds of KB; a fake is ~10–30 KB (the `>100 KB` check). Raw renders cache at `~/.codex/generated_images/<uuid>/ig_*.png` — used for attribution.
+- **Sandbox matrix**: tools-mode delegation needs `--dangerously-bypass-approvals-and-sandbox` — the sandbox blocks both the network and OS-keyring access that downstream CLIs (e.g. agy) require, even with `network_access=true`. `image-gen` keeps `--full-auto` (its `image_gen` tool is codex-internal, not a sandboxed shell). No-tools delegation uses `read-only`.
+- `--output-schema` uses OpenAI strict structured outputs: `additionalProperties: false` AND every property in `required` — optional fields must be nullable, not omitted. A lax schema 400s.
+- `-i ref.png` (reference images) is space-variadic — prompt goes BEFORE `-i`, multiple refs comma-separated.
+
+## grok / claude
+
+- Plain print-mode CLIs; effort maps to `--reasoning-effort` (grok) / `--effort` (claude). grok is aggressively capped (~30 req/min, ~1k msgs/day) with no local usage probe — one grok stage at a time. claude quota is read from its usage command (session + weekly windows).
