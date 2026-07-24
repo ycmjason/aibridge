@@ -72,7 +72,7 @@ jobs:
           ./node_modules/.bin/aibridge --help
 
           node --input-type=module -e '
-            const pkgs = ["proc", "agy", "grok", "codex", "claude", "cli"];
+            const pkgs = ["proc", "driver-agy", "driver-grok", "driver-codex", "driver-claude", "cli"];
             for (const p of pkgs) {
               await import("@aibridge/" + p);
               console.log("imported @aibridge/" + p);
