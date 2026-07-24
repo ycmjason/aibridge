@@ -28,7 +28,7 @@ const routes = buildRouteMap({
 });
 
 export const app = buildApplication(routes, {
-  name: 'ai-bridge',
+  name: 'aibridge',
   scanner: {
     // Accept --no-preflight / --no-tools while flag keys stay camelCase in TS
     caseStyle: 'allow-kebab-for-camel',

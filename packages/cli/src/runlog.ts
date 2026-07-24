@@ -67,7 +67,7 @@ function pruneOldRuns(runsDir: string): void {
 }
 
 export function startRun(command: string, detail: string): RunLog {
-  const runsDir = join(homedir(), '.ai-bridge', 'runs');
+  const runsDir = join(homedir(), '.aibridge', 'runs');
   try {
     mkdirSync(runsDir, { recursive: true });
     pruneOldRuns(runsDir);
@@ -144,7 +144,7 @@ export function startRun(command: string, detail: string): RunLog {
 }
 
 export function listRuns(): RunMeta[] {
-  const runsDir = join(homedir(), '.ai-bridge', 'runs');
+  const runsDir = join(homedir(), '.aibridge', 'runs');
   if (!existsSync(runsDir)) return [];
   try {
     const entries = readdirSync(runsDir, { withFileTypes: true });
@@ -178,7 +178,7 @@ export function listRuns(): RunMeta[] {
 }
 
 export function readRunLogs(id: string): { meta: RunMeta; stdout: string; stderr: string } | null {
-  const runsDir = join(homedir(), '.ai-bridge', 'runs');
+  const runsDir = join(homedir(), '.aibridge', 'runs');
   const dir = join(runsDir, id);
   const metaPath = join(dir, 'meta.json');
   const stdoutPath = join(dir, 'stdout.log');

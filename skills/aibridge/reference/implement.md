@@ -1,12 +1,12 @@
 # implement — execute an implementation plan file
 
-`ai-bridge implement` hands a plan FILE to an implementer model that edits the
+`aibridge implement` hands a plan FILE to an implementer model that edits the
 working tree in place and runs the project's real gates. Stage three of
 **`plan` → you read/approve → `implement` → `review`**.
 
 ## When to use
 
-- You have a plan file you have READ and approved (from `ai-bridge plan`, or
+- You have a plan file you have READ and approved (from `aibridge plan`, or
   written yourself). The implementer is a pure do-er: if the plan needs vision
   or context to execute correctly, the plan is not done — fix the plan, don't
   brief the implementer.
@@ -14,7 +14,7 @@ working tree in place and runs the project's real gates. Stage three of
 ## Usage
 
 ```bash
-ai-bridge implement [options] <plan-file>
+aibridge implement [options] <plan-file>
   --model <slug>       implementer model (default: google-antigravity/gemini-3.6-flash)
   --timeout <secs>     max seconds for implementation (default: 1800)
   --no-preflight       skip the backend quota preflight check
@@ -49,7 +49,7 @@ Exit 3: quota preflight refusal.
 
 - The summary's "gates green" claim is **delegate-reported**. Re-run the real
   gates yourself before trusting the diff.
-- Then `ai-bridge review --plan <plan-file>` for the cross-model check
+- Then `aibridge review --plan <plan-file>` for the cross-model check
   (defaults already make reviewer ≠ implementer).
 
 ## Gotchas
@@ -57,6 +57,6 @@ Exit 3: quota preflight refusal.
 - Keep the implementer cross-model from whoever reviews: gemini implements,
   grok reviews (the defaults). If you override `--model`, check the other seat.
 - agy quota is shared per model GROUP — two concurrent agy-heavy implements
-  drain the same window. `ai-bridge quota` before pipelining.
+  drain the same window. `aibridge quota` before pipelining.
 - Timeout is for the WHOLE implementation incl. gate-fixing loops; raise it for
   big plans rather than letting a near-done run get killed.

@@ -6,7 +6,7 @@ matters even if you only hand the prompt back.
 ## A. Calling it
 
 ```bash
-ai-bridge image-gen "<full prompt — see Part B>" \
+aibridge image-gen "<full prompt — see Part B>" \
   [--model <slug>] [--out out.png] [--size 1024x1024] [--image ref.png] \
   [--quality high] [--timeout 600] [--json]
 ```
@@ -23,7 +23,7 @@ Other seats fail fast with a list of capable models.
 
 Notes:
 
-- `--out` defaults to `./ai-bridge-image.png`.
+- `--out` defaults to `./aibridge-image.png`.
 - `--size WxH` — on **codex**, validated against gpt-image-2 limits (each edge
   divisible by 16, ratio 1:3–3:1, 0.65–8.3 MP). On **grok**, mapped to the
   nearest Imagine `aspect_ratio` (`1:1`, `16:9`, …); exact pixels are resized
@@ -41,11 +41,11 @@ Attach one or more existing images and the model edits/varies *them* instead of
 inventing from scratch — e.g. keep the same subject, change only what you ask:
 
 ```bash
-ai-bridge image-gen "the same woman, now in a denim shirt in a bright kitchen, waist-up" \
+aibridge image-gen "the same woman, now in a denim shirt in a bright kitchen, waist-up" \
   --image avatar.png --size 768x1344
 
 # same brief, rendered with Imagine instead of gpt-image-2
-ai-bridge image-gen "the same woman, now in a denim shirt in a bright kitchen, waist-up" \
+aibridge image-gen "the same woman, now in a denim shirt in a bright kitchen, waist-up" \
   --model xai-grok/grok-4.5 --image avatar.png --size 768x1344
 ```
 

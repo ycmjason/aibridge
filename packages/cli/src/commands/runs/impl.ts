@@ -38,13 +38,13 @@ export default async function runs(
     const all = listRuns();
     const matches = all.filter(r => r.id.startsWith(idPrefix));
     if (matches.length === 0) {
-      this.process.stderr.write(`ai-bridge runs: no run matches prefix "${idPrefix}"\n`);
+      this.process.stderr.write(`aibridge runs: no run matches prefix "${idPrefix}"\n`);
       this.process.exitCode = 1;
       return;
     }
     if (matches.length > 1) {
       this.process.stderr.write(
-        `ai-bridge runs: ambiguous prefix "${idPrefix}" matches:\n${matches.map(m => `  ${m.id}`).join('\n')}\n`,
+        `aibridge runs: ambiguous prefix "${idPrefix}" matches:\n${matches.map(m => `  ${m.id}`).join('\n')}\n`,
       );
       this.process.exitCode = 1;
       return;
@@ -53,7 +53,7 @@ export default async function runs(
     if (target === undefined) return;
     const logs = readRunLogs(target.id);
     if (!logs) {
-      this.process.stderr.write(`ai-bridge runs: failed to read logs for run "${target.id}"\n`);
+      this.process.stderr.write(`aibridge runs: failed to read logs for run "${target.id}"\n`);
       this.process.exitCode = 1;
       return;
     }
@@ -97,7 +97,7 @@ export default async function runs(
     const update = () => {
       this.process.stdout.write('\x1b[2J\x1b[H');
       const timeStr = new Date().toLocaleTimeString();
-      this.process.stdout.write(`ai-bridge runs — ${timeStr} (ctrl-c to quit)\n\n`);
+      this.process.stdout.write(`aibridge runs — ${timeStr} (ctrl-c to quit)\n\n`);
 
       const runs = listRuns();
       if (runs.length === 0) {

@@ -93,7 +93,7 @@ export default async function review(this: LocalContext, flags: ReviewFlags): Pr
   if (flags.plan) {
     absPlanPath = isAbsolute(flags.plan) ? flags.plan : resolve(cwd, flags.plan);
     if (!existsSync(absPlanPath)) {
-      this.process.stderr.write(`ai-bridge review: plan file "${absPlanPath}" not found\n`);
+      this.process.stderr.write(`aibridge review: plan file "${absPlanPath}" not found\n`);
       this.process.exitCode = 2;
       return;
     }
@@ -103,7 +103,7 @@ export default async function review(this: LocalContext, flags: ReviewFlags): Pr
   if (diffRes.code !== 0 && diffRes.code !== 1) {
     const detail = diffRes.stderr.trim().split('\n')[0] ?? `exit code ${diffRes.code}`;
     this.process.stderr.write(
-      `ai-bridge review: git diff failed for base "${baseRef}": ${detail}\n`,
+      `aibridge review: git diff failed for base "${baseRef}": ${detail}\n`,
     );
     this.process.exitCode = 2;
     return;
@@ -116,7 +116,7 @@ export default async function review(this: LocalContext, flags: ReviewFlags): Pr
   const isDirty = hasDiff || hasPorcelain;
 
   if (!isDirty && !absPlanPath) {
-    this.process.stderr.write(`ai-bridge review: nothing to review\n`);
+    this.process.stderr.write(`aibridge review: nothing to review\n`);
     this.process.exitCode = 2;
     return;
   }
@@ -128,7 +128,7 @@ export default async function review(this: LocalContext, flags: ReviewFlags): Pr
       this.process.exitCode = 3;
       return;
     }
-    if (verdict.warning) this.process.stderr.write(`ai-bridge review: ${verdict.warning}\n`);
+    if (verdict.warning) this.process.stderr.write(`aibridge review: ${verdict.warning}\n`);
   }
 
   const timeoutSec = flags.timeout ?? 1200;
@@ -183,7 +183,7 @@ export default async function review(this: LocalContext, flags: ReviewFlags): Pr
   }
 
   if (!existsSync(absOutPath) || readFileSync(absOutPath, 'utf8').trim().length === 0) {
-    this.process.stderr.write(`ai-bridge review: review file was not written to ${absOutPath}\n`);
+    this.process.stderr.write(`aibridge review: review file was not written to ${absOutPath}\n`);
     this.process.exitCode = 1;
     return;
   }
@@ -191,9 +191,7 @@ export default async function review(this: LocalContext, flags: ReviewFlags): Pr
   const verdictResult = parseReviewVerdict(outcome.response);
 
   if (verdictResult.kind === 'unparseable') {
-    this.process.stderr.write(
-      `ai-bridge review: could not parse a verdict line from the answer.\n`,
-    );
+    this.process.stderr.write(`aibridge review: could not parse a verdict line from the answer.\n`);
     this.process.stdout.write(`${outcome.response}\nreview: ${absOutPath}\nrun: ${run.id}\n`);
     this.process.exitCode = 1;
     return;

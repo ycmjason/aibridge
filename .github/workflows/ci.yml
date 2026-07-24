@@ -31,11 +31,11 @@ jobs:
           pnpm build:skill
           git diff --exit-code skills/
           test -z "$(git status --porcelain skills/)"
-          test "$(ls skills/ai-bridge/scripts)" = "cli.mjs"
+          test "$(ls skills/aibridge/scripts)" = "cli.mjs"
       - name: Skill artifact is self-contained (Vercel copy model)
         run: |
           tmp="$(mktemp -d)"
-          cp -R skills/ai-bridge "$tmp/skill"
+          cp -R skills/aibridge "$tmp/skill"
           test -f "$tmp/skill/THIRD-PARTY-LICENSES"
           cd "$tmp/skill" && node scripts/cli.mjs --help
       - name: Ban import.meta / __dirname in package sources

@@ -54,14 +54,14 @@ export async function run(
         return {
           ok: false,
           kind: 'not-found',
-          message: `ai-bridge: "grok" not found on PATH. ${INSTALL_HINT}`,
+          message: `aibridge: "grok" not found on PATH. ${INSTALL_HINT}`,
           exitCode: null,
         };
       }
       return {
         ok: false,
         kind: 'spawn',
-        message: `ai-bridge: failed to run grok: ${(err as Error).message}`,
+        message: `aibridge: failed to run grok: ${(err as Error).message}`,
         exitCode: null,
       };
     }
@@ -70,7 +70,7 @@ export async function run(
       return {
         ok: false,
         kind: 'timeout',
-        message: `ai-bridge: grok timed out after ~${task.timeoutSec + 20}s; raise --timeout.`,
+        message: `aibridge: grok timed out after ~${task.timeoutSec + 20}s; raise --timeout.`,
         exitCode: result.code,
       };
     }
@@ -82,7 +82,7 @@ export async function run(
       return {
         ok: false,
         kind: 'no-answer',
-        message: `ai-bridge: grok returned no usable answer (${detail}).`,
+        message: `aibridge: grok returned no usable answer (${detail}).`,
         exitCode: result.code,
       };
     }
@@ -92,7 +92,7 @@ export async function run(
     return {
       ok: false,
       kind: 'spawn',
-      message: `ai-bridge: error executing grok: ${(err as Error).message}`,
+      message: `aibridge: error executing grok: ${(err as Error).message}`,
       exitCode: null,
     };
   }

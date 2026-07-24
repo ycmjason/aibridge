@@ -8,7 +8,7 @@ pre-commit:
       stage_fixed: true
     build-skill:
       glob: "{packages/**/*,package.json,pnpm-workspace.yaml,pnpm-lock.yaml}"
-      run: pnpm build:skill && git add skills/ai-bridge/scripts/cli.mjs
+      run: pnpm build:skill && git add skills/aibridge/scripts/cli.mjs
 
 pre-push:
   commands:
@@ -23,8 +23,8 @@ post-commit:
     refresh-skill:
       # Only when the just-created commit actually touched the skill.
       run: |
-        if git diff-tree --no-commit-id --name-only -r HEAD | grep -q '^skills/ai-bridge/'; then
-          echo "→ ai-bridge skill changed; refreshing global install in the background…"
+        if git diff-tree --no-commit-id --name-only -r HEAD | grep -q '^skills/aibridge/'; then
+          echo "→ aibridge skill changed; refreshing global install in the background…"
           # Detached + backgrounded so the commit returns immediately; log for debugging.
-          (pnpm skill:install >/tmp/ai-bridge-skill-install.log 2>&1 &)
+          (pnpm skill:install >/tmp/aibridge-skill-install.log 2>&1 &)
         fi

@@ -26,7 +26,7 @@ export const imageGen = buildCommand({
         kind: 'parsed',
         parse: String,
         optional: true,
-        brief: 'Path to write the image (default: ./ai-bridge-image.png)',
+        brief: 'Path to write the image (default: ./aibridge-image.png)',
       },
       size: {
         kind: 'parsed',

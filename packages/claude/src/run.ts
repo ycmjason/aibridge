@@ -55,14 +55,14 @@ export async function run(
         return {
           ok: false,
           kind: 'not-found',
-          message: `ai-bridge: "claude" not found on PATH. ${INSTALL_HINT}`,
+          message: `aibridge: "claude" not found on PATH. ${INSTALL_HINT}`,
           exitCode: null,
         };
       }
       return {
         ok: false,
         kind: 'spawn',
-        message: `ai-bridge: failed to run claude: ${(err as Error).message}`,
+        message: `aibridge: failed to run claude: ${(err as Error).message}`,
         exitCode: null,
       };
     }
@@ -71,7 +71,7 @@ export async function run(
       return {
         ok: false,
         kind: 'timeout',
-        message: `ai-bridge: claude timed out after ~${task.timeoutSec + 20}s; raise --timeout.`,
+        message: `aibridge: claude timed out after ~${task.timeoutSec + 20}s; raise --timeout.`,
         exitCode: result.code,
       };
     }
@@ -83,7 +83,7 @@ export async function run(
       return {
         ok: false,
         kind: 'no-answer',
-        message: `ai-bridge: claude returned no usable answer (${detail}).`,
+        message: `aibridge: claude returned no usable answer (${detail}).`,
         exitCode: result.code,
       };
     }
@@ -93,7 +93,7 @@ export async function run(
     return {
       ok: false,
       kind: 'spawn',
-      message: `ai-bridge: error executing claude: ${(err as Error).message}`,
+      message: `aibridge: error executing claude: ${(err as Error).message}`,
       exitCode: null,
     };
   }

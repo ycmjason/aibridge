@@ -2206,7 +2206,7 @@ async function probe$3(run = runCaptured) {
 		const res = await run("agy", ["--version"], { timeoutMs: 1e4 });
 		if (res.timedOut) return {
 			ok: false,
-			error: "ai-bridge: \"agy\" timed out probing version."
+			error: "aibridge: \"agy\" timed out probing version."
 		};
 		const line = (res.stdout || res.stderr).split("\n")[0]?.trim();
 		if (line && line.length > 0) return {
@@ -2215,16 +2215,16 @@ async function probe$3(run = runCaptured) {
 		};
 		return {
 			ok: false,
-			error: `ai-bridge: "agy" returned no version output. ${INSTALL_HINT$7}`
+			error: `aibridge: "agy" returned no version output. ${INSTALL_HINT$7}`
 		};
 	} catch (err) {
 		if (isNotFound(err)) return {
 			ok: false,
-			error: `ai-bridge: "agy" not found on PATH. ${INSTALL_HINT$7}`
+			error: `aibridge: "agy" not found on PATH. ${INSTALL_HINT$7}`
 		};
 		return {
 			ok: false,
-			error: `ai-bridge: failed to probe agy: ${err.message}`
+			error: `aibridge: failed to probe agy: ${err.message}`
 		};
 	}
 }
@@ -2242,7 +2242,7 @@ async function run$3(task, exec = runCaptured) {
 	let taskPrompt = task.prompt;
 	const addDirs = [];
 	if (task.tools) {
-		tempDir = mkdtempSync(join(tmpdir(), "ai-bridge-agy-"));
+		tempDir = mkdtempSync(join(tmpdir(), "aibridge-agy-"));
 		answerPath = join(tempDir, "answer.md");
 		taskPrompt = `${task.prompt}\n\nYou are working in the repository rooted at ${task.cwd}; make ALL file edits there (any relative paths in the task are relative to that root). When the task is complete, write ONLY your final answer (the exact text you would otherwise print as your response, with no narration of your steps) to the file ${answerPath} — nothing else in that file. This is how your answer is captured; do not mention the file in the answer.`;
 		addDirs.push(task.cwd, tempDir);
@@ -2268,20 +2268,20 @@ async function run$3(task, exec = runCaptured) {
 			if (isNotFound(err)) return {
 				ok: false,
 				kind: "not-found",
-				message: `ai-bridge: "agy" not found on PATH. ${INSTALL_HINT$6}`,
+				message: `aibridge: "agy" not found on PATH. ${INSTALL_HINT$6}`,
 				exitCode: null
 			};
 			return {
 				ok: false,
 				kind: "spawn",
-				message: `ai-bridge: failed to run agy: ${err.message}`,
+				message: `aibridge: failed to run agy: ${err.message}`,
 				exitCode: null
 			};
 		}
 		if (result.timedOut) return {
 			ok: false,
 			kind: "timeout",
-			message: `ai-bridge: agy timed out after ~${task.timeoutSec + 20}s; raise --timeout.`,
+			message: `aibridge: agy timed out after ~${task.timeoutSec + 20}s; raise --timeout.`,
 			exitCode: result.code
 		};
 		let response = "";
@@ -2293,7 +2293,7 @@ async function run$3(task, exec = runCaptured) {
 		if (result.code !== 0 || response.length === 0) return {
 			ok: false,
 			kind: "no-answer",
-			message: `ai-bridge: agy returned no usable answer (${clean$3(result.stderr) || `exit code ${result.code}`}).`,
+			message: `aibridge: agy returned no usable answer (${clean$3(result.stderr) || `exit code ${result.code}`}).`,
 			exitCode: result.code
 		};
 		return {
@@ -2376,16 +2376,16 @@ async function probe$2(_run = runCaptured) {
 		};
 		return {
 			ok: false,
-			error: `ai-bridge: ${check.error}`
+			error: `aibridge: ${check.error}`
 		};
 	} catch (err) {
 		if (isNotFound(err)) return {
 			ok: false,
-			error: `ai-bridge: "claude" not found on PATH. ${INSTALL_HINT$5}`
+			error: `aibridge: "claude" not found on PATH. ${INSTALL_HINT$5}`
 		};
 		return {
 			ok: false,
-			error: `ai-bridge: failed to probe claude: ${err.message}`
+			error: `aibridge: failed to probe claude: ${err.message}`
 		};
 	}
 }
@@ -2418,27 +2418,27 @@ async function run$2(task, exec = runCaptured) {
 			if (isNotFound(err)) return {
 				ok: false,
 				kind: "not-found",
-				message: `ai-bridge: "claude" not found on PATH. ${INSTALL_HINT$4}`,
+				message: `aibridge: "claude" not found on PATH. ${INSTALL_HINT$4}`,
 				exitCode: null
 			};
 			return {
 				ok: false,
 				kind: "spawn",
-				message: `ai-bridge: failed to run claude: ${err.message}`,
+				message: `aibridge: failed to run claude: ${err.message}`,
 				exitCode: null
 			};
 		}
 		if (result.timedOut) return {
 			ok: false,
 			kind: "timeout",
-			message: `ai-bridge: claude timed out after ~${task.timeoutSec + 20}s; raise --timeout.`,
+			message: `aibridge: claude timed out after ~${task.timeoutSec + 20}s; raise --timeout.`,
 			exitCode: result.code
 		};
 		const response = clean$2(result.stdout);
 		if (result.code !== 0 || response.length === 0) return {
 			ok: false,
 			kind: "no-answer",
-			message: `ai-bridge: claude returned no usable answer (${clean$2(result.stderr) || `exit code ${result.code}`}).`,
+			message: `aibridge: claude returned no usable answer (${clean$2(result.stderr) || `exit code ${result.code}`}).`,
 			exitCode: result.code
 		};
 		return {
@@ -2450,7 +2450,7 @@ async function run$2(task, exec = runCaptured) {
 		return {
 			ok: false,
 			kind: "spawn",
-			message: `ai-bridge: error executing claude: ${err.message}`,
+			message: `aibridge: error executing claude: ${err.message}`,
 			exitCode: null
 		};
 	}
@@ -2601,7 +2601,7 @@ async function generateImage$1(req, exec = runCaptured) {
 		path,
 		bytes: safeSize$1(path)
 	})).filter((r) => r.bytes >= req.minBytes).sort((a, b) => mtime$1(b.path) - mtime$1(a.path));
-	if (fresh.length > 1) process.stderr.write(`ai-bridge image-gen: ${fresh.length} new cached renders appeared; using the most recent.\n`);
+	if (fresh.length > 1) process.stderr.write(`aibridge image-gen: ${fresh.length} new cached renders appeared; using the most recent.\n`);
 	if (fresh[0]) return {
 		kind: "ok",
 		path: fresh[0].path,
@@ -2657,16 +2657,16 @@ async function probe$1(run = runCaptured) {
 		};
 		return {
 			ok: false,
-			error: `ai-bridge: ${check.error}`
+			error: `aibridge: ${check.error}`
 		};
 	} catch (err) {
 		if (isNotFound(err)) return {
 			ok: false,
-			error: `ai-bridge: "codex" not found on PATH. ${INSTALL_HINT$3}`
+			error: `aibridge: "codex" not found on PATH. ${INSTALL_HINT$3}`
 		};
 		return {
 			ok: false,
-			error: `ai-bridge: failed to probe codex: ${err.message}`
+			error: `aibridge: failed to probe codex: ${err.message}`
 		};
 	}
 }
@@ -2682,10 +2682,10 @@ async function run$1(task, exec = runCaptured) {
 	if (!(await ensureCodex(MIN_CODEX_STRUCTURED, exec)).ok) return {
 		ok: false,
 		kind: "not-found",
-		message: `ai-bridge: "codex" not found on PATH or wrong version. ${INSTALL_HINT$2}`,
+		message: `aibridge: "codex" not found on PATH or wrong version. ${INSTALL_HINT$2}`,
 		exitCode: null
 	};
-	const tempDir = mkdtempSync(join(tmpdir(), "ai-bridge-codex-"));
+	const tempDir = mkdtempSync(join(tmpdir(), "aibridge-codex-"));
 	const answerPath = join(tempDir, "last_message.md");
 	try {
 		const config = [];
@@ -2711,20 +2711,20 @@ async function run$1(task, exec = runCaptured) {
 			if (isNotFound(err)) return {
 				ok: false,
 				kind: "not-found",
-				message: `ai-bridge: "codex" not found on PATH. ${INSTALL_HINT$2}`,
+				message: `aibridge: "codex" not found on PATH. ${INSTALL_HINT$2}`,
 				exitCode: null
 			};
 			return {
 				ok: false,
 				kind: "spawn",
-				message: `ai-bridge: failed to run codex: ${err.message}`,
+				message: `aibridge: failed to run codex: ${err.message}`,
 				exitCode: null
 			};
 		}
 		if (result.timedOut) return {
 			ok: false,
 			kind: "timeout",
-			message: `ai-bridge: codex timed out after ~${task.timeoutSec + 20}s; raise --timeout.`,
+			message: `aibridge: codex timed out after ~${task.timeoutSec + 20}s; raise --timeout.`,
 			exitCode: result.code
 		};
 		let response = "";
@@ -2736,7 +2736,7 @@ async function run$1(task, exec = runCaptured) {
 		if (result.code !== 0 || response.length === 0) return {
 			ok: false,
 			kind: "no-answer",
-			message: `ai-bridge: codex returned no usable answer (${clean$1(result.stderr) || `exit code ${result.code}`}).`,
+			message: `aibridge: codex returned no usable answer (${clean$1(result.stderr) || `exit code ${result.code}`}).`,
 			exitCode: result.code
 		};
 		return {
@@ -2974,16 +2974,16 @@ async function probe(run = runCaptured) {
 		};
 		return {
 			ok: false,
-			error: `ai-bridge: ${check.error}`
+			error: `aibridge: ${check.error}`
 		};
 	} catch (err) {
 		if (isNotFound(err)) return {
 			ok: false,
-			error: `ai-bridge: "grok" not found on PATH. ${INSTALL_HINT$1}`
+			error: `aibridge: "grok" not found on PATH. ${INSTALL_HINT$1}`
 		};
 		return {
 			ok: false,
-			error: `ai-bridge: failed to probe grok: ${err.message}`
+			error: `aibridge: failed to probe grok: ${err.message}`
 		};
 	}
 }
@@ -3015,27 +3015,27 @@ async function run(task, exec = runCaptured) {
 			if (isNotFound(err)) return {
 				ok: false,
 				kind: "not-found",
-				message: `ai-bridge: "grok" not found on PATH. ${INSTALL_HINT}`,
+				message: `aibridge: "grok" not found on PATH. ${INSTALL_HINT}`,
 				exitCode: null
 			};
 			return {
 				ok: false,
 				kind: "spawn",
-				message: `ai-bridge: failed to run grok: ${err.message}`,
+				message: `aibridge: failed to run grok: ${err.message}`,
 				exitCode: null
 			};
 		}
 		if (result.timedOut) return {
 			ok: false,
 			kind: "timeout",
-			message: `ai-bridge: grok timed out after ~${task.timeoutSec + 20}s; raise --timeout.`,
+			message: `aibridge: grok timed out after ~${task.timeoutSec + 20}s; raise --timeout.`,
 			exitCode: result.code
 		};
 		const response = clean(result.stdout);
 		if (result.code !== 0 || response.length === 0) return {
 			ok: false,
 			kind: "no-answer",
-			message: `ai-bridge: grok returned no usable answer (${clean(result.stderr) || `exit code ${result.code}`}).`,
+			message: `aibridge: grok returned no usable answer (${clean(result.stderr) || `exit code ${result.code}`}).`,
 			exitCode: result.code
 		};
 		return {
@@ -3047,7 +3047,7 @@ async function run(task, exec = runCaptured) {
 		return {
 			ok: false,
 			kind: "spawn",
-			message: `ai-bridge: error executing grok: ${err.message}`,
+			message: `aibridge: error executing grok: ${err.message}`,
 			exitCode: null
 		};
 	}
@@ -3090,7 +3090,7 @@ const MIN_REAL_BYTES_CODEX = 1e5;
 const MIN_REAL_BYTES_GROK = 1e4;
 async function imageGen$1(flags, prompt) {
 	const fail = (msg) => {
-		this.process.stderr.write(`ai-bridge image-gen: ${msg}\n`);
+		this.process.stderr.write(`aibridge image-gen: ${msg}\n`);
 		this.process.exitCode = 1;
 	};
 	const inputSlug = flags.model ?? "openai-codex/gpt-5.6-sol";
@@ -3118,7 +3118,7 @@ async function imageGen$1(flags, prompt) {
 		} else if (size.w < 1 || size.h < 1) return fail(`invalid --size ${size.w}x${size.h}: dimensions must be positive`);
 	}
 	const timeoutSec = flags.timeout ?? 600;
-	const outPath = resolve(this.process.cwd(), flags.out ?? "./ai-bridge-image.png");
+	const outPath = resolve(this.process.cwd(), flags.out ?? "./aibridge-image.png");
 	const imagePaths = [];
 	if (flags.image !== void 0) for (const raw of flags.image.split(",").map((s) => s.trim()).filter(Boolean)) {
 		const abs = resolve(this.process.cwd(), raw);
@@ -3128,7 +3128,7 @@ async function imageGen$1(flags, prompt) {
 	const driver = getDriver(model.spec.backend);
 	if (!driver.generateImage) return fail(formatImageGenModelError(inputSlug, model));
 	const minBytes = model.spec.backend === "codex" ? MIN_REAL_BYTES_CODEX : MIN_REAL_BYTES_GROK;
-	const work = mkdtempSync(join(tmpdir(), "ai-bridge-imagegen-"));
+	const work = mkdtempSync(join(tmpdir(), "aibridge-imagegen-"));
 	try {
 		let outcome = await driver.generateImage({
 			prompt,
@@ -3166,13 +3166,13 @@ async function imageGen$1(flags, prompt) {
 			`${size.w}x${size.h}!`,
 			local
 		])) dims = imageSize(local) ?? dims;
-		else this.process.stderr.write(`ai-bridge image-gen: rendered ${dims.width}x${dims.height}, wanted ${size.w}x${size.h}, and ImageMagick (magick/convert) is unavailable to resize.
+		else this.process.stderr.write(`aibridge image-gen: rendered ${dims.width}x${dims.height}, wanted ${size.w}x${size.h}, and ImageMagick (magick/convert) is unavailable to resize.
 `);
 		const outExt = /\.png$/i.test(outPath) ? "png" : /\.jpe?g$/i.test(outPath) ? "jpg" : null;
 		const actualFmt = pngSize(local) ? "png" : jpegSize(local) ? "jpg" : null;
 		const needsConvert = outExt !== null && actualFmt !== null && outExt !== actualFmt;
 		if (!needsConvert || !await magick([local, outPath])) {
-			if (needsConvert) this.process.stderr.write(`ai-bridge image-gen: render is ${actualFmt.toUpperCase()} but out path wants ${outExt.toUpperCase()}, and ImageMagick (magick/convert) is unavailable to convert; writing the raw bytes as-is.
+			if (needsConvert) this.process.stderr.write(`aibridge image-gen: render is ${actualFmt.toUpperCase()} but out path wants ${outExt.toUpperCase()}, and ImageMagick (magick/convert) is unavailable to convert; writing the raw bytes as-is.
 `);
 			copyFileSync(local, outPath);
 		}
@@ -3292,7 +3292,7 @@ const imageGen = buildCommand({
 				kind: "parsed",
 				parse: String,
 				optional: true,
-				brief: "Path to write the image (default: ./ai-bridge-image.png)"
+				brief: "Path to write the image (default: ./aibridge-image.png)"
 			},
 			size: {
 				kind: "parsed",
@@ -3432,7 +3432,7 @@ function formatReset$1(resetTime) {
 }
 function renderPreflightRefusal(cmd, verdict) {
 	const resetClause = verdict.resetAt ? ` Resets ${formatReset$1(verdict.resetAt)}.` : "";
-	return `ai-bridge ${cmd}: refusing — ${verdict.message}.${resetClause} Use --no-preflight to override, or a claude-backend fallback (subagent --model sonnet|opus — bills the Claude subscription).`;
+	return `aibridge ${cmd}: refusing — ${verdict.message}.${resetClause} Use --no-preflight to override, or a claude-backend fallback (subagent --model sonnet|opus — bills the Claude subscription).`;
 }
 
 //#endregion
@@ -3457,7 +3457,7 @@ function pruneOldRuns(runsDir) {
 	} catch {}
 }
 function startRun(command, detail) {
-	const runsDir = join(homedir(), ".ai-bridge", "runs");
+	const runsDir = join(homedir(), ".aibridge", "runs");
 	try {
 		mkdirSync(runsDir, { recursive: true });
 		pruneOldRuns(runsDir);
@@ -3520,7 +3520,7 @@ function startRun(command, detail) {
 	}
 }
 function listRuns() {
-	const runsDir = join(homedir(), ".ai-bridge", "runs");
+	const runsDir = join(homedir(), ".aibridge", "runs");
 	if (!existsSync(runsDir)) return [];
 	try {
 		const entries = readdirSync(runsDir, { withFileTypes: true });
@@ -3539,7 +3539,7 @@ function listRuns() {
 	}
 }
 function readRunLogs(id) {
-	const dir = join(join(homedir(), ".ai-bridge", "runs"), id);
+	const dir = join(join(homedir(), ".aibridge", "runs"), id);
 	const metaPath = join(dir, "meta.json");
 	const stdoutPath = join(dir, "stdout.log");
 	const stderrPath = join(dir, "stderr.log");
@@ -3568,7 +3568,7 @@ async function implement$1(flags, planFile) {
 	const cwd = this.process.cwd();
 	const absPlanPath = isAbsolute(planFile) ? planFile : resolve(cwd, planFile);
 	if (!existsSync(absPlanPath)) {
-		this.process.stderr.write(`ai-bridge implement: plan file "${absPlanPath}" not found\n`);
+		this.process.stderr.write(`aibridge implement: plan file "${absPlanPath}" not found\n`);
 		this.process.exitCode = 2;
 		return;
 	}
@@ -3579,7 +3579,7 @@ async function implement$1(flags, planFile) {
 			this.process.exitCode = 3;
 			return;
 		}
-		if (verdict.warning) this.process.stderr.write(`ai-bridge implement: ${verdict.warning}\n`);
+		if (verdict.warning) this.process.stderr.write(`aibridge implement: ${verdict.warning}\n`);
 	}
 	const timeoutSec = flags.timeout ?? 1800;
 	const run = startRun("implement", `${model.spec.slug}: ${planFile}`);
@@ -3603,7 +3603,7 @@ async function implement$1(flags, planFile) {
 		for (const line of statusRes.stdout.split(/\r?\n/)) if (line.startsWith("??")) untrackedCount++;
 	}
 	if (diffStat.length === 0 && untrackedCount === 0) {
-		this.process.stderr.write(`ai-bridge implement: delegate completed but made zero working tree changes.\n`);
+		this.process.stderr.write(`aibridge implement: delegate completed but made zero working tree changes.\n`);
 		this.process.exitCode = 1;
 		return;
 	}
@@ -3706,7 +3706,7 @@ async function plan$1(flags, taskPrompt) {
 			this.process.exitCode = 3;
 			return;
 		}
-		if (verdict.warning) this.process.stderr.write(`ai-bridge plan: ${verdict.warning}\n`);
+		if (verdict.warning) this.process.stderr.write(`aibridge plan: ${verdict.warning}\n`);
 	}
 	const timeoutSec = flags.timeout ?? 1800;
 	const cwd = this.process.cwd();
@@ -3728,18 +3728,18 @@ async function plan$1(flags, taskPrompt) {
 		return;
 	}
 	if (!existsSync(absOutPath)) {
-		this.process.stderr.write(`ai-bridge plan: plan file was not written to ${absOutPath}\n`);
+		this.process.stderr.write(`aibridge plan: plan file was not written to ${absOutPath}\n`);
 		this.process.exitCode = 1;
 		return;
 	}
 	const planContent = readFileSync(absOutPath, "utf8");
 	if (planContent.trim().length === 0) {
-		this.process.stderr.write(`ai-bridge plan: plan file at ${absOutPath} is empty\n`);
+		this.process.stderr.write(`aibridge plan: plan file at ${absOutPath} is empty\n`);
 		this.process.exitCode = 1;
 		return;
 	}
 	if (!/^## Open questions/m.test(planContent)) {
-		this.process.stderr.write(`ai-bridge plan: plan file at ${absOutPath} missing required "## Open questions" section\n`);
+		this.process.stderr.write(`aibridge plan: plan file at ${absOutPath} missing required "## Open questions" section\n`);
 		this.process.exitCode = 1;
 		return;
 	}
@@ -3755,7 +3755,7 @@ async function plan$1(flags, taskPrompt) {
 		unexpectedPaths.push(relPath);
 	}
 	if (unexpectedPaths.length > 0) {
-		this.process.stderr.write(`ai-bridge plan: unexpected working tree changes beyond plan file:\n${unexpectedPaths.map((p) => `  ${p}`).join("\n")}\n`);
+		this.process.stderr.write(`aibridge plan: unexpected working tree changes beyond plan file:\n${unexpectedPaths.map((p) => `  ${p}`).join("\n")}\n`);
 		this.process.exitCode = 1;
 		return;
 	}
@@ -3963,7 +3963,7 @@ async function review$1(flags) {
 	if (flags.plan) {
 		absPlanPath = isAbsolute(flags.plan) ? flags.plan : resolve(cwd, flags.plan);
 		if (!existsSync(absPlanPath)) {
-			this.process.stderr.write(`ai-bridge review: plan file "${absPlanPath}" not found\n`);
+			this.process.stderr.write(`aibridge review: plan file "${absPlanPath}" not found\n`);
 			this.process.exitCode = 2;
 			return;
 		}
@@ -3975,7 +3975,7 @@ async function review$1(flags) {
 	], { cwd });
 	if (diffRes.code !== 0 && diffRes.code !== 1) {
 		const detail = diffRes.stderr.trim().split("\n")[0] ?? `exit code ${diffRes.code}`;
-		this.process.stderr.write(`ai-bridge review: git diff failed for base "${baseRef}": ${detail}\n`);
+		this.process.stderr.write(`aibridge review: git diff failed for base "${baseRef}": ${detail}\n`);
 		this.process.exitCode = 2;
 		return;
 	}
@@ -3984,7 +3984,7 @@ async function review$1(flags) {
 	const hasPorcelain = statusRes.code === 0 && statusRes.stdout.trim().length > 0;
 	const isDirty = hasDiff || hasPorcelain;
 	if (!isDirty && !absPlanPath) {
-		this.process.stderr.write(`ai-bridge review: nothing to review\n`);
+		this.process.stderr.write(`aibridge review: nothing to review\n`);
 		this.process.exitCode = 2;
 		return;
 	}
@@ -3995,7 +3995,7 @@ async function review$1(flags) {
 			this.process.exitCode = 3;
 			return;
 		}
-		if (verdict.warning) this.process.stderr.write(`ai-bridge review: ${verdict.warning}\n`);
+		if (verdict.warning) this.process.stderr.write(`aibridge review: ${verdict.warning}\n`);
 	}
 	const timeoutSec = flags.timeout ?? 1200;
 	const modeDetail = isDirty ? absPlanPath ? `diff + plan (${absPlanPath})` : `diff (${baseRef})` : `plan-only (${absPlanPath})`;
@@ -4018,13 +4018,13 @@ async function review$1(flags) {
 		return;
 	}
 	if (!existsSync(absOutPath) || readFileSync(absOutPath, "utf8").trim().length === 0) {
-		this.process.stderr.write(`ai-bridge review: review file was not written to ${absOutPath}\n`);
+		this.process.stderr.write(`aibridge review: review file was not written to ${absOutPath}\n`);
 		this.process.exitCode = 1;
 		return;
 	}
 	const verdictResult = parseReviewVerdict(outcome.response);
 	if (verdictResult.kind === "unparseable") {
-		this.process.stderr.write(`ai-bridge review: could not parse a verdict line from the answer.\n`);
+		this.process.stderr.write(`aibridge review: could not parse a verdict line from the answer.\n`);
 		this.process.stdout.write(`${outcome.response}\nreview: ${absOutPath}\nrun: ${run.id}\n`);
 		this.process.exitCode = 1;
 		return;
@@ -4113,12 +4113,12 @@ async function runs$1(flags, idPrefix) {
 	if (idPrefix !== void 0) {
 		const matches = listRuns().filter((r) => r.id.startsWith(idPrefix));
 		if (matches.length === 0) {
-			this.process.stderr.write(`ai-bridge runs: no run matches prefix "${idPrefix}"\n`);
+			this.process.stderr.write(`aibridge runs: no run matches prefix "${idPrefix}"\n`);
 			this.process.exitCode = 1;
 			return;
 		}
 		if (matches.length > 1) {
-			this.process.stderr.write(`ai-bridge runs: ambiguous prefix "${idPrefix}" matches:\n${matches.map((m) => `  ${m.id}`).join("\n")}\n`);
+			this.process.stderr.write(`aibridge runs: ambiguous prefix "${idPrefix}" matches:\n${matches.map((m) => `  ${m.id}`).join("\n")}\n`);
 			this.process.exitCode = 1;
 			return;
 		}
@@ -4126,7 +4126,7 @@ async function runs$1(flags, idPrefix) {
 		if (target === void 0) return;
 		const logs = readRunLogs(target.id);
 		if (!logs) {
-			this.process.stderr.write(`ai-bridge runs: failed to read logs for run "${target.id}"\n`);
+			this.process.stderr.write(`aibridge runs: failed to read logs for run "${target.id}"\n`);
 			this.process.exitCode = 1;
 			return;
 		}
@@ -4158,7 +4158,7 @@ async function runs$1(flags, idPrefix) {
 		const update = () => {
 			this.process.stdout.write("\x1B[2J\x1B[H");
 			const timeStr = (/* @__PURE__ */ new Date()).toLocaleTimeString();
-			this.process.stdout.write(`ai-bridge runs — ${timeStr} (ctrl-c to quit)\n\n`);
+			this.process.stdout.write(`aibridge runs — ${timeStr} (ctrl-c to quit)\n\n`);
 			const runs = listRuns();
 			if (runs.length === 0) {
 				this.process.stdout.write("no runs yet\n");
@@ -4222,12 +4222,12 @@ async function runs$1(flags, idPrefix) {
 const fullDescription$1 = "Lists recent runs, watches active runs, or displays logs for a specific run.";
 async function runsCommand(flags, idPrefix) {
 	if (flags.watch && idPrefix !== void 0) {
-		this.process.stderr.write("ai-bridge runs: cannot specify <id> when using --watch\n");
+		this.process.stderr.write("aibridge runs: cannot specify <id> when using --watch\n");
 		this.process.exitCode = 2;
 		return;
 	}
 	if (flags.watch && flags.json) {
-		this.process.stderr.write("ai-bridge runs: cannot specify --json when using --watch\n");
+		this.process.stderr.write("aibridge runs: cannot specify --json when using --watch\n");
 		this.process.exitCode = 2;
 		return;
 	}
@@ -4287,7 +4287,7 @@ async function subagent$1(flags, prompt) {
 			this.process.exitCode = 3;
 			return;
 		}
-		if (verdict.warning) this.process.stderr.write(`ai-bridge subagent: ${verdict.warning}\n`);
+		if (verdict.warning) this.process.stderr.write(`aibridge subagent: ${verdict.warning}\n`);
 	}
 	const timeoutSec = flags.timeout ?? 600;
 	const workDir = this.process.cwd();
@@ -4406,7 +4406,7 @@ const routes = buildRouteMap({
 	docs: { brief: "Bridge tasks to non-Claude AI CLIs — a plan → implement → review workflow, task delegation, and image generation (codex gpt-image-2 / grok Imagine)." }
 });
 const app = buildApplication(routes, {
-	name: "ai-bridge",
+	name: "aibridge",
 	scanner: { caseStyle: "allow-kebab-for-camel" }
 });
 /** Public entry used by cli.ts and index.ts — preserves runCli(ctx, argv) surface. */

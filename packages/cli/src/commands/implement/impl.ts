@@ -29,7 +29,7 @@ export default async function implement(
   const cwd = this.process.cwd();
   const absPlanPath = isAbsolute(planFile) ? planFile : resolve(cwd, planFile);
   if (!existsSync(absPlanPath)) {
-    this.process.stderr.write(`ai-bridge implement: plan file "${absPlanPath}" not found\n`);
+    this.process.stderr.write(`aibridge implement: plan file "${absPlanPath}" not found\n`);
     this.process.exitCode = 2;
     return;
   }
@@ -41,7 +41,7 @@ export default async function implement(
       this.process.exitCode = 3;
       return;
     }
-    if (verdict.warning) this.process.stderr.write(`ai-bridge implement: ${verdict.warning}\n`);
+    if (verdict.warning) this.process.stderr.write(`aibridge implement: ${verdict.warning}\n`);
   }
 
   const timeoutSec = flags.timeout ?? 1800;
@@ -82,7 +82,7 @@ export default async function implement(
 
   if (diffStat.length === 0 && untrackedCount === 0) {
     this.process.stderr.write(
-      `ai-bridge implement: delegate completed but made zero working tree changes.\n`,
+      `aibridge implement: delegate completed but made zero working tree changes.\n`,
     );
     this.process.exitCode = 1;
     return;

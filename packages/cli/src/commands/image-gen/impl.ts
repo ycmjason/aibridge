@@ -41,7 +41,7 @@ export default async function imageGen(
   prompt: string,
 ): Promise<void> {
   const fail = (msg: string): void => {
-    this.process.stderr.write(`ai-bridge image-gen: ${msg}\n`);
+    this.process.stderr.write(`aibridge image-gen: ${msg}\n`);
     this.process.exitCode = 1;
   };
 
@@ -75,7 +75,7 @@ export default async function imageGen(
   }
 
   const timeoutSec = flags.timeout ?? 600;
-  const outPath = resolve(this.process.cwd(), flags.out ?? './ai-bridge-image.png');
+  const outPath = resolve(this.process.cwd(), flags.out ?? './aibridge-image.png');
 
   const imagePaths: string[] = [];
   if (flags.image !== undefined) {
@@ -95,7 +95,7 @@ export default async function imageGen(
   }
 
   const minBytes = model.spec.backend === 'codex' ? MIN_REAL_BYTES_CODEX : MIN_REAL_BYTES_GROK;
-  const work = mkdtempSync(join(tmpdir(), 'ai-bridge-imagegen-'));
+  const work = mkdtempSync(join(tmpdir(), 'aibridge-imagegen-'));
 
   try {
     let outcome: ImageResult = await driver.generateImage({
@@ -150,7 +150,7 @@ export default async function imageGen(
         dims = imageSize(local) ?? dims;
       } else {
         this.process.stderr.write(
-          `ai-bridge image-gen: rendered ${dims.width}x${dims.height}, wanted ${size.w}x${size.h}, ` +
+          `aibridge image-gen: rendered ${dims.width}x${dims.height}, wanted ${size.w}x${size.h}, ` +
             'and ImageMagick (magick/convert) is unavailable to resize.\n',
         );
       }
@@ -162,7 +162,7 @@ export default async function imageGen(
     if (!needsConvert || !(await magick([local, outPath]))) {
       if (needsConvert) {
         this.process.stderr.write(
-          `ai-bridge image-gen: render is ${actualFmt.toUpperCase()} but out path wants ` +
+          `aibridge image-gen: render is ${actualFmt.toUpperCase()} but out path wants ` +
             `${outExt.toUpperCase()}, and ImageMagick (magick/convert) is unavailable to convert; ` +
             'writing the raw bytes as-is.\n',
         );

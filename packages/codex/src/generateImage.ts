@@ -93,7 +93,7 @@ export async function generateImage(
 
   if (fresh.length > 1) {
     process.stderr.write(
-      `ai-bridge image-gen: ${fresh.length} new cached renders appeared; using the most recent.\n`,
+      `aibridge image-gen: ${fresh.length} new cached renders appeared; using the most recent.\n`,
     );
   }
 

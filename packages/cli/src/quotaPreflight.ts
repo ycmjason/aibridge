@@ -99,5 +99,5 @@ export function renderPreflightRefusal(
   verdict: { message: string; resetAt: string | undefined },
 ): string {
   const resetClause = verdict.resetAt ? ` Resets ${formatReset(verdict.resetAt)}.` : '';
-  return `ai-bridge ${cmd}: refusing — ${verdict.message}.${resetClause} Use --no-preflight to override, or a claude-backend fallback (subagent --model sonnet|opus — bills the Claude subscription).`;
+  return `aibridge ${cmd}: refusing — ${verdict.message}.${resetClause} Use --no-preflight to override, or a claude-backend fallback (subagent --model sonnet|opus — bills the Claude subscription).`;
 }

@@ -1,14 +1,14 @@
 {
-  "name": "ai-bridge",
+  "name": "aibridge",
   "version": "0.0.0",
   "private": true,
-  "description": "ai-bridge — Claude Code skill + TypeScript CLI that bridges tasks to non-Claude AI CLIs.",
+  "description": "aibridge — Claude Code skill + TypeScript CLI that bridges tasks to non-Claude AI CLIs.",
   "type": "module",
   "engines": {
     "node": ">=24.11"
   },
   "scripts": {
-    "ai-bridge": "node packages/cli/src/cli.ts",
+    "aibridge": "node packages/cli/src/cli.ts",
     "build:skill": "pnpm --filter @aibridge/cli build",
     "check": "biome check .",
     "check:fix": "biome check --write .",

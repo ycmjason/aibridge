@@ -11,11 +11,11 @@ export async function probe(run: typeof runCaptured = runCaptured): Promise<Avai
   try {
     const check = await ensureGrok(run);
     if (check.ok) return { ok: true, version: check.version };
-    return { ok: false, error: `ai-bridge: ${check.error}` };
+    return { ok: false, error: `aibridge: ${check.error}` };
   } catch (err) {
     if (isNotFound(err)) {
-      return { ok: false, error: `ai-bridge: "grok" not found on PATH. ${INSTALL_HINT}` };
+      return { ok: false, error: `aibridge: "grok" not found on PATH. ${INSTALL_HINT}` };
     }
-    return { ok: false, error: `ai-bridge: failed to probe grok: ${(err as Error).message}` };
+    return { ok: false, error: `aibridge: failed to probe grok: ${(err as Error).message}` };
   }
 }

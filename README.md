@@ -1,6 +1,6 @@
-# ai-bridge
+# aibridge
 
-A TypeScript CLI that bridges tasks to non-Claude AI CLIs installed on your machine (workspace drivers are zero-dependency; CLI app uses `@stricli/core` inlined into the skill bundle). Organized as a pnpm monorepo under `packages/*`, with a committed skill bundle inside `skills/ai-bridge/scripts/cli.mjs`:
+A TypeScript CLI that bridges tasks to non-Claude AI CLIs installed on your machine (workspace drivers are zero-dependency; CLI app uses `@stricli/core` inlined into the skill bundle). Organized as a pnpm monorepo under `packages/*`, with a committed skill bundle inside `skills/aibridge/scripts/cli.mjs`:
 
 - `node packages/cli/src/cli.ts plan "<prompt>"` — produce a detailed implementation plan file for a task prompt.
 - `node packages/cli/src/cli.ts implement <plan.md>` — execute an implementation plan file with real typecheck + tests.
@@ -10,7 +10,7 @@ A TypeScript CLI that bridges tasks to non-Claude AI CLIs installed on your mach
 
 Models are named by canonical, effort-aware slugs — `<vendor>-<cli>/<model>[-<effort>]`, e.g. `xai-grok/grok-4.5` (default planner/reviewer, via the **Grok CLI**), `google-antigravity/gemini-3.6-flash` (default implementer, via the **Antigravity CLI**, `agy`), `openai-codex/gpt-5.6-sol-high`, `anthropic-claude/opus`. There are no short aliases — always pass the full canonical slug.
 
-It's the execution layer behind the `ai-bridge` Claude Code skill — one router skill with `plan`, `implement`, `review`, `subagent`, and `image-gen` subskills (see [`skills/`](skills/)): the skill carries the judgment and prompt-craft, this CLI owns the brittle execution (driving the external CLIs and verifying their output).
+It's the execution layer behind the `aibridge` Claude Code skill — one router skill with `plan`, `implement`, `review`, `subagent`, and `image-gen` subskills (see [`skills/`](skills/)): the skill carries the judgment and prompt-craft, this CLI owns the brittle execution (driving the external CLIs and verifying their output).
 
 ## Requirements
 
@@ -21,19 +21,19 @@ It's the execution layer behind the `ai-bridge` Claude Code skill — one router
 ## Installing the skill (this repo is private)
 
 This repo is **private**, so the [`skills`](https://skills.sh) CLI **cannot** fetch it from GitHub —
-`skills add fishballapp/ai-bridge` and `skills update` fail with `Failed to fetch tree`.
+`skills add fishballapp/aibridge` and `skills update` fail with `Failed to fetch tree`.
 Install from this **local clone** instead:
 
 ```bash
-# Copies the skill into ~/.agents/skills/ai-bridge.
-npx skills add /absolute/path/to/ai-bridge -g -y \
+# Copies the skill into ~/.agents/skills/aibridge.
+npx skills add /absolute/path/to/aibridge -g -y \
   -a amp antigravity antigravity-cli cline codex cursor deepagents gemini-cli \
      github-copilot kimi-code-cli opencode warp zed claude-code
 ```
 
 Caveats, so this doesn't trip you up later:
 
-- A **global (`-g`) local install is not lock-tracked** — it's an untracked copy. To pick up edits, the copy refreshes automatically via a `post-commit` hook when a commit touches `skills/ai-bridge/`; run `pnpm skill:install` to sync uncommitted edits. Git hooks run `biome check` and `build-skill` on pre-commit, and `pnpm typecheck` on pre-push.
+- A **global (`-g`) local install is not lock-tracked** — it's an untracked copy. To pick up edits, the copy refreshes automatically via a `post-commit` hook when a commit touches `skills/aibridge/`; run `pnpm skill:install` to sync uncommitted edits. Git hooks run `biome check` and `build-skill` on pre-commit, and `pnpm typecheck` on pre-push.
 
 ## Develop
 
@@ -42,7 +42,7 @@ pnpm install
 pnpm check && pnpm typecheck && pnpm repojj:check && pnpm test
 pnpm build:skill
 node packages/cli/src/cli.ts --help
-node skills/ai-bridge/scripts/cli.mjs --help
+node skills/aibridge/scripts/cli.mjs --help
 ```
 
 ## Usage

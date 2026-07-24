@@ -7,12 +7,12 @@ const fullDescription =
 
 async function runsCommand(this: LocalContext, flags: RunsFlags, idPrefix?: string): Promise<void> {
   if (flags.watch && idPrefix !== undefined) {
-    this.process.stderr.write('ai-bridge runs: cannot specify <id> when using --watch\n');
+    this.process.stderr.write('aibridge runs: cannot specify <id> when using --watch\n');
     this.process.exitCode = 2;
     return;
   }
   if (flags.watch && flags.json) {
-    this.process.stderr.write('ai-bridge runs: cannot specify --json when using --watch\n');
+    this.process.stderr.write('aibridge runs: cannot specify --json when using --watch\n');
     this.process.exitCode = 2;
     return;
   }

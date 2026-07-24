@@ -63,7 +63,7 @@ ls -t ~/.codex/generated_images/*/ig_*.png | head -1
 
 ## Implementation checklist for `packages/cli/src/commands/image-gen/impl.ts`
 
-- [ ] Resolve `--out` (default `./ai-bridge-image.png`), `--size`, `--quality`.
+- [ ] Resolve `--out` (default `./aibridge-image.png`), `--size`, `--quality`.
 - [ ] Discover a codex ≥ ~0.135; error clearly if missing/stale.
 - [ ] Run `codex exec --full-auto --skip-git-repo-check -C <dir>` with the prompt,
       folding in the "save directly, don't redraw" guard and "render at <quality>
@@ -79,7 +79,7 @@ ls -t ~/.codex/generated_images/*/ig_*.png | head -1
 
 ## Prompt-craft
 
-Lives in the `ai-bridge` skill (`skills/ai-bridge/reference/image-gen.md`) —
+Lives in the `aibridge` skill (`skills/aibridge/reference/image-gen.md`) —
 that's the durable, model-shaping knowledge and stays out of the CLI.
 
 ## Sources [web]

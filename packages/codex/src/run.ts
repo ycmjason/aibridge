@@ -41,12 +41,12 @@ export async function run(
     return {
       ok: false,
       kind: 'not-found',
-      message: `ai-bridge: "codex" not found on PATH or wrong version. ${INSTALL_HINT}`,
+      message: `aibridge: "codex" not found on PATH or wrong version. ${INSTALL_HINT}`,
       exitCode: null,
     };
   }
 
-  const tempDir = mkdtempSync(join(tmpdir(), 'ai-bridge-codex-'));
+  const tempDir = mkdtempSync(join(tmpdir(), 'aibridge-codex-'));
   const answerPath = join(tempDir, 'last_message.md');
 
   try {
@@ -78,14 +78,14 @@ export async function run(
         return {
           ok: false,
           kind: 'not-found',
-          message: `ai-bridge: "codex" not found on PATH. ${INSTALL_HINT}`,
+          message: `aibridge: "codex" not found on PATH. ${INSTALL_HINT}`,
           exitCode: null,
         };
       }
       return {
         ok: false,
         kind: 'spawn',
-        message: `ai-bridge: failed to run codex: ${(err as Error).message}`,
+        message: `aibridge: failed to run codex: ${(err as Error).message}`,
         exitCode: null,
       };
     }
@@ -94,7 +94,7 @@ export async function run(
       return {
         ok: false,
         kind: 'timeout',
-        message: `ai-bridge: codex timed out after ~${task.timeoutSec + 20}s; raise --timeout.`,
+        message: `aibridge: codex timed out after ~${task.timeoutSec + 20}s; raise --timeout.`,
         exitCode: result.code,
       };
     }
@@ -115,7 +115,7 @@ export async function run(
       return {
         ok: false,
         kind: 'no-answer',
-        message: `ai-bridge: codex returned no usable answer (${detail}).`,
+        message: `aibridge: codex returned no usable answer (${detail}).`,
         exitCode: result.code,
       };
     }

@@ -2,7 +2,7 @@ import { defineConfig } from 'tsdown';
 
 export default defineConfig({
   entry: { cli: 'src/cli.ts' },
-  outDir: '../../skills/ai-bridge/scripts',
+  outDir: '../../skills/aibridge/scripts',
   fixedExtension: true,
   format: 'esm',
   platform: 'node',

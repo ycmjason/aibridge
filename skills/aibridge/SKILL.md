@@ -1,5 +1,5 @@
 ---
-name: ai-bridge
+name: aibridge
 description: >-
   Bridge a task to a non-Claude AI CLI on this machine — an orchestrator-driven
   plan → implement → review workflow across Grok / Gemini / Codex, plus one-shot
@@ -28,9 +28,9 @@ allowed-tools:
   - Bash(node *)
 ---
 
-# ai-bridge
+# aibridge
 
-`ai-bridge` drives non-Claude AI CLIs and verifies their output. **You** supply the
+`aibridge` drives non-Claude AI CLIs and verifies their output. **You** supply the
 judgment and prompt-craft; the CLI owns the brittle execution. It uses the backing
 CLIs' existing logins — no API keys, and the delegated work runs **off your own
 token budget**.
@@ -49,7 +49,7 @@ Bundled third-party code is listed in [THIRD-PARTY-LICENSES](THIRD-PARTY-LICENSE
 
 `<skill-dir>` is the directory this `SKILL.md` lives in (resolve it to an absolute
 path). For brevity the reference files below write the command as
-`ai-bridge <command> …` — **substitute the `node <skill-dir>/scripts/cli.mjs`
+`aibridge <command> …` — **substitute the `node <skill-dir>/scripts/cli.mjs`
 invocation**. Requires the backing CLIs on `PATH` and authed: **`grok`** (default
 planner/reviewer), **`agy`** (default implementer), **`codex`** (image-gen +
 `openai-codex/*` delegation), and optionally **`claude`** for the on-budget
@@ -100,4 +100,4 @@ fallback tier.
   off-budget alternate for any seat; `anthropic-claude/sonnet|opus` BILL the
   Claude subscription — last resort, and say so.
 - Quota preflight runs automatically before every delegation;
-  `ai-bridge quota` is the manual two-second check when planning a pipeline.
+  `aibridge quota` is the manual two-second check when planning a pipeline.

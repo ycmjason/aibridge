@@ -67,7 +67,7 @@ this repo — that is NOT true here.** agy emits cleanly to a non-TTY stdout:
 | stdout = pipe, captured into a JS variable | exit 0, clean text, **no ANSI** ✓ |
 | stdout **and** stderr both piped (fully headless) | exit 0, clean text ✓ |
 
-So `ai-bridge subagent` just spawns agy with `stdio: ["ignore", "pipe", "pipe"]`
+So `aibridge subagent` just spawns agy with `stdio: ["ignore", "pipe", "pipe"]`
 and reads stdout (see `runCaptured` in [`packages/proc/src/proc.ts`](../packages/proc/src/proc.ts)).
 **No `node-pty`, no `/dev/tty`, no temp-file dance, no native dependency.** Output
 in this mode carries no ANSI chrome, but we still `stripAnsi` + drop the stray

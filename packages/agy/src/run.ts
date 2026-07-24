@@ -43,7 +43,7 @@ export async function run(
   const addDirs: string[] = [];
 
   if (task.tools) {
-    tempDir = mkdtempSync(join(tmpdir(), 'ai-bridge-agy-'));
+    tempDir = mkdtempSync(join(tmpdir(), 'aibridge-agy-'));
     answerPath = join(tempDir, 'answer.md');
     taskPrompt =
       `${task.prompt}\n\nYou are working in the repository rooted at ${task.cwd}; make ALL file ` +
@@ -77,14 +77,14 @@ export async function run(
         return {
           ok: false,
           kind: 'not-found',
-          message: `ai-bridge: "agy" not found on PATH. ${INSTALL_HINT}`,
+          message: `aibridge: "agy" not found on PATH. ${INSTALL_HINT}`,
           exitCode: null,
         };
       }
       return {
         ok: false,
         kind: 'spawn',
-        message: `ai-bridge: failed to run agy: ${(err as Error).message}`,
+        message: `aibridge: failed to run agy: ${(err as Error).message}`,
         exitCode: null,
       };
     }
@@ -93,7 +93,7 @@ export async function run(
       return {
         ok: false,
         kind: 'timeout',
-        message: `ai-bridge: agy timed out after ~${task.timeoutSec + 20}s; raise --timeout.`,
+        message: `aibridge: agy timed out after ~${task.timeoutSec + 20}s; raise --timeout.`,
         exitCode: result.code,
       };
     }
@@ -114,7 +114,7 @@ export async function run(
       return {
         ok: false,
         kind: 'no-answer',
-        message: `ai-bridge: agy returned no usable answer (${detail}).`,
+        message: `aibridge: agy returned no usable answer (${detail}).`,
         exitCode: result.code,
       };
     }

@@ -11,11 +11,11 @@ export async function probe(_run: typeof runCaptured = runCaptured): Promise<Ava
   try {
     const check = await ensureClaude();
     if (check.ok) return { ok: true, version: check.version };
-    return { ok: false, error: `ai-bridge: ${check.error}` };
+    return { ok: false, error: `aibridge: ${check.error}` };
   } catch (err) {
     if (isNotFound(err)) {
-      return { ok: false, error: `ai-bridge: "claude" not found on PATH. ${INSTALL_HINT}` };
+      return { ok: false, error: `aibridge: "claude" not found on PATH. ${INSTALL_HINT}` };
     }
-    return { ok: false, error: `ai-bridge: failed to probe claude: ${(err as Error).message}` };
+    return { ok: false, error: `aibridge: failed to probe claude: ${(err as Error).message}` };
   }
 }

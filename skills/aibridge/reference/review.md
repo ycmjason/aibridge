@@ -1,13 +1,13 @@
 # review — cross-model review of a diff (or a plan) against a contract
 
-`ai-bridge review` has a reviewer model inspect the working-tree diff — with a
+`aibridge review` has a reviewer model inspect the working-tree diff — with a
 plan file as the CONTRACT, so over-reach is a finding — and write the full
 report to a FILE. stdout carries only a verdict line + paths: the happy path
 costs you almost nothing in context; read the report only when findings exist.
 
 ## When to use
 
-- After `ai-bridge implement` (or any delegated edit): cross-check the diff
+- After `aibridge implement` (or any delegated edit): cross-check the diff
   against the plan contract before you commit.
 - Before implementing a high-risk design: on a CLEAN tree with `--plan`, it
   reviews the plan itself (pre-implementation gate).
@@ -16,7 +16,7 @@ costs you almost nothing in context; read the report only when findings exist.
 ## Usage
 
 ```bash
-ai-bridge review [options]
+aibridge review [options]
   --model <slug>       reviewer model (default: xai-grok/grok-4.5)
   --plan <file>        plan contract; over-reach against it is a finding
   --base <ref>         git base to diff against (default: HEAD)

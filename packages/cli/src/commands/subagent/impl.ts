@@ -48,7 +48,7 @@ export default async function subagent(
       this.process.exitCode = 3;
       return;
     }
-    if (verdict.warning) this.process.stderr.write(`ai-bridge subagent: ${verdict.warning}\n`);
+    if (verdict.warning) this.process.stderr.write(`aibridge subagent: ${verdict.warning}\n`);
   }
 
   const timeoutSec = flags.timeout ?? 600;

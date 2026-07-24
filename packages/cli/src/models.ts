@@ -1,5 +1,5 @@
 /**
- * Canonical model registry and resolution for ai-bridge.
+ * Canonical model registry and resolution for aibridge.
  *
  * Models are registered by canonical, provider-qualified slug —
  * `<vendor>-<cli>/<model>[-<effort>]`, e.g. `openai-codex/gpt-5.6-sol-high`.

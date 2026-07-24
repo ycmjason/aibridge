@@ -1,12 +1,12 @@
 # subagent — delegate a task to another model
 
-`ai-bridge` owns the brittle execution; you supply the judgment. This reference covers
+`aibridge` owns the brittle execution; you supply the judgment. This reference covers
 **(A)** calling it and available models, **(B)** delegating one task well, **(C)** scaling up via the three-verb flow, **(D)** when to stay native, and **(E)** driving delegates from orchestration tools.
 
 ## A. Calling it & Available Models
 
 ```bash
-ai-bridge subagent "<self-contained prompt>" [--model <slug>] [--timeout 600] [--no-tools] [--no-preflight] [--json]
+aibridge subagent "<self-contained prompt>" [--model <slug>] [--timeout 600] [--no-tools] [--no-preflight] [--json]
 ```
 
 Pass a canonical slug to `--model` (no short aliases):
@@ -43,9 +43,9 @@ Write prompts for a capable stranger:
 
 For large or multi-file tasks, use the three-verb workflow instead of raw subagent calls:
 
-1. **`ai-bridge plan "<prompt>"`**: Produces a detailed plan file (`plan.md`) listing files to touch, design decisions, and verification gates.
-2. **`ai-bridge implement <plan.md>`**: Reads the plan file, implements changes, runs typecheck + tests, and returns a diff summary.
-3. **`ai-bridge review [--plan <plan.md>]`**: Inspects working tree diffs and verifies implementation against plan contracts.
+1. **`aibridge plan "<prompt>"`**: Produces a detailed plan file (`plan.md`) listing files to touch, design decisions, and verification gates.
+2. **`aibridge implement <plan.md>`**: Reads the plan file, implements changes, runs typecheck + tests, and returns a diff summary.
+3. **`aibridge review [--plan <plan.md>]`**: Inspects working tree diffs and verifies implementation against plan contracts.
 
 ## D. When to stay native instead
 
@@ -56,4 +56,4 @@ Keep work native when it requires:
 
 ## E. Driving delegates from an orchestration tool
 
-When running from an orchestrator, pass prompts to `ai-bridge subagent` via thin passthrough agents to perform off-budget implementation work while maintaining native control.
+When running from an orchestrator, pass prompts to `aibridge subagent` via thin passthrough agents to perform off-budget implementation work while maintaining native control.

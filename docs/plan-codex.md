@@ -6,7 +6,7 @@
 
 ## What `plan` is
 
-`ai-bridge plan` is the planning verb of the three-verb flow: **`plan` → `implement` → `review`**. Claude writes a high-level prompt or plan; `ai-bridge plan "<prompt>"` hands it to a model, which reviews it against the real codebase and produces an expanded implementation plan file (`plan.md`).
+`aibridge plan` is the planning verb of the three-verb flow: **`plan` → `implement` → `review`**. Claude writes a high-level prompt or plan; `aibridge plan "<prompt>"` hands it to a model, which reviews it against the real codebase and produces an expanded implementation plan file (`plan.md`).
 
 ## The key discovery — codex's sandbox blocks the hand-off; you must bypass it
 

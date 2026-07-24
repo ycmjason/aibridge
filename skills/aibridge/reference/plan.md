@@ -1,6 +1,6 @@
 # plan — produce a detailed implementation plan file
 
-`ai-bridge plan` hands a task prompt to a model that studies the real codebase
+`aibridge plan` hands a task prompt to a model that studies the real codebase
 and writes an expanded, detailed implementation plan to a FILE. It is stage one
 of the orchestrator-driven workflow: **`plan` → you read/approve → `implement`
 → `review`**. The plan file is the contract for every later stage — pass its
@@ -16,7 +16,7 @@ PATH around, never re-emit its contents.
 ## Usage
 
 ```bash
-ai-bridge plan [options] "<task prompt>"
+aibridge plan [options] "<task prompt>"
   --model <slug>       planner model (default: xai-grok/grok-4.5)
   --out <file>         where to write the plan (default: <run-dir>/plan.md)
   --timeout <secs>     max seconds for planning (default: 1800)
@@ -63,12 +63,12 @@ timeout. Exit 2: bad arguments. Exit 3: quota preflight refusal.
 2. Resolve every open question — edit the file directly or re-run `plan` with
    a sharpened prompt.
 3. For high-risk designs, add a cross-model gate before building:
-   `ai-bridge review --plan <file>` on a clean tree reviews the plan itself.
-4. Then `ai-bridge implement <file>`.
+   `aibridge review --plan <file>` on a clean tree reviews the plan itself.
+4. Then `aibridge implement <file>`.
 
 ## Gotchas
 
-- Default `--out` lands in the run directory (`~/.ai-bridge/runs/...`) — fine
+- Default `--out` lands in the run directory (`~/.aibridge/runs/...`) — fine
   for pipelines; pass an explicit `--out` if a human should find it later.
 - An `--out` inside the repo is allowed (it shows up untracked and is exempted
   from the cleanliness check); everything else dirty fails the run.

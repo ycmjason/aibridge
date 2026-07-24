@@ -78,7 +78,7 @@ export default async function plan(
       this.process.exitCode = 3;
       return;
     }
-    if (verdict.warning) this.process.stderr.write(`ai-bridge plan: ${verdict.warning}\n`);
+    if (verdict.warning) this.process.stderr.write(`aibridge plan: ${verdict.warning}\n`);
   }
 
   const timeoutSec = flags.timeout ?? 1800;
@@ -119,21 +119,21 @@ export default async function plan(
   }
 
   if (!existsSync(absOutPath)) {
-    this.process.stderr.write(`ai-bridge plan: plan file was not written to ${absOutPath}\n`);
+    this.process.stderr.write(`aibridge plan: plan file was not written to ${absOutPath}\n`);
     this.process.exitCode = 1;
     return;
   }
 
   const planContent = readFileSync(absOutPath, 'utf8');
   if (planContent.trim().length === 0) {
-    this.process.stderr.write(`ai-bridge plan: plan file at ${absOutPath} is empty\n`);
+    this.process.stderr.write(`aibridge plan: plan file at ${absOutPath} is empty\n`);
     this.process.exitCode = 1;
     return;
   }
 
   if (!/^## Open questions/m.test(planContent)) {
     this.process.stderr.write(
-      `ai-bridge plan: plan file at ${absOutPath} missing required "## Open questions" section\n`,
+      `aibridge plan: plan file at ${absOutPath} missing required "## Open questions" section\n`,
     );
     this.process.exitCode = 1;
     return;
@@ -158,7 +158,7 @@ export default async function plan(
 
   if (unexpectedPaths.length > 0) {
     this.process.stderr.write(
-      `ai-bridge plan: unexpected working tree changes beyond plan file:\n${unexpectedPaths.map(p => `  ${p}`).join('\n')}\n`,
+      `aibridge plan: unexpected working tree changes beyond plan file:\n${unexpectedPaths.map(p => `  ${p}`).join('\n')}\n`,
     );
     this.process.exitCode = 1;
     return;

@@ -11,11 +11,11 @@ export async function probe(run: typeof runCaptured = runCaptured): Promise<Avai
   try {
     const check = await ensureCodex(MIN_CODEX_STRUCTURED, run);
     if (check.ok) return { ok: true, version: check.version };
-    return { ok: false, error: `ai-bridge: ${check.error}` };
+    return { ok: false, error: `aibridge: ${check.error}` };
   } catch (err) {
     if (isNotFound(err)) {
-      return { ok: false, error: `ai-bridge: "codex" not found on PATH. ${INSTALL_HINT}` };
+      return { ok: false, error: `aibridge: "codex" not found on PATH. ${INSTALL_HINT}` };
     }
-    return { ok: false, error: `ai-bridge: failed to probe codex: ${(err as Error).message}` };
+    return { ok: false, error: `aibridge: failed to probe codex: ${(err as Error).message}` };
   }
 }
