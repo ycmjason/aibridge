@@ -137,7 +137,7 @@ jobs:
           # npm requires the package to already exist before a Trusted Publisher can
           # be configured. Bootstrap once from a logged-in machine:
           #   pnpm publish --access public --no-git-checks
-          # from each package dir (order: proc agy grok codex claude cli), then in
+          # from each package dir (order: proc driver-agy driver-grok driver-codex driver-claude cli), then in
           # each package's npmjs.com settings add Trusted Publisher:
           #   repo ycmjason/aibridge, workflow publish.yml
           # Subsequent version bumps on main publish automatically via this job.

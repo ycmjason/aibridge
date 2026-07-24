@@ -1,6 +1,6 @@
 {
   "name": "@aibridge/cli",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "CLI that bridges tasks to non-Claude AI CLIs (plan / implement / review / subagent / image-gen)",
   "type": "module",
   "license": "MIT",
