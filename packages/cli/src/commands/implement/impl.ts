@@ -3,12 +3,12 @@ import { isAbsolute, resolve } from 'node:path';
 import { runCaptured } from '@aibridge/proc';
 import type { LocalContext } from '../../context.ts';
 import { delegate } from '../../delegate.ts';
-import { DEFAULT_IMPLEMENTER, formatUnknownModelError, resolveModel } from '../../models.ts';
+import { formatUnknownModelError, resolveModel } from '../../models.ts';
 import { preflightModel, renderPreflightRefusal } from '../../quotaPreflight.ts';
 import { startRun } from '../../runlog.ts';
 
 export interface ImplementFlags {
-  readonly model?: string;
+  readonly model: string;
   readonly timeout?: number;
   readonly preflight: boolean;
 }
@@ -18,7 +18,7 @@ export default async function implement(
   flags: ImplementFlags,
   planFile: string,
 ): Promise<void> {
-  const inputSlug = flags.model ?? DEFAULT_IMPLEMENTER;
+  const inputSlug = flags.model;
   const model = resolveModel(inputSlug);
   if (!model) {
     this.process.stderr.write(`${formatUnknownModelError(inputSlug)}\n`);

@@ -1,5 +1,5 @@
 import { buildCommand } from '@stricli/core';
-import { DEFAULT_IMAGE_GEN, listModelHelpLines } from '../../models.ts';
+import { listModelHelpLines } from '../../models.ts';
 import { nonEmptyPrompt, positiveIntSeconds } from '../../parsers.ts';
 import imageGenImpl from './impl.ts';
 
@@ -9,7 +9,7 @@ const fullDescription = [
   '',
   'Image-gen seats (canonical slug):',
   ...listModelHelpLines({ imageOnly: true }),
-  `Default: ${DEFAULT_IMAGE_GEN}.`,
+  'Recommended seat: openai-codex/gpt-5.6-sol.',
 ].join('\n');
 
 export const imageGen = buildCommand({
@@ -19,8 +19,7 @@ export const imageGen = buildCommand({
       model: {
         kind: 'parsed',
         parse: String,
-        optional: true,
-        brief: `Model slug (default: ${DEFAULT_IMAGE_GEN})`,
+        brief: 'Model slug (required) — see the seat list above',
       },
       out: {
         kind: 'parsed',

@@ -16,9 +16,9 @@ PATH around, never re-emit its contents.
 ## Usage
 
 ```bash
-aibridge plan [options] "<task prompt>"
-  --model <slug>       planner model (default: xai-grok/grok-4.5)
-  --out <file>         where to write the plan (default: <run-dir>/plan.md)
+aibridge plan --model <slug> --out <file> "<task prompt>"
+  --model <slug>       planner model (required, e.g. xai-grok/grok-4.5)
+  --out <file>         where to write the plan file (required)
   --timeout <secs>     max seconds for planning (default: 1800)
   --no-preflight       skip the backend quota preflight check
 ```
@@ -63,14 +63,13 @@ timeout. Exit 2: bad arguments. Exit 3: quota preflight refusal.
 2. Resolve every open question — edit the file directly or re-run `plan` with
    a sharpened prompt.
 3. For high-risk designs, add a cross-model gate before building:
-   `aibridge review --plan <file>` on a clean tree reviews the plan itself.
-4. Then `aibridge implement <file>`.
+   `aibridge review --model xai-grok/grok-4.5 --plan <file> --out review.md` on a clean tree reviews the plan itself.
+4. Then `aibridge implement --model google-antigravity/gemini-3.6-flash <file>`.
 
 ## Gotchas
 
-- Default `--out` lands in the run directory (`~/.aibridge/runs/...`) — fine
-  for pipelines; pass an explicit `--out` if a human should find it later.
+- Pass an explicit `--out` (e.g. `plan.md` or `docs/plans/feature.md`) for where to store the plan file.
 - An `--out` inside the repo is allowed (it shows up untracked and is exempted
   from the cleanliness check); everything else dirty fails the run.
-- grok (the default planner) is capped ~30 req/min, ~1k msgs/day, one run at a
+- grok (the recommended planner) is capped ~30 req/min, ~1k msgs/day, one run at a
   time — never run two grok stages concurrently.

@@ -95,10 +95,6 @@ export const MODELS: Record<string, ModelSpec> = {
   },
 } as const satisfies Record<string, ModelSpec>;
 
-export const DEFAULT_MODEL = 'xai-grok/grok-4.5';
-export const DEFAULT_IMPLEMENTER = 'google-antigravity/gemini-3.6-flash';
-export const DEFAULT_IMAGE_GEN = 'openai-codex/gpt-5.6-sol';
-
 export type ImageFormat = 'jpg' | 'png';
 
 const IMAGE_GEN_FORMATS: ReadonlyMap<Backend, ImageFormat> = new Map([

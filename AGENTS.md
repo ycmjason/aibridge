@@ -2,11 +2,11 @@
 
 `aibridge` is a TypeScript CLI that bridges tasks to **other AI CLIs** already installed and authed on this machine. Workspace driver packages (`proc`, `agy`, `grok`, `codex`, `claude`) and app package (`cli`) are published to npm under `@aibridge/*`. The codebase is organized as a pnpm monorepo under `packages/*`:
 
-- **`node packages/cli/src/cli.ts plan`** (or installed **`aibridge plan`**) → a delegate model studies the repo and writes a detailed implementation plan to a FILE (default planner **`xai-grok/grok-4.5`**, own xAI login). The orchestrator reads/edits/approves it — plans are passed between stages as paths, not content.
-- **`node packages/cli/src/cli.ts implement`** → a delegate model implements a plan file in place, running the project's real typecheck/tests (default implementer **`google-antigravity/gemini-3.6-flash`** via `agy`, own Antigravity login). Prints the delegate's summary + `git diff --stat`.
-- **`node packages/cli/src/cli.ts review`** → a delegate model reviews the working-tree diff against a base ref — with `--plan <file>` as the contract, over-reach is a finding — writing the full report to a file; stdout is just the verdict line (`PASS` / `FINDINGS: …`) + path. With a clean tree and `--plan`, it reviews the plan itself (pre-implementation gate).
-- **`node packages/cli/src/cli.ts subagent`** → delegate a self-contained task to another model through the canonical registry: default **`xai-grok/grok-4.5`** via the **Grok CLI** (own xAI login; ~30 req/min + ~1k msgs/day caps, one run at a time); **`google-antigravity/gemini-3.6-flash`** via the **Antigravity CLI** (`agy`, own Antigravity login) when grok is capped/dead; **`openai-codex/gpt-5.6-sol`** via the **Codex CLI** (own ChatGPT login); last-resort **`anthropic-claude/sonnet-5`** / **`anthropic-claude/opus-5`** (+ `-1m` for Opus 5's 1M context) via the **claude CLI** (bill the claude CLI's Claude subscription — last resort for agents whose own budget that is).
-- **`node packages/cli/src/cli.ts image-gen`** → image generation via a model seat (`openai-codex/gpt-5.6-sol`, the default; `google-antigravity/gemini-3.6-flash`; `xai-grok/grok-4.5`).
+- **`node packages/cli/src/cli.ts plan`** (or installed **`aibridge plan`**) → a delegate model studies the repo and writes a detailed implementation plan to a FILE (recommended planner **`xai-grok/grok-4.5`**, own xAI login — pass `--model` and `--out` explicitly). The orchestrator reads/edits/approves it — plans are passed between stages as paths, not content.
+- **`node packages/cli/src/cli.ts implement`** → a delegate model implements a plan file in place, running the project's real typecheck/tests (recommended implementer **`google-antigravity/gemini-3.6-flash`** via `agy`, own Antigravity login — pass `--model` explicitly). Prints the delegate's summary + `git diff --stat`.
+- **`node packages/cli/src/cli.ts review`** → a delegate model reviews the working-tree diff against a base ref — with `--plan <file>` as the contract, over-reach is a finding — writing the full report to a file (pass `--model` and `--out` explicitly); stdout is just the verdict line (`PASS` / `FINDINGS: …`) + path. With a clean tree and `--plan`, it reviews the plan itself (pre-implementation gate).
+- **`node packages/cli/src/cli.ts subagent`** → delegate a self-contained task to another model through the canonical registry (pass `--model` explicitly): recommended **`xai-grok/grok-4.5`** via the **Grok CLI** (own xAI login; ~30 req/min + ~1k msgs/day caps, one run at a time); **`google-antigravity/gemini-3.6-flash`** via the **Antigravity CLI** (`agy`, own Antigravity login) when grok is capped/dead; **`openai-codex/gpt-5.6-sol`** via the **Codex CLI** (own ChatGPT login); last-resort **`anthropic-claude/sonnet-5`** / **`anthropic-claude/opus-5`** (+ `-1m` for Opus 5's 1M context) via the **claude CLI** (bill the claude CLI's Claude subscription — last resort for agents whose own budget that is).
+- **`node packages/cli/src/cli.ts image-gen`** → image generation via a model seat (pass `--model` explicitly; recommended `openai-codex/gpt-5.6-sol`; `google-antigravity/gemini-3.6-flash`; `xai-grok/grok-4.5`).
 
 Model slugs are canonical `<vendor>-<cli>/<model>[-<effort>]` (e.g. `openai-codex/gpt-5.6-sol-high`); there are NO short aliases — always pass the full slug. Effort in the slug maps to each backend's own knob; an un-suffixed slug uses the backend's default.
 
@@ -26,11 +26,11 @@ the seats are:
   large/risky designs) BEFORE `implement`. Never leave architectural calls as
   "implementer's choice". The orchestrator reads the plan file between `plan` and
   `implement` — that sign-off is the point of the split.
-- **Planner / reviewer (grok by default)** — expands designs against the real
+- **Planner / reviewer (grok recommended)** — expands designs against the real
   codebase (`plan`) and pressure-tests diffs (`review`). Keep the reviewer
   cross-model from the implementer; treat findings as design input, not
   friction.
-- **Implementer (gemini by default)** — a pure do-er. It executes
+- **Implementer (gemini recommended)** — a pure do-er. It executes
   fully-designed, self-contained plan files and does NOT need (and shouldn't
   be asked to hold) the bigger vision. If a plan requires vision context to
   implement correctly, the design work upstream was insufficient.
@@ -58,10 +58,10 @@ say so unprompted and propose the cleanup — don't wait to be asked.
 | Run CLI (published) | `aibridge <args>` or `npx -y @aibridge/cli <args>` |
 | Help | `node packages/cli/src/cli.ts --help` |
 | Build all dists | `pnpm build` |
-| Plan | `pnpm aibridge plan "<task prompt>" [--out <file>]` |
-| Implement | `pnpm aibridge implement <plan.md>` |
-| Review | `pnpm aibridge review [--plan <plan.md>] [--base <ref>]` |
-| Subagent | `pnpm aibridge subagent "<prompt>" [--model <slug>]` |
+| Plan | `pnpm aibridge plan --model xai-grok/grok-4.5 --out plan.md "<task prompt>"` |
+| Implement | `pnpm aibridge implement --model google-antigravity/gemini-3.6-flash <plan.md>` |
+| Review | `pnpm aibridge review --model xai-grok/grok-4.5 --out review.md [--plan <plan.md>] [--base <ref>]` |
+| Subagent | `pnpm aibridge subagent --model xai-grok/grok-4.5 "<prompt>"` |
 | Monitor runs | `pnpm aibridge runs [--watch]` (logs in `~/.aibridge/runs`) |
 | Quota (all backends) | `pnpm aibridge quota [--json]` — agy group windows (weekly+5h) & per-model, codex 5h/weekly, claude session/weekly. Check BEFORE delegating: agy quota is shared per model GROUP (all Gemini tiers drain together) |
 | Check / Type-check / Repo / Test | `pnpm check` · `pnpm typecheck` · `pnpm repojj:check` · `pnpm test` |

@@ -1,5 +1,5 @@
 import { buildCommand } from '@stricli/core';
-import { DEFAULT_IMPLEMENTER, listModelHelpLines } from '../../models.ts';
+import { listModelHelpLines } from '../../models.ts';
 import { positiveIntSeconds } from '../../parsers.ts';
 import implementImpl from './impl.ts';
 
@@ -17,8 +17,7 @@ export const implement = buildCommand({
       model: {
         kind: 'parsed',
         parse: String,
-        optional: true,
-        brief: `Model slug (default: ${DEFAULT_IMPLEMENTER})`,
+        brief: 'Model slug (required) — see the seat list above',
       },
       timeout: {
         kind: 'parsed',

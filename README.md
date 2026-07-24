@@ -28,7 +28,7 @@ npx skills add ycmjason/aibridge
 That's it. The skill runs the CLI on demand via `npx -y @aibridge/cli` — nothing else to install. Ask your agent to "use aibridge", or try it yourself:
 
 ```bash
-npx -y @aibridge/cli subagent "summarize the architecture of this repo"
+npx -y @aibridge/cli subagent --model xai-grok/grok-4.5 "summarize the architecture of this repo"
 ```
 
 <sup>Want the `aibridge` command on your PATH for manual use? `npm i -g @aibridge/cli` (optional).</sup>
@@ -37,21 +37,21 @@ npx -y @aibridge/cli subagent "summarize the architecture of this repo"
 
 | Command | Use when |
 |---|---|
-| `aibridge plan "<task>"` | You want a delegate model to study the repo and expand a task into a detailed, reviewable **plan file** before any code is written |
-| `aibridge implement <plan.md>` | You have an approved plan file and want it executed in place — with your project's **real typecheck and tests** run until green |
-| `aibridge review [--plan <plan.md>]` | You want a **different model** to pressure-test the working-tree diff against the plan contract (over-reach is a finding) — or to review the plan itself before implementing |
-| `aibridge subagent "<task>"` | A self-contained task deserves a concurrent delegate, a cross-model second opinion, or a red-team pass |
-| `aibridge image-gen "<prompt>" --out out.png` | You need a real raster image — on a Codex (default), Antigravity, or Grok seat, with render verification |
+| `aibridge plan --model xai-grok/grok-4.5 --out plan.md "<task>"` | You want a delegate model to study the repo and expand a task into a detailed, reviewable **plan file** before any code is written |
+| `aibridge implement --model google-antigravity/gemini-3.6-flash <plan.md>` | You have an approved plan file and want it executed in place — with your project's **real typecheck and tests** run until green |
+| `aibridge review --model xai-grok/grok-4.5 --out review.md [--plan <plan.md>]` | You want a **different model** to pressure-test the working-tree diff against the plan contract (over-reach is a finding) — or to review the plan itself before implementing |
+| `aibridge subagent --model xai-grok/grok-4.5 "<task>"` | A self-contained task deserves a concurrent delegate, a cross-model second opinion, or a red-team pass |
+| `aibridge image-gen --model openai-codex/gpt-5.6-sol --out out.png "<prompt>"` | You need a real raster image — on a Codex, Antigravity, or Grok seat, with render verification |
 | `aibridge quota` | Two-second check of every backend's remaining quota before you pipeline work |
 | `aibridge runs` | Inspect or watch past delegation runs (`~/.aibridge/runs`) |
 
 The three verbs compose into an orchestrator-driven loop your agent stays in charge of:
 
 ```
-aibridge plan "add rate limiting to the API"   # delegate writes plan.md
+aibridge plan --model xai-grok/grok-4.5 --out plan.md "add rate limiting to the API"   # delegate writes plan.md
 # → your agent reads, edits, approves the plan
-aibridge implement plan.md                     # another model executes it, runs your gates
-aibridge review --plan plan.md                 # a third seat cross-checks the diff
+aibridge implement --model google-antigravity/gemini-3.6-flash plan.md                 # another model executes it, runs your gates
+aibridge review --model xai-grok/grok-4.5 --out review.md --plan plan.md               # a third seat cross-checks the diff
 ```
 
 Plan files — not their contents — travel between stages, so the loop is nearly free on your agent's context.

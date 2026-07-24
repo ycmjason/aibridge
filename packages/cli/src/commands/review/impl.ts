@@ -3,15 +3,15 @@ import { isAbsolute, resolve } from 'node:path';
 import { runCaptured } from '@aibridge/proc';
 import type { LocalContext } from '../../context.ts';
 import { delegate } from '../../delegate.ts';
-import { DEFAULT_MODEL, formatUnknownModelError, resolveModel } from '../../models.ts';
+import { formatUnknownModelError, resolveModel } from '../../models.ts';
 import { preflightModel, renderPreflightRefusal } from '../../quotaPreflight.ts';
 import { startRun } from '../../runlog.ts';
 
 export interface ReviewFlags {
-  readonly model?: string;
+  readonly model: string;
   readonly plan?: string;
   readonly base?: string;
-  readonly out?: string;
+  readonly out: string;
   readonly timeout?: number;
   readonly preflight: boolean;
 }
@@ -78,7 +78,7 @@ export function parseReviewVerdict(response: string): ReviewVerdictResult {
 }
 
 export default async function review(this: LocalContext, flags: ReviewFlags): Promise<void> {
-  const inputSlug = flags.model ?? DEFAULT_MODEL;
+  const inputSlug = flags.model;
   const model = resolveModel(inputSlug);
   if (!model) {
     this.process.stderr.write(`${formatUnknownModelError(inputSlug)}\n`);
@@ -140,11 +140,7 @@ export default async function review(this: LocalContext, flags: ReviewFlags): Pr
 
   const run = startRun('review', `${model.spec.slug}: ${modeDetail}`);
 
-  const absOutPath = flags.out
-    ? isAbsolute(flags.out)
-      ? flags.out
-      : resolve(cwd, flags.out)
-    : resolve(run.dir, 'review.md');
+  const absOutPath = isAbsolute(flags.out) ? flags.out : resolve(cwd, flags.out);
 
   let reviewPrompt: string;
   if (isDirty) {

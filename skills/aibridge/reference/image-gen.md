@@ -6,17 +6,17 @@ matters even if you only hand the prompt back.
 ## A. Calling it
 
 ```bash
-aibridge image-gen "<full prompt — see Part B>" --out out.png \
-  [--model <slug>] [--aspect-ratio 16:9] [--image ref.png] \
+aibridge image-gen --model <slug> --out out.png "<full prompt — see Part B>" \
+  [--aspect-ratio 16:9] [--image ref.png] \
   [--timeout 600] [--json]
 ```
 
-`--model` uses the **same canonical slugs as every other command**
+`--model` is required and uses the **same canonical slugs as every other command**
 (`resolveModel`; no short aliases). Image-capable seats today:
 
 | slug | backend CLI | renders |
 |---|---|---|
-| `openai-codex/gpt-5.6-sol` (default) | Codex CLI | PNG |
+| `openai-codex/gpt-5.6-sol` (recommended) | Codex CLI | PNG |
 | `google-antigravity/gemini-3.6-flash` | Antigravity CLI (`agy`) | JPEG |
 | `xai-grok/grok-4.5` | Grok CLI | JPEG |
 
@@ -40,12 +40,12 @@ Attach one or more existing images and the model edits/varies *them* instead of
 inventing from scratch — e.g. keep the same subject, change only what you ask:
 
 ```bash
-aibridge image-gen "the same woman, now in a denim shirt in a bright kitchen, waist-up" \
+aibridge image-gen --model openai-codex/gpt-5.6-sol "the same woman, now in a denim shirt in a bright kitchen, waist-up" \
   --out avatar2.png --image avatar.png --aspect-ratio 9:16
 
 # same brief, on a different seat
-aibridge image-gen "the same woman, now in a denim shirt in a bright kitchen, waist-up" \
-  --model xai-grok/grok-4.5 --out avatar2.jpg --image avatar.jpg --aspect-ratio 9:16
+aibridge image-gen --model xai-grok/grok-4.5 "the same woman, now in a denim shirt in a bright kitchen, waist-up" \
+  --out avatar2.jpg --image avatar.jpg --aspect-ratio 9:16
 ```
 
 With a reference, write the prompt as a **diff** — say only what should *change*

@@ -6,14 +6,14 @@
 ## A. Calling it & Available Models
 
 ```bash
-aibridge subagent "<self-contained prompt>" [--model <slug>] [--timeout 600] [--no-tools] [--no-preflight] [--json]
+aibridge subagent --model <slug> "<self-contained prompt>" [--timeout 600] [--no-tools] [--no-preflight] [--json]
 ```
 
-Pass a canonical slug to `--model` (no short aliases):
+Pass a canonical slug to `--model` (required, no short aliases):
 
 | Canonical Slug | Backend | Description |
 |---|---|---|
-| `xai-grok/grok-4.5` | grok | xAI Grok 4.5 via grok CLI — DEFAULT; own xAI login |
+| `xai-grok/grok-4.5` | grok | xAI Grok 4.5 via grok CLI — RECOMMENDED FIRST CHOICE; own xAI login |
 | `google-antigravity/gemini-3.6-flash` | agy | Google Gemini 3.6 Flash via agy (default effort: high); own Antigravity login |
 | `google-antigravity/claude-sonnet-4-6` | agy | Claude Sonnet 4.6 (thinking) via agy; own Antigravity login |
 | `google-antigravity/claude-opus-4-6-thinking` | agy | Claude Opus 4.6 (thinking) via agy; own Antigravity login — heavyweight |
@@ -46,9 +46,9 @@ Write prompts for a capable stranger:
 
 For large or multi-file tasks, use the three-verb workflow instead of raw subagent calls:
 
-1. **`aibridge plan "<prompt>"`**: Produces a detailed plan file (`plan.md`) listing files to touch, design decisions, and verification gates.
-2. **`aibridge implement <plan.md>`**: Reads the plan file, implements changes, runs typecheck + tests, and returns a diff summary.
-3. **`aibridge review [--plan <plan.md>]`**: Inspects working tree diffs and verifies implementation against plan contracts.
+1. **`aibridge plan --model xai-grok/grok-4.5 --out plan.md "<prompt>"`**: Produces a detailed plan file (`plan.md`) listing files to touch, design decisions, and verification gates.
+2. **`aibridge implement --model google-antigravity/gemini-3.6-flash plan.md`**: Reads the plan file, implements changes, runs typecheck + tests, and returns a diff summary.
+3. **`aibridge review --model xai-grok/grok-4.5 --out review.md [--plan plan.md]`**: Inspects working tree diffs and verifies implementation against plan contracts.
 
 ## D. When to stay native instead
 

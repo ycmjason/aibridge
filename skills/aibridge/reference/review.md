@@ -16,11 +16,11 @@ costs you almost nothing in context; read the report only when findings exist.
 ## Usage
 
 ```bash
-aibridge review [options]
-  --model <slug>       reviewer model (default: xai-grok/grok-4.5)
+aibridge review --model <slug> --out <file> [options]
+  --model <slug>       reviewer model (required, e.g. xai-grok/grok-4.5)
   --plan <file>        plan contract; over-reach against it is a finding
   --base <ref>         git base to diff against (default: HEAD)
-  --out <file>         full report destination (default: <run-dir>/review.md)
+  --out <file>         full report destination (required)
   --timeout <secs>     max seconds for review (default: 1200)
   --no-preflight       skip the backend quota preflight check
 ```
@@ -60,7 +60,7 @@ run: <run id>
 ## Gotchas
 
 - Reviewer must be cross-model from the implementer — never let a model review
-  its own diff. Defaults (grok reviews, gemini implements) already comply.
+  its own diff. Recommended seats (grok reviews, gemini implements) already comply.
 - Backends narrate: the verdict parser accepts the verdict on the first line,
   last line, or embedded at the end of a narration blob (grok has been observed
   concatenating progress prose onto the final message). If parsing still fails

@@ -14,8 +14,8 @@ working tree in place and runs the project's real gates. Stage three of
 ## Usage
 
 ```bash
-aibridge implement [options] <plan-file>
-  --model <slug>       implementer model (default: google-antigravity/gemini-3.6-flash)
+aibridge implement --model <slug> <plan-file>
+  --model <slug>       implementer model (required, e.g. google-antigravity/gemini-3.6-flash)
   --timeout <secs>     max seconds for implementation (default: 1800)
   --no-preflight       skip the backend quota preflight check
 ```
@@ -49,13 +49,13 @@ Exit 3: quota preflight refusal.
 
 - The summary's "gates green" claim is **delegate-reported**. Re-run the real
   gates yourself before trusting the diff.
-- Then `aibridge review --plan <plan-file>` for the cross-model check
-  (defaults already make reviewer ≠ implementer).
+- Then `aibridge review --model xai-grok/grok-4.5 --plan <plan-file> --out review.md` for the cross-model check
+  (recommended seats already make reviewer ≠ implementer).
 
 ## Gotchas
 
 - Keep the implementer cross-model from whoever reviews: gemini implements,
-  grok reviews (the defaults). If you override `--model`, check the other seat.
+  grok reviews (the recommended seats). If you override `--model`, check the other seat.
 - agy quota is shared per model GROUP — two concurrent agy-heavy implements
   drain the same window. `aibridge quota` before pipelining.
 - Timeout is for the WHOLE implementation incl. gate-fixing loops; raise it for

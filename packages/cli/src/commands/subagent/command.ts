@@ -1,5 +1,5 @@
 import { buildCommand } from '@stricli/core';
-import { DEFAULT_MODEL, listModelHelpLines } from '../../models.ts';
+import { listModelHelpLines } from '../../models.ts';
 import { nonEmptyPrompt, positiveIntSeconds } from '../../parsers.ts';
 import subagentImpl from './impl.ts';
 
@@ -8,7 +8,7 @@ const fullDescription = [
   '',
   'Available models (canonical slug):',
   ...listModelHelpLines(),
-  `Default: ${DEFAULT_MODEL} (off-budget). The claude-backend slugs are FALLBACKS for`,
+  'Recommended first choice: xai-grok/grok-4.5 (off-budget). The claude-backend slugs are FALLBACKS for',
   'when the off-budget CLIs are quota-exhausted — they bill your Claude subscription.',
 ].join('\n');
 
@@ -19,8 +19,7 @@ export const subagent = buildCommand({
       model: {
         kind: 'parsed',
         parse: String,
-        optional: true,
-        brief: `Model slug to delegate to (default: ${DEFAULT_MODEL})`,
+        brief: 'Model slug (required) — see the seat list above',
       },
       timeout: {
         kind: 'parsed',

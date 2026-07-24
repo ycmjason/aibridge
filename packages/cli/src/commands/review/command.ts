@@ -1,5 +1,5 @@
 import { buildCommand } from '@stricli/core';
-import { DEFAULT_MODEL, listModelHelpLines } from '../../models.ts';
+import { listModelHelpLines } from '../../models.ts';
 import { positiveIntSeconds } from '../../parsers.ts';
 import reviewImpl from './impl.ts';
 
@@ -17,8 +17,7 @@ export const review = buildCommand({
       model: {
         kind: 'parsed',
         parse: String,
-        optional: true,
-        brief: `Model slug (default: ${DEFAULT_MODEL})`,
+        brief: 'Model slug (required) — see the seat list above',
       },
       plan: {
         kind: 'parsed',
@@ -35,8 +34,7 @@ export const review = buildCommand({
       out: {
         kind: 'parsed',
         parse: String,
-        optional: true,
-        brief: 'Where to write the review report (default: <run.dir>/review.md)',
+        brief: 'Where to write the review report (required)',
       },
       timeout: {
         kind: 'parsed',

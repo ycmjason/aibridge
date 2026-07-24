@@ -1,16 +1,11 @@
 import type { LocalContext } from '../../context.ts';
 import { delegate } from '../../delegate.ts';
-import {
-  backendModelId,
-  DEFAULT_MODEL,
-  formatUnknownModelError,
-  resolveModel,
-} from '../../models.ts';
+import { backendModelId, formatUnknownModelError, resolveModel } from '../../models.ts';
 import { preflightModel, renderPreflightRefusal } from '../../quotaPreflight.ts';
 import { startRun } from '../../runlog.ts';
 
 export interface SubagentFlags {
-  readonly model?: string;
+  readonly model: string;
   readonly timeout?: number;
   readonly tools: boolean;
   readonly preflight: boolean;
@@ -22,7 +17,7 @@ export default async function subagent(
   flags: SubagentFlags,
   prompt: string,
 ): Promise<void> {
-  const inputSlug = flags.model ?? DEFAULT_MODEL;
+  const inputSlug = flags.model;
   const model = resolveModel(inputSlug);
   if (!model) {
     this.process.stderr.write(`${formatUnknownModelError(inputSlug)}\n`);

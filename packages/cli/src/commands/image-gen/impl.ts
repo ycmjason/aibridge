@@ -15,7 +15,6 @@ import type { ImageResult } from '../../driver.ts';
 import { getDriver } from '../../drivers.ts';
 import {
   backendModelId,
-  DEFAULT_IMAGE_GEN,
   formatImageGenModelError,
   formatUnknownModelError,
   imageFormatFor,
@@ -24,7 +23,7 @@ import {
 } from '../../models.ts';
 
 export interface ImageGenFlags {
-  readonly model?: string;
+  readonly model: string;
   readonly out: string;
   readonly aspectRatio?: string;
   readonly image?: string;
@@ -45,14 +44,14 @@ export default async function imageGen(
     this.process.exitCode = 1;
   };
 
-  const inputSlug = flags.model ?? DEFAULT_IMAGE_GEN;
+  const inputSlug = flags.model;
   const model = resolveModel(inputSlug);
   if (!model) return fail(formatUnknownModelError(inputSlug));
   if (!supportsImageGen(model)) return fail(formatImageGenModelError(inputSlug, model));
 
   if (model.spec.backend === 'codex' && model.effort) {
     return fail(
-      `effort "-${model.effort}" has no effect on image-gen (the image tool renders, not the seat model); use ${DEFAULT_IMAGE_GEN}.`,
+      `effort "-${model.effort}" has no effect on image-gen (the image tool renders, not the seat model); pass the un-suffixed slug "${model.spec.slug}" instead.`,
     );
   }
 

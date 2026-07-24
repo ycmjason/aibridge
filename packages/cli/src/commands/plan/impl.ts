@@ -3,13 +3,13 @@ import { isAbsolute, resolve } from 'node:path';
 import { runCaptured } from '@aibridge/proc';
 import type { LocalContext } from '../../context.ts';
 import { delegate } from '../../delegate.ts';
-import { DEFAULT_MODEL, formatUnknownModelError, resolveModel } from '../../models.ts';
+import { formatUnknownModelError, resolveModel } from '../../models.ts';
 import { preflightModel, renderPreflightRefusal } from '../../quotaPreflight.ts';
 import { startRun } from '../../runlog.ts';
 
 export interface PlanFlags {
-  readonly model?: string;
-  readonly out?: string;
+  readonly model: string;
+  readonly out: string;
   readonly timeout?: number;
   readonly preflight: boolean;
 }
@@ -63,7 +63,7 @@ export default async function plan(
   flags: PlanFlags,
   taskPrompt: string,
 ): Promise<void> {
-  const inputSlug = flags.model ?? DEFAULT_MODEL;
+  const inputSlug = flags.model;
   const model = resolveModel(inputSlug);
   if (!model) {
     this.process.stderr.write(`${formatUnknownModelError(inputSlug)}\n`);
@@ -86,11 +86,7 @@ export default async function plan(
   const promptSnippet = taskPrompt.replace(/\r?\n/g, ' ').slice(0, 80);
   const run = startRun('plan', `${model.spec.slug}: ${promptSnippet}`);
 
-  const absOutPath = flags.out
-    ? isAbsolute(flags.out)
-      ? flags.out
-      : resolve(cwd, flags.out)
-    : resolve(run.dir, 'plan.md');
+  const absOutPath = isAbsolute(flags.out) ? flags.out : resolve(cwd, flags.out);
 
   const beforePorcelain = await getPorcelainStatus(cwd);
 

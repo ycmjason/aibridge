@@ -70,7 +70,7 @@ everything else is identical. Requires Node ≥24.11.
 - Optional, for users who want the `aibridge` command directly on PATH:
   `npm i -g @aibridge/cli`. **Ask the user before running global installs.**
 
-Requires the backing CLIs on `PATH` and authed: **`grok`** (default planner/reviewer), **`agy`** (default implementer), **`codex`** (image-gen + `openai-codex/*` delegation), and optionally **`claude`** for the `anthropic-claude/*` delegation tier.
+Requires the backing CLIs on `PATH` and authed: **`grok`** (recommended planner/reviewer — pass it explicitly), **`agy`** (recommended implementer — pass it explicitly), **`codex`** (recommended image-gen seat — pass it explicitly, plus `openai-codex/*` delegation), and optionally **`claude`** for the `anthropic-claude/*` delegation tier.
 
 ## Subcommands
 
@@ -102,15 +102,15 @@ Requires the backing CLIs on `PATH` and authed: **`grok`** (default planner/revi
    If genuinely ambiguous, show the table above and ask.
 3. **Unsure of the current flags?** Run `aibridge <command> --help` — the surface grows over time (new models, new flags).
 
-## Model seats (defaults encode this — keep it)
+## Model seats (recommended choices — pass them explicitly)
 
-- **Planner / reviewer seat: grok** (`xai-grok/grok-4.5`) — default for `plan`
-  and `review`. Runs on its own xAI login, but aggressively capped (~30
+- **Planner / reviewer seat: grok** (`xai-grok/grok-4.5`) — recommended for `plan`
+  and `review` — pass it explicitly. Runs on its own xAI login, but aggressively capped (~30
   req/min, ~1k msgs/day, no local usage probe): run ONE grok stage at a time.
 - **Implementer seat: gemini** (`google-antigravity/gemini-3.6-flash`, effort
-  high) — default for `implement`. A pure do-er for fully-specified plans.
+  high) — recommended for `implement` — pass it explicitly. A pure do-er for fully-specified plans.
 - **Keep the reviewer cross-model from the implementer** — a model reviewing
-  its own diff shares its own blind spots. The defaults already differ; if you
+  its own diff shares its own blind spots. The recommended seats already differ; if you
   override one seat, check the other. The same logic applies to you: for work
   you authored yourself, prefer a reviewer outside your own model family.
 - **Quota is orchestrator-relative.** Every backend spends its own CLI's

@@ -1,5 +1,5 @@
 import { buildCommand } from '@stricli/core';
-import { DEFAULT_MODEL, listModelHelpLines } from '../../models.ts';
+import { listModelHelpLines } from '../../models.ts';
 import { nonEmptyPrompt, positiveIntSeconds } from '../../parsers.ts';
 import planImpl from './impl.ts';
 
@@ -17,14 +17,12 @@ export const plan = buildCommand({
       model: {
         kind: 'parsed',
         parse: String,
-        optional: true,
-        brief: `Model slug (default: ${DEFAULT_MODEL})`,
+        brief: 'Model slug (required) — see the seat list above',
       },
       out: {
         kind: 'parsed',
         parse: String,
-        optional: true,
-        brief: 'Where to write the plan (default: <run.dir>/plan.md)',
+        brief: 'Where to write the plan file (required)',
       },
       timeout: {
         kind: 'parsed',

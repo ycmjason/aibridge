@@ -35,7 +35,7 @@ describe('flag mapping & defaults lock', () => {
   it('plan command maps defaults correctly', async () => {
     mockPlanImpl.mockReset();
     const ctx = fakeCtx();
-    await runCli(ctx, ['plan', 'do something']);
+    await runCli(ctx, ['plan', '--model', 'xai-grok/grok-4.5', '--out', 'plan.md', 'do something']);
     expect(mockPlanImpl).toHaveBeenCalledTimes(1);
     const [call] = mockPlanImpl.mock.calls;
     expect(call).toBeDefined();
@@ -43,6 +43,8 @@ describe('flag mapping & defaults lock', () => {
     const [flags, prompt] = call;
     expect(prompt).toBe('do something');
     expect(flags).toEqual({
+      model: 'xai-grok/grok-4.5',
+      out: 'plan.md',
       preflight: true,
     });
   });
@@ -50,7 +52,17 @@ describe('flag mapping & defaults lock', () => {
   it('plan command handles --no-preflight and --timeout', async () => {
     mockPlanImpl.mockReset();
     const ctx = fakeCtx();
-    await runCli(ctx, ['plan', '--no-preflight', '--timeout', '120', 'task']);
+    await runCli(ctx, [
+      'plan',
+      '--model',
+      'xai-grok/grok-4.5',
+      '--out',
+      'plan.md',
+      '--no-preflight',
+      '--timeout',
+      '120',
+      'task',
+    ]);
     expect(mockPlanImpl).toHaveBeenCalledTimes(1);
     const [call] = mockPlanImpl.mock.calls;
     expect(call).toBeDefined();
@@ -58,6 +70,8 @@ describe('flag mapping & defaults lock', () => {
     const [flags, prompt] = call;
     expect(prompt).toBe('task');
     expect(flags).toEqual({
+      model: 'xai-grok/grok-4.5',
+      out: 'plan.md',
       preflight: false,
       timeout: 120,
     });
@@ -66,7 +80,7 @@ describe('flag mapping & defaults lock', () => {
   it('subagent command maps defaults correctly', async () => {
     mockSubagentImpl.mockReset();
     const ctx = fakeCtx();
-    await runCli(ctx, ['subagent', 'hello agent']);
+    await runCli(ctx, ['subagent', '--model', 'xai-grok/grok-4.5', 'hello agent']);
     expect(mockSubagentImpl).toHaveBeenCalledTimes(1);
     const [call] = mockSubagentImpl.mock.calls;
     expect(call).toBeDefined();
@@ -74,6 +88,7 @@ describe('flag mapping & defaults lock', () => {
     const [flags, prompt] = call;
     expect(prompt).toBe('hello agent');
     expect(flags).toEqual({
+      model: 'xai-grok/grok-4.5',
       tools: true,
       preflight: true,
       json: false,
@@ -83,7 +98,14 @@ describe('flag mapping & defaults lock', () => {
   it('subagent command handles --no-tools and --no-preflight', async () => {
     mockSubagentImpl.mockReset();
     const ctx = fakeCtx();
-    await runCli(ctx, ['subagent', '--no-tools', '--no-preflight', 'hello agent']);
+    await runCli(ctx, [
+      'subagent',
+      '--model',
+      'xai-grok/grok-4.5',
+      '--no-tools',
+      '--no-preflight',
+      'hello agent',
+    ]);
     expect(mockSubagentImpl).toHaveBeenCalledTimes(1);
     const [call] = mockSubagentImpl.mock.calls;
     expect(call).toBeDefined();
@@ -91,6 +113,7 @@ describe('flag mapping & defaults lock', () => {
     const [flags, prompt] = call;
     expect(prompt).toBe('hello agent');
     expect(flags).toEqual({
+      model: 'xai-grok/grok-4.5',
       tools: false,
       preflight: false,
       json: false,

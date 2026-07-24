@@ -6,9 +6,6 @@ export { getDriver } from './drivers.ts';
 export {
   type Backend,
   backendModelId,
-  DEFAULT_IMAGE_GEN,
-  DEFAULT_IMPLEMENTER,
-  DEFAULT_MODEL,
   type Effort,
   formatImageGenModelError,
   formatUnknownModelError,
