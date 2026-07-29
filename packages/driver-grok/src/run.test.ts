@@ -142,3 +142,32 @@ describe('grok driver run()', () => {
     }
   });
 });
+
+describe('grok driver run() sign-in detection', () => {
+  const task = {
+    prompt: 'p',
+    tools: false,
+    timeoutSec: 30,
+    cwd: '/work',
+    backendModel: 'grok-4.5',
+  };
+  const exec = (stdout: string) => async (): Promise<RunResult> => ({
+    code: 0,
+    signal: null,
+    stdout,
+    stderr: '',
+    timedOut: false,
+  });
+
+  it('treats the CLI sign-in notice as no-answer', async () => {
+    const res = await run(task, exec('You are not authenticated.'));
+    expect(res.ok).toBe(false);
+    expect(res).toMatchObject({ kind: 'no-answer', message: /not signed in/ });
+  });
+
+  it('keeps a real answer that merely mentions the phrase', async () => {
+    const answer = `${'Your endpoint returns "not authenticated" because the bearer token is stale. '.repeat(6)}`;
+    const res = await run(task, exec(answer));
+    expect(res.ok).toBe(true);
+  });
+});

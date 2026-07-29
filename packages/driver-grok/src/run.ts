@@ -77,7 +77,9 @@ export async function run(
 
     const response = clean(result.stdout);
 
-    if (/not authenticated|please (?:run )?`?grok login/i.test(response)) {
+    // Only a terse one-liner is the CLI's own sign-in notice; a long answer that
+    // merely mentions the phrase is a real answer about auth.
+    if (response.length < 300 && /not authenticated|please (?:run )?`?grok login/i.test(response)) {
       return {
         ok: false,
         kind: 'no-answer',
