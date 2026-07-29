@@ -21,6 +21,7 @@
 import { readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
+import { AuthExpiredError } from '@aibridge/proc';
 import { AGY_CANONICAL_TO_NATIVE } from './registry.ts';
 
 const CLOUDCODE_BASE = 'https://cloudcode-pa.googleapis.com';
@@ -100,11 +101,15 @@ async function getAccessToken(): Promise<string> {
   const access = parsed.token?.access_token;
   const refresh = parsed.token?.refresh_token;
   const expiry = parsed.token?.expiry;
-  if (!access) throw new Error('agy token file has no access_token');
+  if (!access) throw new AuthExpiredError('agy token file has no access_token');
 
   const isExpired = expiry ? new Date(expiry).getTime() - Date.now() < 60_000 : false;
   if (!isExpired) return access;
-  if (!refresh) throw new Error('agy token expired and no refresh_token present');
+  if (!refresh) {
+    throw new AuthExpiredError(
+      'agy token expired and no refresh_token present — run `agy` once to re-login',
+    );
+  }
 
   const res = await fetch(TOKEN_ENDPOINT, {
     method: 'POST',

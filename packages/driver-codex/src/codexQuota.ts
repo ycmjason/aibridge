@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
+import { AuthExpiredError } from '@aibridge/proc';
 
 const USAGE_ENDPOINT = 'https://chatgpt.com/backend-api/wham/usage';
 
@@ -73,7 +74,7 @@ export async function fetchCodexQuota(): Promise<CodexQuotaSnapshot> {
     tokens?: { access_token?: string; account_id?: string };
   };
   const access = auth.tokens?.access_token;
-  if (!access) throw new Error('codex auth.json has no tokens.access_token');
+  if (!access) throw new AuthExpiredError('codex auth.json has no tokens.access_token');
 
   const headers: Record<string, string> = {
     Authorization: `Bearer ${access}`,
@@ -83,7 +84,9 @@ export async function fetchCodexQuota(): Promise<CodexQuotaSnapshot> {
 
   const res = await fetch(USAGE_ENDPOINT, { headers });
   if (res.status === 401) {
-    throw new Error('codex token expired (401) — run any codex command once to refresh it');
+    throw new AuthExpiredError(
+      'codex session expired (401) — run any codex command once (or `codex login`), then retry',
+    );
   }
   if (!res.ok) throw new Error(`codex usage endpoint failed: HTTP ${res.status}`);
 

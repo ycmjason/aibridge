@@ -7,6 +7,7 @@ import {
   evaluateAgyPreflight,
   evaluateCodexPreflight,
   evaluateGrokPreflight,
+  renderPreflightRefusal,
 } from './quotaPreflight.ts';
 
 test('evaluateAgyPreflight: exhausted model returns ok:false with resetTime', () => {
@@ -28,6 +29,7 @@ test('evaluateAgyPreflight: exhausted model returns ok:false with resetTime', ()
 
   assert.deepEqual(result, {
     ok: false,
+    kind: 'quota',
     message: 'agy model "Gemini 3.5 Flash (High)" is quota-exhausted',
     resetAt: '2024-01-02T12:00:00Z',
   });
@@ -127,6 +129,7 @@ test('evaluateCodexPreflight: limitReached returns ok:false', () => {
 
   assert.deepEqual(result, {
     ok: false,
+    kind: 'quota',
     message: 'codex quota limit reached',
     resetAt: '2024-01-01T17:00:00Z',
   });
@@ -199,6 +202,7 @@ test('evaluateGrokPreflight: usedPercent at 100 refuses with resetAt', () => {
 
   assert.deepEqual(result, {
     ok: false,
+    kind: 'quota',
     message: 'grok credit quota exhausted',
     resetAt: '2024-01-08T00:00:00Z',
   });
@@ -220,4 +224,28 @@ test('evaluateGrokPreflight: healthy (17% used) returns ok:true', () => {
   const result = evaluateGrokPreflight(snapshot);
 
   assert.deepEqual(result, { ok: true });
+});
+
+test('renderPreflightRefusal: auth kind uses unauthenticated wording', () => {
+  const msg = renderPreflightRefusal('plan', {
+    kind: 'auth',
+    message: 'grok session expired (401) — run `grok login`, then retry',
+    resetAt: undefined,
+  });
+  assert.strictEqual(
+    msg,
+    'aibridge plan: refusing — grok session expired (401) — run `grok login`, then retry. Running with --no-preflight would only send the delegate in unauthenticated. Or use a different --model.',
+  );
+});
+
+test('renderPreflightRefusal: quota kind keeps override wording', () => {
+  const msg = renderPreflightRefusal('subagent', {
+    kind: 'quota',
+    message: 'grok credit quota exhausted',
+    resetAt: undefined,
+  });
+  assert.strictEqual(
+    msg,
+    'aibridge subagent: refusing — grok credit quota exhausted. Use --no-preflight to override, or a claude-backend fallback (subagent --model sonnet|opus — bills the Claude subscription).',
+  );
 });

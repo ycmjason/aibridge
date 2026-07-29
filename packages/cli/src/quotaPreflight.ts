@@ -1,11 +1,17 @@
 import { type AgyQuotaSnapshot, fetchAgyQuota, findModelQuota } from '@aibridge/driver-agy';
 import { type CodexQuotaSnapshot, fetchCodexQuota } from '@aibridge/driver-codex';
 import { fetchGrokQuota, type GrokQuotaSnapshot } from '@aibridge/driver-grok';
+import { isAuthExpired } from '@aibridge/proc';
 import { backendModelId, type ResolvedModel } from './models.ts';
 
 export type PreflightVerdict =
   | { readonly ok: true; readonly warning?: string }
-  | { readonly ok: false; readonly message: string; readonly resetAt: string | undefined };
+  | {
+      readonly ok: false;
+      readonly kind: 'auth' | 'quota';
+      readonly message: string;
+      readonly resetAt: string | undefined;
+    };
 
 export function evaluateAgyPreflight(
   snapshot: AgyQuotaSnapshot,
@@ -32,7 +38,12 @@ export function evaluateAgyPreflight(
         }
       }
     }
-    return { ok: false, message: `agy model "${backendModel}" is quota-exhausted`, resetAt };
+    return {
+      ok: false,
+      kind: 'quota',
+      message: `agy model "${backendModel}" is quota-exhausted`,
+      resetAt,
+    };
   }
 
   return { ok: true };
@@ -41,12 +52,17 @@ export function evaluateAgyPreflight(
 export function evaluateCodexPreflight(snapshot: CodexQuotaSnapshot): PreflightVerdict {
   if (snapshot.limitReached) {
     const resetAt = snapshot.windows.find(w => w.resetAt)?.resetAt;
-    return { ok: false, message: 'codex quota limit reached', resetAt };
+    return { ok: false, kind: 'quota', message: 'codex quota limit reached', resetAt };
   }
 
   const exhaustedWindow = snapshot.windows.find(w => w.usedPercent >= 100);
   if (exhaustedWindow) {
-    return { ok: false, message: 'codex quota limit reached', resetAt: exhaustedWindow.resetAt };
+    return {
+      ok: false,
+      kind: 'quota',
+      message: 'codex quota limit reached',
+      resetAt: exhaustedWindow.resetAt,
+    };
   }
 
   return { ok: true };
@@ -56,6 +72,7 @@ export function evaluateGrokPreflight(snapshot: GrokQuotaSnapshot): PreflightVer
   if (snapshot.usedPercent !== undefined && snapshot.usedPercent >= 100) {
     return {
       ok: false,
+      kind: 'quota',
       message: 'grok credit quota exhausted',
       resetAt: snapshot.periodEnd,
     };
@@ -81,10 +98,9 @@ export async function preflightModel(resolved: ResolvedModel): Promise<Preflight
     const snapshot = await fetchAgyQuota();
     return evaluateAgyPreflight(snapshot, backendModelId(resolved));
   } catch (err) {
-    return {
-      ok: true,
-      warning: `quota preflight failed (${(err as Error).message}); proceeding`,
-    };
+    if (isAuthExpired(err))
+      return { ok: false, kind: 'auth', message: err.message, resetAt: undefined };
+    return { ok: true, warning: `quota preflight failed (${(err as Error).message}); proceeding` };
   }
 }
 
@@ -93,10 +109,9 @@ export async function preflightCodex(): Promise<PreflightVerdict> {
     const snapshot = await fetchCodexQuota();
     return evaluateCodexPreflight(snapshot);
   } catch (err) {
-    return {
-      ok: true,
-      warning: `quota preflight failed (${(err as Error).message}); proceeding`,
-    };
+    if (isAuthExpired(err))
+      return { ok: false, kind: 'auth', message: err.message, resetAt: undefined };
+    return { ok: true, warning: `quota preflight failed (${(err as Error).message}); proceeding` };
   }
 }
 
@@ -105,10 +120,9 @@ export async function preflightGrok(): Promise<PreflightVerdict> {
     const snapshot = await fetchGrokQuota();
     return evaluateGrokPreflight(snapshot);
   } catch (err) {
-    return {
-      ok: true,
-      warning: `quota preflight failed (${(err as Error).message}); proceeding`,
-    };
+    if (isAuthExpired(err))
+      return { ok: false, kind: 'auth', message: err.message, resetAt: undefined };
+    return { ok: true, warning: `quota preflight failed (${(err as Error).message}); proceeding` };
   }
 }
 
@@ -124,8 +138,11 @@ function formatReset(resetTime: string | undefined): string {
 
 export function renderPreflightRefusal(
   cmd: string,
-  verdict: { message: string; resetAt: string | undefined },
+  verdict: { kind: 'auth' | 'quota'; message: string; resetAt: string | undefined },
 ): string {
+  if (verdict.kind === 'auth') {
+    return `aibridge ${cmd}: refusing — ${verdict.message}. Running with --no-preflight would only send the delegate in unauthenticated. Or use a different --model.`;
+  }
   const resetClause = verdict.resetAt ? ` Resets ${formatReset(verdict.resetAt)}.` : '';
   return `aibridge ${cmd}: refusing — ${verdict.message}.${resetClause} Use --no-preflight to override, or a claude-backend fallback (subagent --model sonnet|opus — bills the Claude subscription).`;
 }

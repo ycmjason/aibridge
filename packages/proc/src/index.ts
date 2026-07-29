@@ -1,3 +1,4 @@
+export { AuthExpiredError, isAuthExpired } from './authError.ts';
 export {
   isNotFound,
   parseSemver,

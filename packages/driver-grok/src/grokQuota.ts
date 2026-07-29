@@ -1,6 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
+import { AuthExpiredError } from '@aibridge/proc';
+import { probeGrokAuth } from './grok.ts';
 
 export interface GrokQuotaProduct {
   readonly product: string;
@@ -103,20 +105,20 @@ interface GrokAuthRecord {
   user_id?: string;
 }
 
-export async function fetchGrokQuota(): Promise<GrokQuotaSnapshot> {
+async function requestBilling(fetchImpl: typeof fetch): Promise<Response> {
   const authPath = grokAuthPath();
   let rawAuth: string;
   try {
     rawAuth = readFileSync(authPath, 'utf8');
   } catch (_err) {
-    throw new Error('grok auth.json has no usable session (run `grok login`)');
+    throw new AuthExpiredError('grok auth.json has no usable session (run `grok login`)');
   }
 
   let authData: Record<string, GrokAuthRecord>;
   try {
     authData = JSON.parse(rawAuth) as Record<string, GrokAuthRecord>;
   } catch (_err) {
-    throw new Error('grok auth.json has no usable session (run `grok login`)');
+    throw new AuthExpiredError('grok auth.json has no usable session (run `grok login`)');
   }
 
   let record: GrokAuthRecord | undefined;
@@ -134,7 +136,7 @@ export async function fetchGrokQuota(): Promise<GrokQuotaSnapshot> {
   }
 
   if (!record?.key) {
-    throw new Error('grok auth.json has no usable session (run `grok login`)');
+    throw new AuthExpiredError('grok auth.json has no usable session (run `grok login`)');
   }
 
   const headers: Record<string, string> = {
@@ -158,12 +160,22 @@ export async function fetchGrokQuota(): Promise<GrokQuotaSnapshot> {
     // If unreadable, omit the x-grok-client-version header
   }
 
-  const res = await fetch('https://cli-chat-proxy.grok.com/v1/billing?format=credits', {
+  return fetchImpl('https://cli-chat-proxy.grok.com/v1/billing?format=credits', {
     headers,
   });
+}
 
+export async function fetchGrokQuota(
+  fetchImpl: typeof fetch = fetch,
+  refresh: () => Promise<unknown> = probeGrokAuth,
+): Promise<GrokQuotaSnapshot> {
+  let res = await requestBilling(fetchImpl);
   if (res.status === 401) {
-    throw new Error('grok token expired (401) — run any grok command once to refresh it');
+    await refresh();
+    res = await requestBilling(fetchImpl);
+  }
+  if (res.status === 401) {
+    throw new AuthExpiredError('grok session expired (401) — run `grok login`, then retry');
   }
   if (!res.ok) {
     throw new Error(`grok billing endpoint failed: HTTP ${res.status}`);

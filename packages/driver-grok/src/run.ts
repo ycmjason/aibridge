@@ -77,6 +77,15 @@ export async function run(
 
     const response = clean(result.stdout);
 
+    if (/not authenticated|please (?:run )?`?grok login/i.test(response)) {
+      return {
+        ok: false,
+        kind: 'no-answer',
+        message: 'aibridge: grok is not signed in. Run `grok login`, then retry.',
+        exitCode: result.code,
+      };
+    }
+
     if (result.code !== 0 || response.length === 0) {
       const detail = clean(result.stderr) || `exit code ${result.code}`;
       return {
