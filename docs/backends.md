@@ -5,10 +5,11 @@
 ## agy (Antigravity CLI)
 
 - Google's terminal agent, successor to Gemini CLI. Auth = the user's Google login (OS keyring), no API key. Config under `~/.gemini/antigravity-cli/`.
-- **Effort is baked into the model id** (`gemini-3.6-flash-high|-medium|-low`; no un-suffixed id). The registry stores the base id + `defaultEffort`; `backendModelId()` appends the suffix. `agy models` lists current ids.
+- **Effort is baked into the model id** (`gemini-3.7-flash-high|-medium|-low`; no un-suffixed id). The registry stores the base id + `defaultEffort`; `backendModelId()` appends the suffix. `agy models` lists current ids.
 - Headless: `agy -p "<prompt>"` (+ `--model`, `--dangerously-skip-permissions` for tools, `--add-dir`, `--print-timeout`, default 5m). **No JSON output mode.**
 - **agy ignores its spawn cwd** — it treats the FIRST `--add-dir` as the workspace. Delegation must pass the caller's repo as the first `--add-dir` (temp answer dir second) or all edits land in the wrong directory and vanish.
 - stdout capture works headless (piped, no TTY) as of agy 1.0.6 — no `node-pty` needed. If a future agy regresses (symptom: hangs to `--print-timeout`, 0 bytes), fall back to a pseudo-TTY or answer-file-only capture.
+- **The per-model quota list lags `agy models`.** Verified on agy 1.1.12 (2026-08-13): `agy models` offers `gemini-3.7-flash-*`, but the quota endpoint still itemises only up to `gemini-3.6-flash-*`, so `evaluateAgyPreflight` finds no entry and proceeds with `model "…" not in quota snapshot; proceeding`. Runs work; only the per-model exhaustion guard is missing. The Gemini *group* windows still cover it, and `gemini-3.6-flash` stays registered as the newest flash tier the guard can see.
 - **Quota death shows up as an empty answer, exit 0** (~6s). The quota preflight guards this. Quota is per model GROUP (all Gemini tiers share weekly+5h windows); each request injects ~24k system tokens, so don't loop trivia. **[web]**
 - `--continue` resumes the most-recent conversation GLOBALLY — cross-contaminates concurrent runs; never use it for parallel calls.
 - **Image generation**: agy exposes a `generate_image` tool with parameters `Prompt`, `ImageName`, `AspectRatio` (`1:1`, `16:9`, etc.), and `ImagePaths` (for image-to-image/reference edits). Renders land outside the cwd in `~/.gemini/antigravity-cli/brain/<uuid>/<name>_<epochms>.jpg` (JPEG, ~550 KB at 1024x1024). agy has no image quality knob.

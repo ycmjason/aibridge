@@ -17,7 +17,7 @@ aibridge image-gen --model <slug> --out out.png "<full prompt — see Part B>" \
 | slug | backend CLI | renders |
 |---|---|---|
 | `openai-codex/gpt-5.6-sol` (recommended) | Codex CLI | PNG |
-| `google-antigravity/gemini-3.6-flash` | Antigravity CLI (`agy`) | JPEG |
+| `google-antigravity/gemini-3.7-flash` | Antigravity CLI (`agy`) | JPEG |
 | `xai-grok/grok-4.6` | Grok CLI | JPEG |
 
 Other seats fail fast with a list of capable models.

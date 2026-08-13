@@ -38,7 +38,7 @@ npx -y @aibridge/cli subagent --model xai-grok/grok-4.6 "summarize the architect
 | Command | Use when |
 |---|---|
 | `aibridge plan --model xai-grok/grok-4.6 --out plan.md "<task>"` | You want a delegate model to study the repo and expand a task into a detailed, reviewable **plan file** before any code is written |
-| `aibridge implement --model google-antigravity/gemini-3.6-flash <plan.md>` | You have an approved plan file and want it executed in place — with your project's **real typecheck and tests** run until green |
+| `aibridge implement --model google-antigravity/gemini-3.7-flash <plan.md>` | You have an approved plan file and want it executed in place — with your project's **real typecheck and tests** run until green |
 | `aibridge review --model xai-grok/grok-4.6 --out review.md [--plan <plan.md>]` | You want a **different model** to pressure-test the working-tree diff against the plan contract (over-reach is a finding) — or to review the plan itself before implementing |
 | `aibridge subagent --model xai-grok/grok-4.6 "<task>"` | A self-contained task deserves a concurrent delegate, a cross-model second opinion, or a red-team pass |
 | `aibridge image-gen --model openai-codex/gpt-5.6-sol --out out.png "<prompt>"` | You need a real raster image — on a Codex, Antigravity, or Grok seat, with render verification |
@@ -51,7 +51,7 @@ The three verbs compose into an orchestrator-driven loop your agent stays in cha
 ```
 aibridge plan --model xai-grok/grok-4.6 --out plan.md "add rate limiting to the API"   # delegate writes plan.md
 # → your agent reads, edits, approves the plan
-aibridge implement --model google-antigravity/gemini-3.6-flash plan.md                 # another model executes it, runs your gates
+aibridge implement --model google-antigravity/gemini-3.7-flash plan.md                 # another model executes it, runs your gates
 aibridge review --model xai-grok/grok-4.6 --out review.md --plan plan.md               # a third seat cross-checks the diff
 ```
 
@@ -62,7 +62,7 @@ Plan files — not their contents — travel between stages, so the loop is near
 - **The skill carries judgment; the CLI owns execution.** The skill teaches your agent prompt-craft, seat selection, and when to gate; the CLI deterministically drives the backing CLIs, captures their output, verifies results (a "generated image" under 100 KB is a code-drawn fake, an empty answer is a quota death), and logs every run.
 - **Seats stay cross-model by default.** Grok plans and reviews, Gemini implements — a model never reviews its own diff, and independent eyes catch what shared blind spots miss.
 - **No API keys.** Delegation runs on the backing CLIs' existing logins, each spending its own quota. (The skill treats a backend that shares your agent's own quota pool as a last resort.)
-- **Models are canonical slugs**: `<vendor>-<cli>/<model>[-<effort>]` — e.g. `xai-grok/grok-4.6`, `google-antigravity/gemini-3.6-flash`, `openai-codex/gpt-5.6-sol-high`, `anthropic-claude/opus-5`. No aliases — not short ones, and not moving vendor aliases like `opus`: every seat pins an exact model version. `aibridge <command> --help` lists every seat.
+- **Models are canonical slugs**: `<vendor>-<cli>/<model>[-<effort>]` — e.g. `xai-grok/grok-4.6`, `google-antigravity/gemini-3.7-flash`, `openai-codex/gpt-5.6-sol-high`, `anthropic-claude/opus-5`. No aliases — not short ones, and not moving vendor aliases like `opus`: every seat pins an exact model version. `aibridge <command> --help` lists every seat.
 
 ## Tell your agent when to reach for it
 

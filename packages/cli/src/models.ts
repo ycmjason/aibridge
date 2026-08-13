@@ -42,6 +42,17 @@ export const MODELS: Record<string, ModelSpec> = {
     efforts: ['low', 'medium', 'high'],
     brief: 'xAI Grok 4.5 via grok CLI — own xAI login; ~30 req/min, ~1k msgs/day, single-flight',
   },
+  'google-antigravity/gemini-3.7-flash': {
+    slug: 'google-antigravity/gemini-3.7-flash',
+    backend: 'agy',
+    backendModel: 'gemini-3.7-flash',
+    efforts: ['low', 'medium', 'high'],
+    defaultEffort: 'high',
+    brief:
+      'Google Gemini 3.7 Flash via agy — own Antigravity login; quota shared across all Gemini tiers (not yet itemised per-model, so no exhaustion preflight)',
+  },
+  // 3.6 stays registered while agy's quota endpoint still stops at 3.6: it is
+  // the newest flash tier the exhaustion preflight can actually guard.
   'google-antigravity/gemini-3.6-flash': {
     slug: 'google-antigravity/gemini-3.6-flash',
     backend: 'agy',

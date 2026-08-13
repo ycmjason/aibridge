@@ -21,7 +21,7 @@ description: >-
   pre-reviews the plan before any code is written. File PATHS, not contents,
   travel between stages — cheap on your output tokens. Models use canonical
   effort-aware slugs (`xai-grok/grok-4.6`,
-  `google-antigravity/gemini-3.6-flash`, `openai-codex/gpt-5.6-sol-high`, …) —
+  `google-antigravity/gemini-3.7-flash`, `openai-codex/gpt-5.6-sol-high`, …) —
   no short aliases, always the full slug. Quota is relative to whoever runs
   this skill: a backend that shares YOUR own quota (`anthropic-claude/*` for
   Claude-based agents — it bills the claude CLI's subscription —
@@ -114,7 +114,7 @@ points — **not** benchmarks, just what tends to work:
 | `xai-grok/grok-4.5` | ○ | ✅ any fidelity | ○ | ○ JPEG |
 | `openai-codex/gpt-5.6-sol` | ✅ mid–big, ambiguous | ○ | ✅ | ✅ PNG |
 | `anthropic-claude/opus-5` | ✅ mid–big, ambiguous | ○ | ✅ | ✗ |
-| `google-antigravity/gemini-3.6-flash` | ○ | ✅ needs high–xhigh detail | ○ | ○ JPEG |
+| `google-antigravity/gemini-3.7-flash` | ○ | ✅ needs high–xhigh detail | ○ | ○ JPEG |
 | `anthropic-claude/sonnet-5` | ○ | ✅ needs high detail | ○ | ✗ |
 
 ✅ recommended · ○ works · ✗ not supported. For `plan` the qualifier is how much
@@ -127,6 +127,8 @@ than guessing.**
 Other registered seats, same rules: `openai-codex/gpt-5.6-terra` / `-luna`
 (cheaper coding tiers), `anthropic-claude/fable-5` (hardest, longest-running
 work), `anthropic-claude/haiku-4-5` (quick answers),
+`google-antigravity/gemini-3.6-flash` (the previous flash tier — the newest one
+agy's per-model quota probe can still see),
 `google-antigravity/gemini-3.1-pro` (`-high`/`-low` only), and agy's
 `claude-sonnet-4-6` / `claude-opus-4-6-thinking` / `gpt-oss-120b-medium` —
 Claude- and GPT-grade work on Antigravity's quota, which matters when the

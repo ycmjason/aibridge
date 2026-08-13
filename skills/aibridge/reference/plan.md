@@ -64,7 +64,7 @@ timeout. Exit 2: bad arguments. Exit 3: quota preflight refusal.
    a sharpened prompt.
 3. For high-risk designs, add a cross-model gate before building:
    `aibridge review --model xai-grok/grok-4.6 --plan <file> --out review.md` on a clean tree reviews the plan itself.
-4. Then `aibridge implement --model google-antigravity/gemini-3.6-flash <file>`.
+4. Then `aibridge implement --model google-antigravity/gemini-3.7-flash <file>`.
 
 ## Gotchas
 

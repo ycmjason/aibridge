@@ -112,8 +112,8 @@ test('findModelQuota hits modelId id-form', () => {
     groups: [],
     models: [
       {
-        modelId: 'gemini-3.6-flash-high',
-        label: 'Gemini 3.6 Flash (High)',
+        modelId: 'gemini-3.7-flash-high',
+        label: 'Gemini 3.7 Flash (High)',
         remainingFraction: 0.9,
         exhausted: false,
         resetTime: undefined,
@@ -121,6 +121,6 @@ test('findModelQuota hits modelId id-form', () => {
     ],
   };
 
-  const found = findModelQuota(snapshot, 'gemini-3.6-flash-high');
-  assert.equal(found?.modelId, 'gemini-3.6-flash-high');
+  const found = findModelQuota(snapshot, 'gemini-3.7-flash-high');
+  assert.equal(found?.modelId, 'gemini-3.7-flash-high');
 });

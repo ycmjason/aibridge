@@ -9,7 +9,7 @@ describe('generateImage', () => {
   const baseReq: ImageGenRequest = {
     prompt: 'A futuristic city skyline',
     workDir: '/tmp/work',
-    backendModel: 'gemini-3.6-flash-high',
+    backendModel: 'gemini-3.7-flash-high',
     aspectRatio: undefined,
     imagePaths: [],
     timeoutSec: 600,
@@ -45,7 +45,7 @@ describe('generateImage', () => {
 
     expect(capturedCmd).toBe('agy');
     expect(capturedArgs).toContain('--model');
-    expect(capturedArgs).toContain('gemini-3.6-flash-high');
+    expect(capturedArgs).toContain('gemini-3.7-flash-high');
     expect(capturedArgs).toContain('--dangerously-skip-permissions');
 
     const promptIdx = capturedArgs.indexOf('-p');

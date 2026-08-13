@@ -15,7 +15,7 @@ working tree in place and runs the project's real gates. Stage three of
 
 ```bash
 aibridge implement --model <slug> <plan-file>
-  --model <slug>       implementer model (required, e.g. google-antigravity/gemini-3.6-flash)
+  --model <slug>       implementer model (required, e.g. google-antigravity/gemini-3.7-flash)
   --timeout <secs>     max seconds for implementation (default: 1800)
   --no-preflight       skip the backend quota preflight check
 ```

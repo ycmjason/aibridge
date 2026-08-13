@@ -24,7 +24,7 @@ describe('agy driver run()', () => {
         tools: false,
         timeoutSec: 60,
         cwd: '/test/cwd',
-        backendModel: 'gemini-3.6-flash-high',
+        backendModel: 'gemini-3.7-flash-high',
       },
       fakeExec,
     );
@@ -34,7 +34,7 @@ describe('agy driver run()', () => {
       '-p',
       'do something',
       '--model',
-      'gemini-3.6-flash-high',
+      'gemini-3.7-flash-high',
       '--print-timeout',
       '60s',
     ]);
@@ -71,7 +71,7 @@ describe('agy driver run()', () => {
         tools: true,
         timeoutSec: 100,
         cwd: '/repo/root',
-        backendModel: 'gemini-3.6-flash-high',
+        backendModel: 'gemini-3.7-flash-high',
       },
       fakeExec,
     );
@@ -94,7 +94,7 @@ describe('agy driver run()', () => {
         tools: false,
         timeoutSec: 30,
         cwd: '/test/cwd',
-        backendModel: 'gemini-3.6-flash-high',
+        backendModel: 'gemini-3.7-flash-high',
       },
       fakeExec,
     );
@@ -117,7 +117,7 @@ describe('agy driver run()', () => {
         tools: false,
         timeoutSec: 10,
         cwd: '/test/cwd',
-        backendModel: 'gemini-3.6-flash-high',
+        backendModel: 'gemini-3.7-flash-high',
       },
       fakeExec,
     );
@@ -140,7 +140,7 @@ describe('agy driver run()', () => {
         tools: false,
         timeoutSec: 10,
         cwd: '/test/cwd',
-        backendModel: 'gemini-3.6-flash-high',
+        backendModel: 'gemini-3.7-flash-high',
       },
       fakeExec,
     );

@@ -14,7 +14,7 @@ Pass a canonical slug to `--model` (required, no short aliases). The seat table 
 runs on the same provider as the agent you orchestrate from is your last resort — it
 spends the pool you are already burning.
 
-Effort suffixes can be appended to slugs supporting them (e.g. `xai-grok/grok-4.6-medium`, `google-antigravity/gemini-3.6-flash-low`, `anthropic-claude/sonnet-5-max`).
+Effort suffixes can be appended to slugs supporting them (e.g. `xai-grok/grok-4.6-medium`, `google-antigravity/gemini-3.7-flash-low`, `anthropic-claude/sonnet-5-max`).
 
 Every seat pins an exact model version — no vendor aliases like `opus`, which move under you when a new release lands.
 
@@ -38,7 +38,7 @@ Write prompts for a capable stranger:
 For large or multi-file tasks, use the three-verb workflow instead of raw subagent calls:
 
 1. **`aibridge plan --model xai-grok/grok-4.6 --out plan.md "<prompt>"`**: Produces a detailed plan file (`plan.md`) listing files to touch, design decisions, and verification gates.
-2. **`aibridge implement --model google-antigravity/gemini-3.6-flash plan.md`**: Reads the plan file, implements changes, runs typecheck + tests, and returns a diff summary.
+2. **`aibridge implement --model google-antigravity/gemini-3.7-flash plan.md`**: Reads the plan file, implements changes, runs typecheck + tests, and returns a diff summary.
 3. **`aibridge review --model xai-grok/grok-4.6 --out review.md [--plan plan.md]`**: Inspects working tree diffs and verifies implementation against plan contracts.
 
 ## D. When to stay native instead

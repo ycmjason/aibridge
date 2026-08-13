@@ -4,14 +4,14 @@ import { buildAgyPrintArgs } from './agy.ts';
 describe('buildAgyPrintArgs', () => {
   it('assembles default agy args', () => {
     const args = buildAgyPrintArgs('test prompt', {
-      model: 'gemini-3.6-flash-high',
+      model: 'gemini-3.7-flash-high',
       printTimeoutSec: 600,
     });
     expect(args).toEqual([
       '-p',
       'test prompt',
       '--model',
-      'gemini-3.6-flash-high',
+      'gemini-3.7-flash-high',
       '--print-timeout',
       '600s',
     ]);
@@ -19,7 +19,7 @@ describe('buildAgyPrintArgs', () => {
 
   it('preserves order of skipPermissions and addDirs', () => {
     const args = buildAgyPrintArgs('test prompt', {
-      model: 'gemini-3.6-flash-high',
+      model: 'gemini-3.7-flash-high',
       printTimeoutSec: 600,
       skipPermissions: true,
       addDirs: ['/work/repo', '/tmp/answer-dir'],
@@ -28,7 +28,7 @@ describe('buildAgyPrintArgs', () => {
       '-p',
       'test prompt',
       '--model',
-      'gemini-3.6-flash-high',
+      'gemini-3.7-flash-high',
       '--print-timeout',
       '600s',
       '--dangerously-skip-permissions',
