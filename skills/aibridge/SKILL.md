@@ -110,7 +110,8 @@ points — **not** benchmarks, just what tends to work:
 
 | slug | plan | implement | review | image-gen |
 |---|---|---|---|---|
-| `xai-grok/grok-4.6` | ✅ small–mid, well-scoped | ✅ any fidelity | ✅ | ○ JPEG |
+| `xai-grok/grok-4.6` | ✅ small–mid, well-scoped | ○ | ✅ | ○ JPEG |
+| `xai-grok/grok-4.5` | ○ | ✅ any fidelity | ○ | ○ JPEG |
 | `openai-codex/gpt-5.6-sol` | ✅ mid–big, ambiguous | ○ | ✅ | ✅ PNG |
 | `anthropic-claude/opus-5` | ✅ mid–big, ambiguous | ○ | ✅ | ✗ |
 | `google-antigravity/gemini-3.6-flash` | ○ | ✅ needs high–xhigh detail | ○ | ○ JPEG |
@@ -132,7 +133,12 @@ Claude- and GPT-grade work on Antigravity's quota, which matters when the
 same-provider seats are the ones you are avoiding. Run `aibridge models [--json]` for exact per-seat facts (accepted efforts, image format, pinned model ID). `aibridge <command> --help`
 lists every seat.
 
-- **grok is aggressively capped** (~30 req/min, ~1k msgs/day; `aibridge quota` tracks weekly credit usage): run ONE grok stage at a time. It is the only seat that tolerates a vague brief, so spend it where the input is unclear rather than where a detailed plan already exists.
+- **grok is aggressively capped** (~30 req/min, ~1k msgs/day; `aibridge quota` tracks weekly credit usage): run ONE grok stage at a time — and the two tiers share that one budget.
+- **The two grok tiers are different seats, not old and new.** `grok-4.6` is the
+  reasoning tier — a slightly weaker `gpt-5.6-sol` / `opus-5`, so spend it on
+  `plan` and `review`, where the input is vague and the seat has to absorb the
+  ambiguity. `grok-4.5` is the better blind implementer: give it a plan file and
+  it executes without needing the surrounding vision.
 - **Keep the reviewer cross-model from the implementer** — a model reviewing
   its own diff shares its own blind spots. The recommended seats already differ; if you
   override one seat, check the other. The same logic applies to you: for work

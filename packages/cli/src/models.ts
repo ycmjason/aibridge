@@ -33,6 +33,15 @@ export const MODELS: Record<string, ModelSpec> = {
     efforts: ['low', 'medium', 'high'],
     brief: 'xAI Grok 4.6 via grok CLI — own xAI login; ~30 req/min, ~1k msgs/day, single-flight',
   },
+  // Both grok tiers stay registered: 4.6 and 4.5 differ in character, not just
+  // recency, so this is two seats of one class rather than a superseded pin.
+  'xai-grok/grok-4.5': {
+    slug: 'xai-grok/grok-4.5',
+    backend: 'grok',
+    backendModel: 'grok-4.5',
+    efforts: ['low', 'medium', 'high'],
+    brief: 'xAI Grok 4.5 via grok CLI — own xAI login; ~30 req/min, ~1k msgs/day, single-flight',
+  },
   'google-antigravity/gemini-3.6-flash': {
     slug: 'google-antigravity/gemini-3.6-flash',
     backend: 'agy',
