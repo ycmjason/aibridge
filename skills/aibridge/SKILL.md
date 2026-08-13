@@ -20,7 +20,7 @@ description: >-
   resulting diff against the plan contract (over-reach is a finding) or
   pre-reviews the plan before any code is written. File PATHS, not contents,
   travel between stages — cheap on your output tokens. Models use canonical
-  effort-aware slugs (`xai-grok/grok-4.5`,
+  effort-aware slugs (`xai-grok/grok-4.6`,
   `google-antigravity/gemini-3.6-flash`, `openai-codex/gpt-5.6-sol-high`, …) —
   no short aliases, always the full slug. Quota is relative to whoever runs
   this skill: a backend that shares YOUR own quota (`anthropic-claude/*` for
@@ -110,7 +110,7 @@ points — **not** benchmarks, just what tends to work:
 
 | slug | plan | implement | review | image-gen |
 |---|---|---|---|---|
-| `xai-grok/grok-4.5` | ✅ small–mid, well-scoped | ✅ any fidelity | ✅ | ○ JPEG |
+| `xai-grok/grok-4.6` | ✅ small–mid, well-scoped | ✅ any fidelity | ✅ | ○ JPEG |
 | `openai-codex/gpt-5.6-sol` | ✅ mid–big, ambiguous | ○ | ✅ | ✅ PNG |
 | `anthropic-claude/opus-5` | ✅ mid–big, ambiguous | ○ | ✅ | ✗ |
 | `google-antigravity/gemini-3.6-flash` | ○ | ✅ needs high–xhigh detail | ○ | ○ JPEG |

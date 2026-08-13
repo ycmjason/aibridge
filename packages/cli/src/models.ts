@@ -26,12 +26,12 @@ export interface ResolvedModel {
 }
 
 export const MODELS: Record<string, ModelSpec> = {
-  'xai-grok/grok-4.5': {
-    slug: 'xai-grok/grok-4.5',
+  'xai-grok/grok-4.6': {
+    slug: 'xai-grok/grok-4.6',
     backend: 'grok',
-    backendModel: 'grok-4.5',
+    backendModel: 'grok-4.6',
     efforts: ['low', 'medium', 'high'],
-    brief: 'xAI Grok 4.5 via grok CLI — own xAI login; ~30 req/min, ~1k msgs/day, single-flight',
+    brief: 'xAI Grok 4.6 via grok CLI — own xAI login; ~30 req/min, ~1k msgs/day, single-flight',
   },
   'google-antigravity/gemini-3.6-flash': {
     slug: 'google-antigravity/gemini-3.6-flash',

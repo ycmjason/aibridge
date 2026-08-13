@@ -35,7 +35,7 @@ describe('flag mapping & defaults lock', () => {
   it('plan command maps defaults correctly', async () => {
     mockPlanImpl.mockReset();
     const ctx = fakeCtx();
-    await runCli(ctx, ['plan', '--model', 'xai-grok/grok-4.5', '--out', 'plan.md', 'do something']);
+    await runCli(ctx, ['plan', '--model', 'xai-grok/grok-4.6', '--out', 'plan.md', 'do something']);
     expect(mockPlanImpl).toHaveBeenCalledTimes(1);
     const [call] = mockPlanImpl.mock.calls;
     expect(call).toBeDefined();
@@ -43,7 +43,7 @@ describe('flag mapping & defaults lock', () => {
     const [flags, prompt] = call;
     expect(prompt).toBe('do something');
     expect(flags).toEqual({
-      model: 'xai-grok/grok-4.5',
+      model: 'xai-grok/grok-4.6',
       out: 'plan.md',
       preflight: true,
     });
@@ -55,7 +55,7 @@ describe('flag mapping & defaults lock', () => {
     await runCli(ctx, [
       'plan',
       '--model',
-      'xai-grok/grok-4.5',
+      'xai-grok/grok-4.6',
       '--out',
       'plan.md',
       '--no-preflight',
@@ -70,7 +70,7 @@ describe('flag mapping & defaults lock', () => {
     const [flags, prompt] = call;
     expect(prompt).toBe('task');
     expect(flags).toEqual({
-      model: 'xai-grok/grok-4.5',
+      model: 'xai-grok/grok-4.6',
       out: 'plan.md',
       preflight: false,
       timeout: 120,
@@ -80,7 +80,7 @@ describe('flag mapping & defaults lock', () => {
   it('subagent command maps defaults correctly', async () => {
     mockSubagentImpl.mockReset();
     const ctx = fakeCtx();
-    await runCli(ctx, ['subagent', '--model', 'xai-grok/grok-4.5', 'hello agent']);
+    await runCli(ctx, ['subagent', '--model', 'xai-grok/grok-4.6', 'hello agent']);
     expect(mockSubagentImpl).toHaveBeenCalledTimes(1);
     const [call] = mockSubagentImpl.mock.calls;
     expect(call).toBeDefined();
@@ -88,7 +88,7 @@ describe('flag mapping & defaults lock', () => {
     const [flags, prompt] = call;
     expect(prompt).toBe('hello agent');
     expect(flags).toEqual({
-      model: 'xai-grok/grok-4.5',
+      model: 'xai-grok/grok-4.6',
       tools: true,
       preflight: true,
       json: false,
@@ -101,7 +101,7 @@ describe('flag mapping & defaults lock', () => {
     await runCli(ctx, [
       'subagent',
       '--model',
-      'xai-grok/grok-4.5',
+      'xai-grok/grok-4.6',
       '--no-tools',
       '--no-preflight',
       'hello agent',
@@ -113,7 +113,7 @@ describe('flag mapping & defaults lock', () => {
     const [flags, prompt] = call;
     expect(prompt).toBe('hello agent');
     expect(flags).toEqual({
-      model: 'xai-grok/grok-4.5',
+      model: 'xai-grok/grok-4.6',
       tools: false,
       preflight: false,
       json: false,

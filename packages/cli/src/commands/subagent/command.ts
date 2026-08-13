@@ -8,7 +8,7 @@ const fullDescription = [
   '',
   'Available models (canonical slug):',
   ...listModelHelpLines(),
-  'Recommended first choice: xai-grok/grok-4.5. Whichever seat runs on the same provider as the',
+  'Recommended first choice: xai-grok/grok-4.6. Whichever seat runs on the same provider as the',
   'agent you orchestrate from is your last resort — it spends the pool you are already burning.',
 ].join('\n');
 

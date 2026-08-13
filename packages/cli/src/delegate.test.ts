@@ -64,7 +64,7 @@ function createRecordingRunLog() {
 }
 
 describe('delegate stub-driver tests', () => {
-  const model = resolveModel('xai-grok/grok-4.5');
+  const model = resolveModel('xai-grok/grok-4.6');
   if (!model) throw new Error('model resolution failed');
 
   it('prepends preamble when tools: true, passes untouched when tools: false', async () => {

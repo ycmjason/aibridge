@@ -17,7 +17,7 @@ costs you almost nothing in context; read the report only when findings exist.
 
 ```bash
 aibridge review --model <slug> --out <file> [options]
-  --model <slug>       reviewer model (required, e.g. xai-grok/grok-4.5)
+  --model <slug>       reviewer model (required, e.g. xai-grok/grok-4.6)
   --plan <file>        plan contract; over-reach against it is a finding
   --base <ref>         git base to diff against (default: HEAD)
   --out <file>         full report destination (required)

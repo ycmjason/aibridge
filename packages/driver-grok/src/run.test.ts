@@ -23,7 +23,7 @@ describe('grok driver run()', () => {
         tools: true,
         timeoutSec: 30,
         cwd: '/work',
-        backendModel: 'grok-4.5',
+        backendModel: 'grok-4.6',
         effort: 'high',
       },
       fakeExec,
@@ -34,7 +34,7 @@ describe('grok driver run()', () => {
       '-p',
       'test prompt',
       '--model',
-      'grok-4.5',
+      'grok-4.6',
       '--reasoning-effort',
       'high',
       '--permission-mode',
@@ -61,12 +61,12 @@ describe('grok driver run()', () => {
         tools: false,
         timeoutSec: 30,
         cwd: '/work',
-        backendModel: 'grok-4.5',
+        backendModel: 'grok-4.6',
       },
       fakeExec,
     );
 
-    expect(capturedArgs).toEqual(['-p', 'read-only task', '--model', 'grok-4.5']);
+    expect(capturedArgs).toEqual(['-p', 'read-only task', '--model', 'grok-4.6']);
     expect(capturedArgs).not.toContain('--permission-mode');
     expect(res).toEqual({ ok: true, response: 'Read-only answer', exitCode: 0 });
   });
@@ -82,7 +82,7 @@ describe('grok driver run()', () => {
         tools: false,
         timeoutSec: 10,
         cwd: '/work',
-        backendModel: 'grok-4.5',
+        backendModel: 'grok-4.6',
       },
       fakeExec,
     );
@@ -105,7 +105,7 @@ describe('grok driver run()', () => {
         tools: false,
         timeoutSec: 10,
         cwd: '/work',
-        backendModel: 'grok-4.5',
+        backendModel: 'grok-4.6',
       },
       fakeExec,
     );
@@ -130,7 +130,7 @@ describe('grok driver run()', () => {
         tools: false,
         timeoutSec: 10,
         cwd: '/work',
-        backendModel: 'grok-4.5',
+        backendModel: 'grok-4.6',
       },
       fakeExec,
     );
@@ -149,7 +149,7 @@ describe('grok driver run() sign-in detection', () => {
     tools: false,
     timeoutSec: 30,
     cwd: '/work',
-    backendModel: 'grok-4.5',
+    backendModel: 'grok-4.6',
   };
   const exec = (stdout: string) => async (): Promise<RunResult> => ({
     code: 0,

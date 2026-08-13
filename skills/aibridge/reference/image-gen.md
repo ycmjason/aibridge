@@ -18,7 +18,7 @@ aibridge image-gen --model <slug> --out out.png "<full prompt — see Part B>" \
 |---|---|---|
 | `openai-codex/gpt-5.6-sol` (recommended) | Codex CLI | PNG |
 | `google-antigravity/gemini-3.6-flash` | Antigravity CLI (`agy`) | JPEG |
-| `xai-grok/grok-4.5` | Grok CLI | JPEG |
+| `xai-grok/grok-4.6` | Grok CLI | JPEG |
 
 Other seats fail fast with a list of capable models.
 
@@ -44,7 +44,7 @@ aibridge image-gen --model openai-codex/gpt-5.6-sol "the same woman, now in a de
   --out avatar2.png --image avatar.png --aspect-ratio 9:16
 
 # same brief, on a different seat
-aibridge image-gen --model xai-grok/grok-4.5 "the same woman, now in a denim shirt in a bright kitchen, waist-up" \
+aibridge image-gen --model xai-grok/grok-4.6 "the same woman, now in a denim shirt in a bright kitchen, waist-up" \
   --out avatar2.jpg --image avatar.jpg --aspect-ratio 9:16
 ```
 

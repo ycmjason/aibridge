@@ -17,7 +17,7 @@ PATH around, never re-emit its contents.
 
 ```bash
 aibridge plan --model <slug> --out <file> "<task prompt>"
-  --model <slug>       planner model (required, e.g. xai-grok/grok-4.5)
+  --model <slug>       planner model (required, e.g. xai-grok/grok-4.6)
   --out <file>         where to write the plan file (required)
   --timeout <secs>     max seconds for planning (default: 1800)
   --no-preflight       skip the backend quota preflight check
@@ -63,7 +63,7 @@ timeout. Exit 2: bad arguments. Exit 3: quota preflight refusal.
 2. Resolve every open question — edit the file directly or re-run `plan` with
    a sharpened prompt.
 3. For high-risk designs, add a cross-model gate before building:
-   `aibridge review --model xai-grok/grok-4.5 --plan <file> --out review.md` on a clean tree reviews the plan itself.
+   `aibridge review --model xai-grok/grok-4.6 --plan <file> --out review.md` on a clean tree reviews the plan itself.
 4. Then `aibridge implement --model google-antigravity/gemini-3.6-flash <file>`.
 
 ## Gotchas

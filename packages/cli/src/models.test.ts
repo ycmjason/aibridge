@@ -10,9 +10,9 @@ import {
 
 describe('models registry', () => {
   it('resolves canonical slugs', () => {
-    const grok = resolveModel('xai-grok/grok-4.5');
+    const grok = resolveModel('xai-grok/grok-4.6');
     expect(grok).toBeDefined();
-    expect(grok?.spec.slug).toBe('xai-grok/grok-4.5');
+    expect(grok?.spec.slug).toBe('xai-grok/grok-4.6');
     expect(grok?.effort).toBeUndefined();
 
     const gemini = resolveModel('google-antigravity/gemini-3.6-flash');
@@ -38,8 +38,8 @@ describe('models registry', () => {
   });
 
   it('resolves effort suffixes', () => {
-    const grokMedium = resolveModel('xai-grok/grok-4.5-medium');
-    expect(grokMedium?.spec.slug).toBe('xai-grok/grok-4.5');
+    const grokMedium = resolveModel('xai-grok/grok-4.6-medium');
+    expect(grokMedium?.spec.slug).toBe('xai-grok/grok-4.6');
     expect(grokMedium?.effort).toBe('medium');
 
     const sonnetMax = resolveModel('anthropic-claude/sonnet-5-max');
@@ -48,7 +48,7 @@ describe('models registry', () => {
   });
 
   it('rejects unsupported efforts', () => {
-    const grokXhigh = resolveModel('xai-grok/grok-4.5-xhigh');
+    const grokXhigh = resolveModel('xai-grok/grok-4.6-xhigh');
     expect(grokXhigh).toBeUndefined();
 
     const gptOssHigh = resolveModel('google-antigravity/gpt-oss-120b-medium-high');
@@ -77,9 +77,9 @@ describe('models registry', () => {
     if (!geminiLow) throw new Error('geminiLow resolution failed');
     expect(backendModelId(geminiLow)).toBe('gemini-3.6-flash-low');
 
-    const grok = resolveModel('xai-grok/grok-4.5');
+    const grok = resolveModel('xai-grok/grok-4.6');
     if (!grok) throw new Error('grok resolution failed');
-    expect(backendModelId(grok)).toBe('grok-4.5');
+    expect(backendModelId(grok)).toBe('grok-4.6');
 
     const sonnet = resolveModel('anthropic-claude/sonnet-5');
     if (!sonnet) throw new Error('sonnet resolution failed');
@@ -88,7 +88,7 @@ describe('models registry', () => {
 
   it('marks codex, grok, and gemini-3.6-flash seats as image-gen capable', () => {
     const codex = resolveModel('openai-codex/gpt-5.6-sol');
-    const grok = resolveModel('xai-grok/grok-4.5');
+    const grok = resolveModel('xai-grok/grok-4.6');
     const gemini = resolveModel('google-antigravity/gemini-3.6-flash');
     const claudeSonnet = resolveModel('anthropic-claude/sonnet-5');
     if (!codex || !grok || !gemini || !claudeSonnet) throw new Error('resolution failed');
@@ -100,7 +100,7 @@ describe('models registry', () => {
 
   it('lists only image-capable seats when imageOnly', () => {
     const lines = listModelHelpLines({ imageOnly: true }).join('\n');
-    expect(lines).toContain('xai-grok/grok-4.5');
+    expect(lines).toContain('xai-grok/grok-4.6');
     expect(lines).toContain('openai-codex/gpt-5.6-sol');
     expect(lines).toContain('google-antigravity/gemini-3.6-flash');
     expect(lines).not.toContain('anthropic-claude/sonnet-5');
@@ -112,7 +112,7 @@ describe('models registry', () => {
     const err = formatImageGenModelError('anthropic-claude/sonnet-5', claudeSonnet);
     expect(err).toContain('cannot generate images');
     expect(err).toContain('backend "claude"');
-    expect(err).toContain('xai-grok/grok-4.5');
+    expect(err).toContain('xai-grok/grok-4.6');
     expect(err).toContain('openai-codex/gpt-5.6-sol');
     expect(err).toContain('google-antigravity/gemini-3.6-flash');
     const seatsSection = err.slice(err.indexOf('Image-gen seats'));
