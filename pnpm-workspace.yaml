@@ -2,6 +2,11 @@
 packages:
   - 'packages/*'
 
+# pnpm downloads and re-execs the pinned version on mismatch. This must live here,
+# not as `onFail: download` in package.json: npm 11 reads devEngines too and hard-fails
+# (EBADDEVENGINES) on any value outside ignore/warn/error, which broke `npm view` in publish.yml.
+pmOnFail: download
+
 catalogMode: strict
 cleanupUnusedCatalogs: true
 
