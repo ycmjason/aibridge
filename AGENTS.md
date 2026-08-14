@@ -43,7 +43,7 @@ say so unprompted and propose the cleanup — don't wait to be asked.
 - **Node 24.11+, native TypeScript in packages for dev. NO build step for dev (`node packages/cli/src/cli.ts`), NO `tsx`, NO `ts-node`.** Run `.ts` files directly with `node` (type-stripping is on by default in Node 24). `tsc` is for type-checking only (`pnpm typecheck`).
 - **Erasable syntax only** — Node strips types, it does not transform them: no `enum`, no `namespace` with runtime members, no parameter properties, no decorators. `tsconfig` enforces this via `erasableSyntaxOnly`.
 - **ESM with explicit `.ts` import extensions** (e.g. `import { app } from "./app.ts"`). `verbatimModuleSyntax` is on → use `import type` for type-only imports.
-- **pnpm only, via corepack.** `corepack use pnpm@latest` manages the pinned `packageManager`. Don't use npm or yarn here.
+- **pnpm only, no corepack.** The version is pinned in `devEngines.packageManager`; pnpm 11 downloads and re-execs that version itself (`onFail: download`). Install pnpm standalone (`curl -fsSL https://pnpm.io/install.sh | sh -`), upgrade with `pnpm self-update` + bump the pin. Don't use npm or yarn here.
 - **Published packages use real `dependencies`.** Dependencies use `workspace:*` / `catalog:` in workspace manifests and are rewritten to concrete versions on publish.
 - **Per-package `dist/` builds.** Each package builds to `dist/` via tsdown. `publishConfig` overrides exports and bin for published packages.
 - **Root stays `private: true`. Version bump = release trigger** for the OIDC publish workflow on `main`.

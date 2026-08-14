@@ -15,8 +15,7 @@ jobs:
         with:
           node-version: 24
           package-manager-cache: false
-      - name: Enable Corepack
-        run: corepack enable
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Lint and Format Check
