@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict';
+import { mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { test } from 'vitest';
-import { parseCodexUsage } from './codexQuota.ts';
+import { fetchCodexQuota, parseCodexUsage } from './codexQuota.ts';
 
 test('parseCodexUsage with realistic payload', () => {
   const data = {
@@ -42,6 +45,38 @@ test('parseCodexUsage with empty payload', () => {
   assert.equal(snapshot.planType, undefined);
   assert.equal(snapshot.limitReached, false);
   assert.deepEqual(snapshot.windows, []);
+});
+
+test('fetchCodexQuota refreshes the codex session once on 401 and retries', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'aibridge-codex-auth-'));
+  const authPath = join(dir, 'auth.json');
+  writeFileSync(authPath, JSON.stringify({ tokens: { access_token: 'stale' } }));
+  process.env.CODEX_AUTH_PATH = authPath;
+
+  const statuses = [401, 200];
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = (async () => {
+    const status = statuses.shift() ?? 200;
+    return {
+      status,
+      ok: status === 200,
+      json: async () => ({ plan_type: 'plus' }),
+    } as Response;
+  }) as typeof fetch;
+
+  const calls: string[][] = [];
+  try {
+    const snapshot = await fetchCodexQuota(async (cmd, args) => {
+      calls.push([cmd, ...args]);
+      // The real refresh rewrites auth.json; here the retry just needs to happen.
+      return { code: 0, signal: null, stdout: '', stderr: '', timedOut: false };
+    });
+    assert.deepEqual(calls, [['codex', 'mcp', 'list']]);
+    assert.equal(snapshot.planType, 'plus');
+  } finally {
+    globalThis.fetch = originalFetch;
+    delete process.env.CODEX_AUTH_PATH;
+  }
 });
 
 test('parseCodexUsage with window missing used_percent and reset_at', () => {

@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
-import { AuthExpiredError } from '@aibridge/proc';
+import { AuthExpiredError, runCaptured } from '@aibridge/proc';
 
 const USAGE_ENDPOINT = 'https://chatgpt.com/backend-api/wham/usage';
 
@@ -68,7 +68,19 @@ export function parseCodexUsage(data: RawCodexUsage): CodexQuotaSnapshot {
   };
 }
 
-export async function fetchCodexQuota(): Promise<CodexQuotaSnapshot> {
+/**
+ * The access token in auth.json expires every ~10 days. The codex CLI refreshes
+ * it lazily when it boots its auth manager — `codex mcp list` does that in <1s
+ * with no model call and no quota cost (`codex login status` does NOT refresh).
+ * We only ever read that file, so we borrow the CLI's own refresh instead of
+ * reimplementing the OAuth dance against its credentials.
+ */
+async function refreshCodexAuth(exec: typeof runCaptured): Promise<void> {
+  await exec('codex', ['mcp', 'list'], { timeoutMs: 30_000 }).catch(() => {});
+}
+
+/** Hits the usage endpoint with whatever token is on disk right now. */
+async function requestUsage(): Promise<RawCodexUsage | 'expired'> {
   const raw = readFileSync(codexAuthPath(), 'utf8');
   const auth = JSON.parse(raw) as {
     tokens?: { access_token?: string; account_id?: string };
@@ -83,12 +95,22 @@ export async function fetchCodexQuota(): Promise<CodexQuotaSnapshot> {
   if (auth.tokens?.account_id) headers['ChatGPT-Account-Id'] = auth.tokens.account_id;
 
   const res = await fetch(USAGE_ENDPOINT, { headers });
-  if (res.status === 401) {
-    throw new AuthExpiredError(
-      'codex session expired (401) — run any codex command once (or `codex login`), then retry',
-    );
-  }
+  if (res.status === 401) return 'expired';
   if (!res.ok) throw new Error(`codex usage endpoint failed: HTTP ${res.status}`);
 
-  return parseCodexUsage((await res.json()) as RawCodexUsage);
+  return (await res.json()) as RawCodexUsage;
+}
+
+export async function fetchCodexQuota(
+  exec: typeof runCaptured = runCaptured,
+): Promise<CodexQuotaSnapshot> {
+  const first = await requestUsage();
+  if (first !== 'expired') return parseCodexUsage(first);
+
+  await refreshCodexAuth(exec);
+  const second = await requestUsage();
+  if (second === 'expired') {
+    throw new AuthExpiredError('codex session expired (401) — run `codex login`, then retry');
+  }
+  return parseCodexUsage(second);
 }
