@@ -40,7 +40,8 @@
     "@aibridge/driver-grok": "workspace:*",
     "@aibridge/driver-codex": "workspace:*",
     "@aibridge/driver-claude": "workspace:*",
-    "@stricli/core": "catalog:"
+    "@stricli/core": "catalog:",
+    "sharp": "catalog:"
   },
   "devDependencies": {
     "tsdown": "catalog:"

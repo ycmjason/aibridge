@@ -150,10 +150,19 @@ export const MODELS: Record<string, ModelSpec> = {
 
 export type ImageFormat = 'jpg' | 'png';
 
+/** Whether a seat's image tool can emit a real alpha channel, or needs local chroma keying. */
+export type ImageAlpha = 'native' | 'chroma';
+
 const IMAGE_GEN_FORMATS: ReadonlyMap<Backend, ImageFormat> = new Map([
   ['agy', 'jpg'],
   ['codex', 'png'],
   ['grok', 'jpg'],
+]);
+
+const IMAGE_ALPHA: ReadonlyMap<Backend, ImageAlpha> = new Map([
+  ['agy', 'chroma'],
+  ['codex', 'native'],
+  ['grok', 'chroma'],
 ]);
 
 export function supportsImageGen(resolved: ResolvedModel): boolean {
@@ -162,6 +171,10 @@ export function supportsImageGen(resolved: ResolvedModel): boolean {
 
 export function imageFormatFor(resolved: ResolvedModel): ImageFormat | undefined {
   return IMAGE_GEN_FORMATS.get(resolved.spec.backend);
+}
+
+export function imageAlphaFor(resolved: ResolvedModel): ImageAlpha | undefined {
+  return IMAGE_ALPHA.get(resolved.spec.backend);
 }
 
 const EFFORTS_SET: ReadonlySet<string> = new Set<Effort>(['low', 'medium', 'high', 'xhigh', 'max']);
@@ -208,6 +221,14 @@ export function listModelHelpLines(opts: { readonly imageOnly?: boolean } = {}):
     if (opts.imageOnly && !IMAGE_GEN_FORMATS.has(spec.backend)) continue;
     lines.push(`  ${slug}`);
     lines.push(`    ${spec.brief}`);
+    if (opts.imageOnly) {
+      const alpha = IMAGE_ALPHA.get(spec.backend);
+      if (alpha !== undefined) {
+        lines.push(
+          `    --transparent: ${alpha === 'native' ? 'native alpha (soft edges)' : 'chroma-keyed (binary edges)'}`,
+        );
+      }
+    }
   }
   return lines;
 }

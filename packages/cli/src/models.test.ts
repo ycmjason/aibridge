@@ -3,6 +3,7 @@ import {
   backendModelId,
   formatImageGenModelError,
   formatUnknownModelError,
+  imageAlphaFor,
   listModelHelpLines,
   resolveModel,
   supportsImageGen,
@@ -98,12 +99,26 @@ describe('models registry', () => {
     expect(supportsImageGen(claudeSonnet)).toBe(false);
   });
 
-  it('lists only image-capable seats when imageOnly', () => {
+  it('lists only image-capable seats when imageOnly and shows --transparent capability', () => {
     const lines = listModelHelpLines({ imageOnly: true }).join('\n');
     expect(lines).toContain('xai-grok/grok-4.6');
     expect(lines).toContain('openai-codex/gpt-5.6-sol');
     expect(lines).toContain('google-antigravity/gemini-3.7-flash');
     expect(lines).not.toContain('anthropic-claude/sonnet-5');
+    expect(lines).toContain('--transparent: native alpha (soft edges)');
+    expect(lines).toContain('--transparent: chroma-keyed (binary edges)');
+  });
+
+  it('reports correct imageAlpha for seats', () => {
+    const codex = resolveModel('openai-codex/gpt-5.6-sol');
+    const grok = resolveModel('xai-grok/grok-4.6');
+    const gemini = resolveModel('google-antigravity/gemini-3.7-flash');
+    const claudeSonnet = resolveModel('anthropic-claude/sonnet-5');
+    if (!codex || !grok || !gemini || !claudeSonnet) throw new Error('resolution failed');
+    expect(imageAlphaFor(codex)).toBe('native');
+    expect(imageAlphaFor(grok)).toBe('chroma');
+    expect(imageAlphaFor(gemini)).toBe('chroma');
+    expect(imageAlphaFor(claudeSonnet)).toBeUndefined();
   });
 
   it('formats image-gen model errors with capable seats only', () => {

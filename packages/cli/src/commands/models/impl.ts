@@ -1,5 +1,5 @@
 import type { LocalContext } from '../../context.ts';
-import { type Backend, imageFormatFor, MODELS } from '../../models.ts';
+import { type Backend, imageAlphaFor, imageFormatFor, MODELS } from '../../models.ts';
 
 export interface ModelsFlags {
   readonly json: boolean;
@@ -23,6 +23,7 @@ export default function modelsImpl(this: LocalContext, flags: ModelsFlags): void
       efforts: spec.efforts ? [...spec.efforts] : [],
       defaultEffort: spec.defaultEffort ?? null,
       image: imageFormatFor({ spec, effort: undefined }) ?? null,
+      imageAlpha: imageAlphaFor({ spec, effort: undefined }) ?? null,
       brief: spec.brief,
     }));
     this.process.stdout.write(`${JSON.stringify(jsonOutput)}\n`);
@@ -56,7 +57,9 @@ export default function modelsImpl(this: LocalContext, flags: ModelsFlags): void
         segments.push(`efforts: ${formattedEfforts}`);
       }
       const img = imageFormatFor({ spec, effort: undefined });
-      segments.push(`image: ${img ?? '—'}`);
+      const alpha = imageAlphaFor({ spec, effort: undefined });
+      const imageStr = img ? `${img} (alpha: ${alpha ?? '—'})` : '—';
+      segments.push(`image: ${imageStr}`);
       segments.push(`id: ${spec.backendModel}`);
 
       this.process.stdout.write(`    ${segments.join(' · ')}\n`);

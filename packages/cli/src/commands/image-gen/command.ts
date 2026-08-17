@@ -25,7 +25,13 @@ export const imageGen = buildCommand({
         kind: 'parsed',
         parse: String,
         brief:
-          'Path to write the image — extension must match the seat format (.png for codex, .jpg for agy/grok)',
+          'Path to write the image — extension must match the seat format (.png for codex or any --transparent run, .jpg for agy/grok otherwise)',
+      },
+      transparent: {
+        kind: 'boolean',
+        withNegated: false,
+        brief:
+          'Transparent background: native alpha where the seat has it, chroma-keyed otherwise — always writes PNG',
       },
       aspectRatio: {
         kind: 'parsed',

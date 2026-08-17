@@ -27,7 +27,7 @@ function createTestContext() {
 }
 
 describe('modelsImpl', () => {
-  it('--json emits parseable JSON with one entry per key of MODELS, with seven documented fields', () => {
+  it('--json emits parseable JSON with one entry per key of MODELS, with eight documented fields', () => {
     const { ctx, getStdout } = createTestContext();
     modelsImpl.call(ctx, { json: true });
 
@@ -44,8 +44,9 @@ describe('modelsImpl', () => {
       expect(item).toHaveProperty('efforts');
       expect(item).toHaveProperty('defaultEffort');
       expect(item).toHaveProperty('image');
+      expect(item).toHaveProperty('imageAlpha');
       expect(item).toHaveProperty('brief');
-      expect(Object.keys(item)).toHaveLength(7);
+      expect(Object.keys(item)).toHaveLength(8);
     }
   });
 
@@ -62,7 +63,7 @@ describe('modelsImpl', () => {
     expect(geminiPro.defaultEffort).toBe('high');
   });
 
-  it('reports backendModel and image correctly for opus-5 and gpt-5.6-sol in JSON', () => {
+  it('reports backendModel, image, and imageAlpha correctly for opus-5 and gpt-5.6-sol in JSON', () => {
     const { ctx, getStdout } = createTestContext();
     modelsImpl.call(ctx, { json: true });
 
@@ -71,10 +72,12 @@ describe('modelsImpl', () => {
     expect(opus).toBeDefined();
     expect(opus.backendModel).toBe('claude-opus-5[1m]');
     expect(opus.image).toBeNull();
+    expect(opus.imageAlpha).toBeNull();
 
     const sol = data.find((item: { slug: string }) => item.slug === 'openai-codex/gpt-5.6-sol');
     expect(sol).toBeDefined();
     expect(sol.image).toBe('png');
+    expect(sol.imageAlpha).toBe('native');
   });
 
   it('human output (no --json) contains every slug in MODELS', () => {

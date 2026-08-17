@@ -11,6 +11,7 @@ import {
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
+import sharp from 'sharp';
 import type { LocalContext } from '../../context.ts';
 import type { ImageResult } from '../../driver.ts';
 import { getDriver } from '../../drivers.ts';
@@ -18,10 +19,13 @@ import {
   backendModelId,
   formatImageGenModelError,
   formatUnknownModelError,
+  type ImageFormat,
+  imageAlphaFor,
   imageFormatFor,
   resolveModel,
   supportsImageGen,
 } from '../../models.ts';
+import { CHROMA_CLAUSE, chromaKeyToPng, NATIVE_ALPHA_CLAUSE } from '../../transparency.ts';
 
 export interface ImageGenFlags {
   readonly model: string;
@@ -30,6 +34,7 @@ export interface ImageGenFlags {
   readonly image?: string;
   readonly timeout?: number;
   readonly json: boolean;
+  readonly transparent: boolean;
 }
 
 const MIN_REAL_BYTES_CODEX = 100_000;
@@ -59,11 +64,29 @@ export default async function imageGen(
   const expected = imageFormatFor(model);
   if (expected === undefined) return fail(formatImageGenModelError(inputSlug, model));
 
-  const label = expected === 'png' ? 'PNG' : 'JPEG';
-  const extValid = expected === 'png' ? /\.png$/i.test(flags.out) : /\.jpe?g$/i.test(flags.out);
+  const alpha = imageAlphaFor(model);
+  if (alpha === undefined) return fail(formatImageGenModelError(inputSlug, model));
+
+  const outFormat: ImageFormat = flags.transparent ? 'png' : expected;
+  const label = outFormat === 'png' ? 'PNG' : 'JPEG';
+  const extValid = outFormat === 'png' ? /\.png$/i.test(flags.out) : /\.jpe?g$/i.test(flags.out);
   if (!extValid) {
+    const reason =
+      flags.transparent && expected === 'jpg'
+        ? '--transparent always writes PNG'
+        : `the ${model.spec.slug} seat renders ${label} and aibridge does not convert`;
     return fail(
-      `--out "${flags.out}" must end in ${expected === 'png' ? '.png' : '.jpg or .jpeg'} — the ${model.spec.slug} seat renders ${label} and aibridge does not convert.`,
+      `--out "${flags.out}" must end in ${outFormat === 'png' ? '.png' : '.jpg or .jpeg'} — ${reason}.`,
+    );
+  }
+
+  const ASKS_FOR_ALPHA =
+    /\b(transparent|transparency|alpha channel|no background|without a background|cut-?out|chroma[- ]?key)\b/i;
+  if (!flags.transparent && alpha === 'chroma' && ASKS_FOR_ALPHA.test(prompt)) {
+    return fail(
+      `the prompt asks for a transparent background but the ${model.spec.slug} seat cannot render alpha — ` +
+        `pass --transparent (aibridge chroma-keys it locally, binary edges) or use a native-alpha seat ` +
+        `(openai-codex/*). Re-run with --transparent to proceed.`,
     );
   }
 
@@ -99,9 +122,13 @@ export default async function imageGen(
   const minBytes = model.spec.backend === 'codex' ? MIN_REAL_BYTES_CODEX : MIN_REAL_BYTES_TOOL;
   const work = mkdtempSync(join(tmpdir(), 'aibridge-imagegen-'));
 
+  const effectivePrompt = flags.transparent
+    ? `${prompt}\n\n${alpha === 'chroma' ? CHROMA_CLAUSE : NATIVE_ALPHA_CLAUSE}`
+    : prompt;
+
   try {
     let outcome: ImageResult = await driver.generateImage({
-      prompt,
+      prompt: effectivePrompt,
       workDir: work,
       backendModel: backendModelId(model),
       effort: model.effort,
@@ -114,7 +141,7 @@ export default async function imageGen(
 
     if (model.spec.backend === 'codex' && outcome.kind === 'suspect') {
       outcome = await driver.generateImage({
-        prompt,
+        prompt: effectivePrompt,
         workDir: work,
         backendModel: backendModelId(model),
         effort: model.effort,
@@ -145,11 +172,32 @@ export default async function imageGen(
     const local = join(work, 'result.bin');
     copyFileSync(outcome.path, local);
 
-    const dims = imageSize(local);
-    const actual = pngSize(local) ? 'png' : jpegSize(local) ? 'jpg' : null;
+    let artefact = local;
+    let transparency: 'native' | 'chroma' | null = null;
+    if (flags.transparent) {
+      const meta = await sharp(local).metadata();
+      const alreadyAlpha = meta.hasAlpha === true;
+      if (alreadyAlpha) {
+        transparency = 'native';
+      } else {
+        const keyed = join(work, 'keyed.png');
+        const { transparentRatio } = await chromaKeyToPng(local, keyed);
+        transparency = 'chroma';
+        if (transparentRatio < 0.02) {
+          this.process.stderr.write(
+            `aibridge image-gen: --transparent keyed only ${(transparentRatio * 100).toFixed(1)}% of the image — ` +
+              `the model likely ignored the chroma-key instruction; wrote it anyway. Re-run, or use a native-alpha seat.\n`,
+          );
+        }
+        artefact = keyed;
+      }
+    }
+
+    const dims = imageSize(artefact);
+    const actual = pngSize(artefact) ? 'png' : jpegSize(artefact) ? 'jpg' : null;
 
     // ponytail: guard for a backend changing formats in the future without throwing away a paid render
-    if (actual !== null && actual !== expected) {
+    if (actual !== null && actual !== outFormat) {
       this.process.stderr.write(
         `aibridge image-gen: expected a ${label} render from this seat but got ${actual === 'png' ? 'PNG' : 'JPEG'}; wrote the raw bytes to ${outPath} anyway — the extension does not match the contents.\n`,
       );
@@ -157,7 +205,7 @@ export default async function imageGen(
 
     // The render is already paid for — don't lose it to a missing --out directory.
     mkdirSync(dirname(outPath), { recursive: true });
-    copyFileSync(local, outPath);
+    copyFileSync(artefact, outPath);
     const bytes = statSync(outPath).size;
 
     if (flags.json) {
@@ -170,13 +218,19 @@ export default async function imageGen(
           aspectRatio: flags.aspectRatio ?? null,
           model: model.spec.slug,
           backend: model.spec.backend,
+          transparency,
           real: true,
         })}\n`,
       );
     } else {
       const kb = Math.round(bytes / 1024);
       const dimStr = dims ? `${dims.width}x${dims.height}, ` : '';
-      this.process.stdout.write(`✓ Wrote ${outPath} (${dimStr}${kb} KB, ${model.spec.slug})\n`);
+      const transparencyStr = flags.transparent
+        ? `, transparency: ${transparency === 'native' ? 'native alpha' : 'chroma-keyed'}`
+        : '';
+      this.process.stdout.write(
+        `✓ Wrote ${outPath} (${dimStr}${kb} KB, ${model.spec.slug}${transparencyStr})\n`,
+      );
     }
   } finally {
     rmSync(work, { recursive: true, force: true });

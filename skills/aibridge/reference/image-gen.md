@@ -7,7 +7,7 @@ matters even if you only hand the prompt back.
 
 ```bash
 aibridge image-gen --model <slug> --out <file.png> "<full prompt — see Part B>" \
-  [--aspect-ratio 16:9] [--image ref.png] \
+  [--aspect-ratio 16:9] [--image ref.png] [--transparent] \
   [--timeout 600] [--json]
 ```
 
@@ -25,8 +25,21 @@ Other seats fail fast with a list of capable models.
 Notes:
 
 - `--out` is required, and its extension must match the seat's format (see the
-  table above). A mismatch is rejected before anything runs. The file holds the
-  model's own bytes, verbatim.
+  table above; `.png` for any `--transparent` run). A mismatch is rejected
+  before anything runs. The file holds the model's own bytes, verbatim (or PNG
+  with chroma-keyed alpha when `--transparent` is used on a JPEG seat).
+- `--transparent` is safe on every image seat and always writes PNG. Codex gives
+  soft, native alpha; grok and gemini are chroma-keyed with binary edges — fine
+  for flat icons, logos and stickers, not for hair, smoke or glass. On a
+  chroma-keyed seat a **strongly green subject is keyed away with the backdrop** —
+  ask a native-alpha seat (`openai-codex/*`) for anything that must be green. The result
+  line and `--json` report which one you got (`transparency: native` vs
+  `chroma-keyed`), so quote that when the edges matter.
+- Want a transparent background? Pass `--transparent` and say nothing about the
+  background in the prompt — the CLI writes the backdrop instruction itself, per
+  seat. Never hand-write "transparent background", "no background" or chroma-key
+  wording into the prompt; on a JPEG-only seat that silently returns an opaque
+  image (aibridge refuses the run and tells you to pass the flag).
 - **Render straight into the asset's real home** (`public/icons/settings.png`,
   `src/assets/hero.jpg`) when the project will keep it — no scratch-then-move.
   Drafts and explorations go to the `.aibridge/` sketchpad instead; promote the
@@ -36,7 +49,7 @@ Notes:
   pixels.
 - `--image` attaches reference image(s) (comma-separated paths) — every seat
   routes them to its edit path. See **Reference images** below.
-- `--json` prints `{ out, bytes, width, height, aspectRatio, model, backend, real }`.
+- `--json` prints `{ out, bytes, width, height, aspectRatio, model, backend, transparency, real }`.
 
 ### Reference images (`--image`)
 
