@@ -72,6 +72,22 @@ everything else is identical. Requires Node ≥24.11.
 
 Requires the backing CLIs on `PATH` and authed: **`grok`** (recommended planner/reviewer — pass it explicitly), **`agy`** (recommended implementer — pass it explicitly), **`codex`** (recommended image-gen seat — pass it explicitly, plus `openai-codex/*` delegation), and optionally **`claude`** for the `anthropic-claude/*` delegation tier.
 
+## Output files go in `.aibridge/` — the sketchpad
+
+Every file a command writes (`--out` on `plan`, `review`, `image-gen`) belongs in
+**`<repo root>/.aibridge/`**, e.g. `--out .aibridge/plan.md`,
+`--out .aibridge/icon.png`. The user is already working in that repo, so output
+lands where they can open it without hunting; a temp dir elsewhere is a detour.
+Name files for the topic (`.aibridge/auth-plan.md`, `.aibridge/auth-review.md`)
+so a session's sketches stay tellable apart.
+
+- Not inside a git repo → `.aibridge/` under the current working directory.
+- **Check it is ignored before the first write of a session:**
+  `git check-ignore -q .aibridge`. If that fails, tell the user to add
+  `.aibridge/` to `.gitignore` (offer to do it) — sketchpad output should never
+  be committed.
+- An explicit path from the user wins over this convention.
+
 ## Subcommands
 
 | Command | Description | Reference |

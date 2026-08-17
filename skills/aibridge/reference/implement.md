@@ -49,7 +49,7 @@ Exit 3: quota preflight refusal.
 
 - The summary's "gates green" claim is **delegate-reported**. Re-run the real
   gates yourself before trusting the diff.
-- Then `aibridge review --model xai-grok/grok-4.6 --plan <plan-file> --out review.md` for the cross-model check
+- Then `aibridge review --model xai-grok/grok-4.6 --plan <plan-file> --out .aibridge/review.md` for the cross-model check
   (recommended seats already make reviewer ≠ implementer).
 
 ## Gotchas

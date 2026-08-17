@@ -48,6 +48,7 @@ say so unprompted and propose the cleanup — don't wait to be asked.
 - **Per-package `dist/` builds.** Each package builds to `dist/` via tsdown. `publishConfig` overrides exports and bin for published packages.
 - **Root stays `private: true`. Version bump = release trigger** for the OIDC publish workflow on `main`.
 - **Skill is prose-only.** The skill wraps the `aibridge` CLI on `PATH`.
+- **Every `--out` lands in `<repo root>/.aibridge/`** — plans, reviews, images. It is the sketchpad of the repo you're working in, so the user can open output without leaving it; keep it gitignored (this repo already does) and never commit its contents.
 
 ## Commands
 
@@ -58,9 +59,9 @@ say so unprompted and propose the cleanup — don't wait to be asked.
 | Run CLI (published) | `aibridge <args>` or `npx -y @aibridge/cli <args>` |
 | Help | `node packages/cli/src/cli.ts --help` |
 | Build all dists | `pnpm build` |
-| Plan | `pnpm aibridge plan --model xai-grok/grok-4.6 --out plan.md "<task prompt>"` |
+| Plan | `pnpm aibridge plan --model xai-grok/grok-4.6 --out .aibridge/plan.md "<task prompt>"` |
 | Implement | `pnpm aibridge implement --model google-antigravity/gemini-3.7-flash <plan.md>` |
-| Review | `pnpm aibridge review --model xai-grok/grok-4.6 --out review.md [--plan <plan.md>] [--base <ref>]` |
+| Review | `pnpm aibridge review --model xai-grok/grok-4.6 --out .aibridge/review.md [--plan <plan.md>] [--base <ref>]` |
 | Subagent | `pnpm aibridge subagent --model xai-grok/grok-4.6 "<prompt>"` |
 | Models | `pnpm aibridge models [--json]` — list every model seat in the registry (efforts, image format, pinned backend model id) |
 | Monitor runs | `pnpm aibridge runs [--watch]` (logs in `~/.aibridge/runs`) |

@@ -63,12 +63,15 @@ timeout. Exit 2: bad arguments. Exit 3: quota preflight refusal.
 2. Resolve every open question — edit the file directly or re-run `plan` with
    a sharpened prompt.
 3. For high-risk designs, add a cross-model gate before building:
-   `aibridge review --model xai-grok/grok-4.6 --plan <file> --out review.md` on a clean tree reviews the plan itself.
+   `aibridge review --model xai-grok/grok-4.6 --plan <file> --out .aibridge/review.md` on a clean tree reviews the plan itself.
 4. Then `aibridge implement --model google-antigravity/gemini-3.7-flash <file>`.
 
 ## Gotchas
 
-- Pass an explicit `--out` (e.g. `plan.md` or `docs/plans/feature.md`) for where to store the plan file.
+- `--out` goes in the repo's `.aibridge/` sketchpad (e.g.
+  `--out .aibridge/auth-plan.md`) so the user can open it in the repo they are
+  already in — see [SKILL.md](../SKILL.md); check `.aibridge/` is gitignored
+  once per session.
 - An `--out` inside the repo is allowed (it shows up untracked and is exempted
   from the cleanliness check); everything else dirty fails the run.
 - grok (the recommended planner) is capped ~30 req/min, ~1k msgs/day, one run at a

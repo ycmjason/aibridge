@@ -6,7 +6,7 @@ matters even if you only hand the prompt back.
 ## A. Calling it
 
 ```bash
-aibridge image-gen --model <slug> --out out.png "<full prompt — see Part B>" \
+aibridge image-gen --model <slug> --out .aibridge/out.png "<full prompt — see Part B>" \
   [--aspect-ratio 16:9] [--image ref.png] \
   [--timeout 600] [--json]
 ```
@@ -41,11 +41,11 @@ inventing from scratch — e.g. keep the same subject, change only what you ask:
 
 ```bash
 aibridge image-gen --model openai-codex/gpt-5.6-sol "the same woman, now in a denim shirt in a bright kitchen, waist-up" \
-  --out avatar2.png --image avatar.png --aspect-ratio 9:16
+  --out .aibridge/avatar2.png --image avatar.png --aspect-ratio 9:16
 
 # same brief, on a different seat
 aibridge image-gen --model xai-grok/grok-4.6 "the same woman, now in a denim shirt in a bright kitchen, waist-up" \
-  --out avatar2.jpg --image avatar.jpg --aspect-ratio 9:16
+  --out .aibridge/avatar2.jpg --image avatar.jpg --aspect-ratio 9:16
 ```
 
 With a reference, write the prompt as a **diff** — say only what should *change*
