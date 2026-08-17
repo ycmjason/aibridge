@@ -4,6 +4,15 @@ import { join, resolve } from 'node:path';
 import { isNotFound, type RunResult, runCaptured, stripAnsi } from '@aibridge/proc';
 import { buildGrokPrintArgs, ensureGrok } from './grok.ts';
 
+/**
+ * The grok CLI hardcodes `grok-imagine-image-quality` for image_gen/image_edit
+ * (see grok-build `image_gen/mod.rs`); 2.0 is the current Imagine model and is
+ * cheaper at 1k. `GROK_IMAGE_{GEN,EDIT}_MODEL_OVERRIDE` is the CLI's top
+ * precedence tier, above its own config.toml and xAI's remote settings.
+ * Neither model can emit alpha — the API only ever returns image/jpeg.
+ */
+const IMAGINE_MODEL = 'grok-imagine-image-2.0';
+
 export interface ImageGenRequest {
   readonly prompt: string;
   readonly workDir: string;
@@ -63,6 +72,12 @@ export async function generateImage(
     result = await exec('grok', args, {
       cwd: req.workDir,
       timeoutMs: req.timeoutSec * 1000,
+      // process.env last: an explicitly exported override still wins.
+      env: {
+        GROK_IMAGE_GEN_MODEL_OVERRIDE: IMAGINE_MODEL,
+        GROK_IMAGE_EDIT_MODEL_OVERRIDE: IMAGINE_MODEL,
+        ...process.env,
+      },
     });
   } catch (err) {
     if (isNotFound(err)) return { kind: 'error', reason: '"grok" not found on PATH.' };

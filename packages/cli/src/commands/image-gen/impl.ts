@@ -2,6 +2,7 @@ import {
   closeSync,
   copyFileSync,
   existsSync,
+  mkdirSync,
   mkdtempSync,
   openSync,
   readSync,
@@ -9,7 +10,7 @@ import {
   statSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import type { LocalContext } from '../../context.ts';
 import type { ImageResult } from '../../driver.ts';
 import { getDriver } from '../../drivers.ts';
@@ -154,6 +155,8 @@ export default async function imageGen(
       );
     }
 
+    // The render is already paid for — don't lose it to a missing --out directory.
+    mkdirSync(dirname(outPath), { recursive: true });
     copyFileSync(local, outPath);
     const bytes = statSync(outPath).size;
 
