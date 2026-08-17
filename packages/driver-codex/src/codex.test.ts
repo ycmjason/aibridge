@@ -2,16 +2,17 @@ import { describe, expect, it } from 'vitest';
 import { buildCodexExecArgs } from './codex.ts';
 
 describe('buildCodexExecArgs', () => {
-  it('handles full-auto approval mode', () => {
+  it('handles workspace-write approval mode', () => {
     const args = buildCodexExecArgs('do something', {
       cwd: '/repo',
-      approval: 'full-auto',
+      approval: 'workspace-write',
       model: 'gpt-5.6-sol',
       timeoutMs: 1000,
     });
     expect(args).toEqual([
       'exec',
-      '--full-auto',
+      '-s',
+      'workspace-write',
       '--skip-git-repo-check',
       '-C',
       '/repo',

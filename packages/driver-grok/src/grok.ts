@@ -11,19 +11,16 @@ export type GrokCheck =
   | { readonly ok: true; readonly version: string }
   | { readonly ok: false; readonly error: string };
 
-const NOT_AUTHENTICATED_RE = /not authenticated/i;
-
-export async function probeGrokAuth(
-  run: typeof runCaptured = runCaptured,
-  sleep: (ms: number) => Promise<void> = ms => new Promise(resolve => setTimeout(resolve, ms)),
-): Promise<boolean> {
-  const probe = async (): Promise<boolean> => {
-    const res = await run('grok', ['models'], { timeoutMs: 10_000 });
-    return !NOT_AUTHENTICATED_RE.test(res.stdout + res.stderr);
-  };
-  if (await probe()) return true;
-  await sleep(2_000);
-  return probe();
+/**
+ * Nudge the CLI into refreshing its own cached token, used by the quota probe
+ * after a 401. Verified against grok 1.0.4: `grok models` prints "You are not
+ * authenticated." even when `grok -p` answers fine, so its OUTPUT is not a
+ * usable sign-in signal — we spawn it only for the side effect and ignore what
+ * it says. A genuinely signed-out grok is caught downstream, off the CLI's own
+ * refusal text (see run.ts).
+ */
+export async function refreshGrokAuth(run: typeof runCaptured = runCaptured): Promise<void> {
+  await run('grok', ['models'], { timeoutMs: 10_000 }).catch(() => {});
 }
 
 export async function ensureGrok(run: typeof runCaptured = runCaptured): Promise<GrokCheck> {
@@ -33,9 +30,6 @@ export async function ensureGrok(run: typeof runCaptured = runCaptured): Promise
       ok: false,
       error: '"grok" not found on PATH. Install the Grok CLI (npm i -g @xai-official/grok).',
     };
-  }
-  if (!(await probeGrokAuth(run))) {
-    return { ok: false, error: 'grok is not signed in. Run `grok login`.' };
   }
   return { ok: true, version };
 }

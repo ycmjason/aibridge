@@ -15,7 +15,11 @@ import {
 export const MIN_CODEX_IMAGE: readonly [number, number, number] = [0, 135, 0];
 export const MIN_CODEX_STRUCTURED: readonly [number, number, number] = [0, 142, 0];
 
-export type CodexApproval = 'full-auto' | 'bypass' | 'read-only';
+/**
+ * codex-cli 0.147.0 dropped `--full-auto` from `codex exec`; the equivalent is
+ * `-s workspace-write` (exec never asks for approval anyway).
+ */
+export type CodexApproval = 'workspace-write' | 'bypass' | 'read-only';
 
 export interface CodexExecOptions {
   readonly cwd: string;
@@ -60,10 +64,8 @@ export function buildCodexExecArgs(prompt: string, opts: CodexExecOptions): stri
   const args = ['exec'];
   if (opts.approval === 'bypass') {
     args.push('--dangerously-bypass-approvals-and-sandbox');
-  } else if (opts.approval === 'read-only') {
-    args.push('-s', 'read-only');
   } else {
-    args.push('--full-auto');
+    args.push('-s', opts.approval);
   }
 
   args.push('--skip-git-repo-check', '-C', opts.cwd);

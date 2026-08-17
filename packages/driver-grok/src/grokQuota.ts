@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { AuthExpiredError } from '@aibridge/proc';
-import { probeGrokAuth } from './grok.ts';
+import { refreshGrokAuth } from './grok.ts';
 
 export interface GrokQuotaProduct {
   readonly product: string;
@@ -167,7 +167,7 @@ async function requestBilling(fetchImpl: typeof fetch): Promise<Response> {
 
 export async function fetchGrokQuota(
   fetchImpl: typeof fetch = fetch,
-  refresh: () => Promise<unknown> = probeGrokAuth,
+  refresh: () => Promise<unknown> = refreshGrokAuth,
 ): Promise<GrokQuotaSnapshot> {
   let res = await requestBilling(fetchImpl);
   if (res.status === 401) {

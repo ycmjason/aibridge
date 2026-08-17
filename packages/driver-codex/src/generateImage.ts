@@ -56,7 +56,7 @@ export async function generateImage(
   try {
     const args = buildCodexExecArgs(prompt, {
       cwd: req.workDir,
-      approval: 'full-auto',
+      approval: 'workspace-write',
       model: req.backendModel,
       images: req.imagePaths,
       timeoutMs: req.timeoutSec * 1000,

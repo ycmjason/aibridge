@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import type { RunResult } from '@aibridge/proc';
 import { describe, expect, it, test } from 'vitest';
-import { buildGrokPrintArgs, probeGrokAuth } from './grok.ts';
+import { buildGrokPrintArgs, refreshGrokAuth } from './grok.ts';
 
 const result = (stdout: string): RunResult => ({
   code: 0,
@@ -57,46 +57,19 @@ describe('buildGrokPrintArgs', () => {
   });
 });
 
-test('authed on first probe — no retry, no sleep', async () => {
+test('refreshGrokAuth spawns `grok models` once and ignores its output', async () => {
   let runs = 0;
-  const ok = await probeGrokAuth(
-    async (_cmd, args) => {
-      runs++;
-      assert.deepEqual([...args], ['models']);
-      return result('You are logged in with grok.com');
-    },
-    async () => {
-      assert.fail('must not sleep when first probe is authed');
-    },
-  );
-  assert.equal(ok, true);
+  await refreshGrokAuth(async (_cmd, args) => {
+    runs++;
+    assert.deepEqual([...args], ['models']);
+    // grok 1.0.4 says this even when signed in — must not be read as a verdict.
+    return result('You are not authenticated.');
+  });
   assert.equal(runs, 1);
 });
 
-test('expired token: unauthed first probe, authed on retry after refresh', async () => {
-  let runs = 0;
-  const sleeps: number[] = [];
-  const ok = await probeGrokAuth(
-    async () =>
-      result(runs++ === 0 ? 'You are not authenticated.' : 'You are logged in with grok.com'),
-    async ms => {
-      sleeps.push(ms);
-    },
-  );
-  assert.equal(ok, true);
-  assert.equal(runs, 2);
-  assert.deepEqual(sleeps, [2_000]);
-});
-
-test('unauthed on both probes — genuinely signed out', async () => {
-  let runs = 0;
-  const ok = await probeGrokAuth(
-    async () => {
-      runs++;
-      return result('You are not authenticated.');
-    },
-    async () => {},
-  );
-  assert.equal(ok, false);
-  assert.equal(runs, 2);
+test('refreshGrokAuth swallows spawn failures', async () => {
+  await refreshGrokAuth(async () => {
+    throw new Error('ENOENT');
+  });
 });

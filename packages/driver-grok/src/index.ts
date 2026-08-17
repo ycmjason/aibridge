@@ -7,7 +7,7 @@ export {
   type GrokEffort,
   type GrokPrintArgs,
   type GrokPrintOptions,
-  probeGrokAuth,
+  refreshGrokAuth,
   runGrokPrint,
 } from './grok.ts';
 export {
