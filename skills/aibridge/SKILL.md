@@ -72,21 +72,27 @@ everything else is identical. Requires Node ≥24.11.
 
 Requires the backing CLIs on `PATH` and authed: **`grok`** (recommended planner/reviewer — pass it explicitly), **`agy`** (recommended implementer — pass it explicitly), **`codex`** (recommended image-gen seat — pass it explicitly, plus `openai-codex/*` delegation), and optionally **`claude`** for the `anthropic-claude/*` delegation tier.
 
-## Output files go in `.aibridge/` — the sketchpad
+## Where `--out` goes
 
-Every file a command writes (`--out` on `plan`, `review`, `image-gen`) belongs in
-**`<repo root>/.aibridge/`**, e.g. `--out .aibridge/plan.md`,
-`--out .aibridge/icon.png`. The user is already working in that repo, so output
-lands where they can open it without hunting; a temp dir elsewhere is a detour.
-Name files for the topic (`.aibridge/auth-plan.md`, `.aibridge/auth-review.md`)
-so a session's sketches stay tellable apart.
+**A file the project will keep goes straight to its real home.** An icon the app
+ships gets `--out public/icons/settings.png`, a doc the repo keeps gets its docs
+path — generating into a scratch dir and moving it after is a pointless extra
+step. Work out the destination before you run the command.
+
+**Everything else goes in `<repo root>/.aibridge/`** — the sketchpad. Plans,
+reviews, and draft/exploration images are working artifacts, not deliverables:
+`--out .aibridge/auth-plan.md`, `--out .aibridge/auth-review.md`,
+`--out .aibridge/hero-draft.png`. It sits in the repo the user is already in, so
+they can open output without hunting; a system temp dir is a detour. Name files
+for the topic so a session's sketches stay tellable apart, and promote a draft to
+its real path once it is the one being kept.
 
 - Not inside a git repo → `.aibridge/` under the current working directory.
-- **Check it is ignored before the first write of a session:**
+- **Check the sketchpad is ignored before the first write of a session:**
   `git check-ignore -q .aibridge`. If that fails, tell the user to add
   `.aibridge/` to `.gitignore` (offer to do it) — sketchpad output should never
   be committed.
-- An explicit path from the user wins over this convention.
+- An explicit path from the user wins over all of this.
 
 ## Subcommands
 

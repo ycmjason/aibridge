@@ -48,7 +48,7 @@ say so unprompted and propose the cleanup — don't wait to be asked.
 - **Per-package `dist/` builds.** Each package builds to `dist/` via tsdown. `publishConfig` overrides exports and bin for published packages.
 - **Root stays `private: true`. Version bump = release trigger** for the OIDC publish workflow on `main`.
 - **Skill is prose-only.** The skill wraps the `aibridge` CLI on `PATH`.
-- **Every `--out` lands in `<repo root>/.aibridge/`** — plans, reviews, images. It is the sketchpad of the repo you're working in, so the user can open output without leaving it; keep it gitignored (this repo already does) and never commit its contents.
+- **`--out` goes to the asset's real home if the project keeps it** (e.g. an icon straight into `public/icons/`); otherwise `<repo root>/.aibridge/` — the sketchpad for plans, reviews, and draft images, in the repo the user is already in. Keep it gitignored (this repo does) and never commit its contents.
 
 ## Commands
 
