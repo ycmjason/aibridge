@@ -25,7 +25,12 @@ import {
   resolveModel,
   supportsImageGen,
 } from '../../models.ts';
-import { CHROMA_CLAUSE, chromaKeyToPng, NATIVE_ALPHA_CLAUSE } from '../../transparency.ts';
+import {
+  CHROMA_CLAUSE,
+  chromaKeyToPng,
+  mentionsTransparentBackground,
+  NATIVE_ALPHA_CLAUSE,
+} from '../../transparency.ts';
 
 export interface ImageGenFlags {
   readonly model: string;
@@ -80,9 +85,7 @@ export default async function imageGen(
     );
   }
 
-  const ASKS_FOR_ALPHA =
-    /\b(transparent|transparency|alpha channel|no background|without a background|cut-?out|chroma[- ]?key)\b/i;
-  if (!flags.transparent && alpha === 'chroma' && ASKS_FOR_ALPHA.test(prompt)) {
+  if (!flags.transparent && alpha === 'chroma' && mentionsTransparentBackground(prompt)) {
     return fail(
       `the prompt asks for a transparent background but the ${model.spec.slug} seat cannot render alpha — ` +
         `pass --transparent (aibridge chroma-keys it locally, binary edges) or use a native-alpha seat ` +
@@ -122,8 +125,12 @@ export default async function imageGen(
   const minBytes = model.spec.backend === 'codex' ? MIN_REAL_BYTES_CODEX : MIN_REAL_BYTES_TOOL;
   const work = mkdtempSync(join(tmpdir(), 'aibridge-imagegen-'));
 
+  // Single space, never a newline: the codex driver wraps the prompt in a one-line
+  // `$imagegen …` invocation, and a blank line there makes it code-draw a substitute
+  // instead of calling the image tool (observed: --transparent failed while the same
+  // prompt without the clause rendered fine).
   const effectivePrompt = flags.transparent
-    ? `${prompt}\n\n${alpha === 'chroma' ? CHROMA_CLAUSE : NATIVE_ALPHA_CLAUSE}`
+    ? `${prompt} ${alpha === 'chroma' ? CHROMA_CLAUSE : NATIVE_ALPHA_CLAUSE}`
     : prompt;
 
   try {

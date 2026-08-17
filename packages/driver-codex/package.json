@@ -1,6 +1,6 @@
 {
   "name": "@aibridge/driver-codex",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "OpenAI Codex CLI driver for aibridge",
   "type": "module",
   "license": "MIT",

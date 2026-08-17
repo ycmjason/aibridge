@@ -6,7 +6,7 @@
 - **`node packages/cli/src/cli.ts implement`** → a delegate model implements a plan file in place, running the project's real typecheck/tests (recommended implementers **`xai-grok/grok-4.5`** — the grok tier that executes a detailed plan blind — or **`google-antigravity/gemini-3.7-flash`** via `agy`, own Antigravity login; pass `--model` explicitly). Prints the delegate's summary + `git diff --stat`.
 - **`node packages/cli/src/cli.ts review`** → a delegate model reviews the working-tree diff against a base ref — with `--plan <file>` as the contract, over-reach is a finding — writing the full report to a file (pass `--model` and `--out` explicitly); stdout is just the verdict line (`PASS` / `FINDINGS: …`) + path. With a clean tree and `--plan`, it reviews the plan itself (pre-implementation gate).
 - **`node packages/cli/src/cli.ts subagent`** → delegate a self-contained task to another model through the canonical registry (pass `--model` explicitly): recommended **`xai-grok/grok-4.6`** via the **Grok CLI** (own xAI login; ~30 req/min + ~1k msgs/day caps, one run at a time); **`google-antigravity/gemini-3.7-flash`** via the **Antigravity CLI** (`agy`, own Antigravity login) when grok is capped/dead; **`openai-codex/gpt-5.6-sol`** via the **Codex CLI** (own ChatGPT login); **`anthropic-claude/fable-5`** / **`opus-5`** (1M context) / **`sonnet-5`** / **`haiku-4-5`** via the **claude CLI** (bills the claude CLI's subscription — last resort for agents whose own budget that is).
-- **`node packages/cli/src/cli.ts image-gen`** → image generation via a model seat (pass `--model` explicitly; recommended `openai-codex/gpt-5.6-sol`; `google-antigravity/gemini-3.7-flash`; `xai-grok/grok-4.6`).
+- **`node packages/cli/src/cli.ts image-gen`** → image generation via a model seat (pass `--model` explicitly; recommended `openai-codex/gpt-5.6-sol`; `google-antigravity/gemini-3.7-flash`; `xai-grok/grok-4.6`). `--transparent` works on every image seat — native alpha on codex, local `#00ff00` chroma keying on the JPEG-only seats.
 
 Model slugs are canonical `<vendor>-<cli>/<model>[-<effort>]` (e.g. `openai-codex/gpt-5.6-sol-high`); there are NO short aliases — always pass the full slug. Effort in the slug maps to each backend's own knob; an un-suffixed slug uses the backend's default.
 
@@ -88,6 +88,7 @@ Command orchestration uses **`@stricli/core`** (`buildCommand` / `buildRouteMap`
 - `packages/cli/src/driver.ts` — structural `AgentCliDriver` interface.
 - `packages/cli/src/drivers.ts` — map `Backend` → `AgentCliDriver` implementations.
 - `packages/cli/src/delegate.ts` — thin delegation engine calling `driver.run(task)`.
+- `packages/cli/src/transparency.ts` — the `--transparent` mechanism: the per-strategy prompt clauses plus `chromaKeyToPng` (sharp). Pure mechanism — no backend switches, no stdout; the impl decides which strategy a seat gets from `imageAlphaFor`.
 - `packages/proc` + `packages/driver-{agy,grok,codex,claude}` — workspace packages driving each backend CLI independently (zero external runtime dependencies).
 
 ### Adding a subagent model

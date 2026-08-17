@@ -28,11 +28,24 @@ const fakeExec = (sink: { opts?: RunOptions }) => {
 describe('generateImage env', () => {
   it('pins image_gen/image_edit to Imagine 2.0', async () => {
     const sink: { opts?: RunOptions } = {};
-    await generateImage(req, fakeExec(sink));
-    expect(sink.opts?.env?.GROK_IMAGE_GEN_MODEL_OVERRIDE).toBe('grok-imagine-image-2.0');
-    expect(sink.opts?.env?.GROK_IMAGE_EDIT_MODEL_OVERRIDE).toBe('grok-imagine-image-2.0');
-    // Inherits the real environment rather than replacing it.
-    expect(sink.opts?.env?.PATH).toBe(process.env.PATH);
+    // Clear the keys first: a developer who exported one to compare tiers should
+    // not see a red test for a preference the next case explicitly honours.
+    const saved = {
+      gen: process.env.GROK_IMAGE_GEN_MODEL_OVERRIDE,
+      edit: process.env.GROK_IMAGE_EDIT_MODEL_OVERRIDE,
+    };
+    delete process.env.GROK_IMAGE_GEN_MODEL_OVERRIDE;
+    delete process.env.GROK_IMAGE_EDIT_MODEL_OVERRIDE;
+    try {
+      await generateImage(req, fakeExec(sink));
+      expect(sink.opts?.env?.GROK_IMAGE_GEN_MODEL_OVERRIDE).toBe('grok-imagine-image-2.0');
+      expect(sink.opts?.env?.GROK_IMAGE_EDIT_MODEL_OVERRIDE).toBe('grok-imagine-image-2.0');
+      // Inherits the real environment rather than replacing it.
+      expect(sink.opts?.env?.PATH).toBe(process.env.PATH);
+    } finally {
+      if (saved.gen !== undefined) process.env.GROK_IMAGE_GEN_MODEL_OVERRIDE = saved.gen;
+      if (saved.edit !== undefined) process.env.GROK_IMAGE_EDIT_MODEL_OVERRIDE = saved.edit;
+    }
   });
 
   it('lets an exported override win', async () => {

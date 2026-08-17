@@ -32,9 +32,10 @@ Notes:
   soft, native alpha; grok and gemini are chroma-keyed with binary edges — fine
   for flat icons, logos and stickers, not for hair, smoke or glass. On a
   chroma-keyed seat a **strongly green subject is keyed away with the backdrop** —
-  ask a native-alpha seat (`openai-codex/*`) for anything that must be green. The result
-  line and `--json` report which one you got (`transparency: native` vs
-  `chroma-keyed`), so quote that when the edges matter.
+  ask a native-alpha seat (`openai-codex/*`) for anything that must be green. Both
+  surfaces report which path ran, so quote it when the edges matter: the result
+  line says `transparency: native` / `chroma-keyed`, and `--json` carries
+  `transparency: "native" | "chroma" | null`.
 - Want a transparent background? Pass `--transparent` and say nothing about the
   background in the prompt — the CLI writes the backdrop instruction itself, per
   seat. Never hand-write "transparent background", "no background" or chroma-key
@@ -76,8 +77,11 @@ and style. Multiple refs: `--image face.png,style.png`.
 2. **Specify the aspect ratio** via `--aspect-ratio` and/or the prompt text
    (e.g. `16:9`, `1:1`).
 3. **Always specify the background** — a concrete colour with hex, or
-   `opaque`/`auto`. Renders come back opaque, so key the alpha out of a flat
-   colour afterwards if you need it.
+   `opaque`/`auto`. **Unless you passed `--transparent`**: then say nothing about
+   the background at all, in the prompt or the example below. The CLI appends the
+   backdrop instruction itself, and a colour of your own contradicts it — the
+   model obeys yours, the key finds nothing, and the paid render comes back
+   opaque.
 4. **Specify what matters**: subject, composition, palette, style/medium, mood,
    lighting.
 5. **Abstraction dial** — *lock* the critical (verbatim text in straight quotes,
@@ -95,3 +99,8 @@ and style. Multiple refs: `--image face.png,style.png`.
 It locks aspect ratio, background hex, subject, brand orange, and the no-text/border/
 gradient constraints — and leaves the fan angle, shadow softness, and spacing to
 the model.
+
+The same prompt for a `--transparent` run simply drops the background sentence —
+`Square 1:1 aspect ratio. A single flat-design fanned stack …` — and drops the
+drop shadow too, since a soft shadow has no flat backdrop colour to key against
+and survives as a pale halo.

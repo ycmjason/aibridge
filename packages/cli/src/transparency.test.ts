@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import sharp from 'sharp';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { chromaKeyToPng } from './transparency.ts';
+import { chromaKeyToPng, mentionsTransparentBackground } from './transparency.ts';
 
 describe('chromaKeyToPng', () => {
   let tempDir: string;
@@ -287,6 +287,34 @@ describe('chromaKeyToPng', () => {
 
     for (let i = 0; i < width * height; i++) {
       expect(data[i * 4 + 3]).toBe(255);
+    }
+  });
+});
+
+describe('mentionsTransparentBackground', () => {
+  it('matches background phrasing', () => {
+    for (const p of [
+      'a fox on a transparent background',
+      'a fox, transparent backdrop',
+      'a fox with no background',
+      'a fox without a background',
+      'PNG with an alpha channel',
+      'shot on a chroma-key stage',
+      'chroma key green screen',
+    ]) {
+      expect(mentionsTransparentBackground(p)).toBe(true);
+    }
+  });
+
+  it('ignores see-through subjects and unrelated wording', () => {
+    for (const p of [
+      'a transparent glass bottle',
+      'a goldfish in a transparent bowl',
+      'frosted transparent plastic packaging',
+      'a paper cutout of a fox',
+      'transparency and trust, abstract illustration',
+    ]) {
+      expect(mentionsTransparentBackground(p)).toBe(false);
     }
   });
 });

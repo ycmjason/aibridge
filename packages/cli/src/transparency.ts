@@ -10,6 +10,20 @@ export interface KeyResult {
   readonly transparentRatio: number;
 }
 
+/**
+ * Background-scoped only. `transparent` on its own describes subjects far more
+ * often than backdrops ("transparent glass bottle", "goldfish in a transparent
+ * bowl"), and refusing those would force `--transparent` onto a brief the chroma
+ * clause actively fights.
+ */
+const TRANSPARENT_BACKGROUND =
+  /\b(transparent (background|backdrop)|no background|without a background|alpha channel|chroma[- ]?key)/i;
+
+/** Does the prompt ask for a see-through *background* (as opposed to a see-through subject)? */
+export function mentionsTransparentBackground(prompt: string): boolean {
+  return TRANSPARENT_BACKGROUND.test(prompt);
+}
+
 const GREEN_MIN = 90;
 /**
  * How far green must lead both red and blue for a pixel to count as backdrop.
@@ -20,9 +34,18 @@ const GREEN_MIN = 90;
 const DOMINANCE = 40;
 
 export async function chromaKeyToPng(src: string, dest: string): Promise<KeyResult> {
-  const { data, info } = await sharp(src).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  // toColourspace before ensureAlpha: a greyscale source would otherwise come back
+  // 2-channel (Y+A) and every RGBA offset below would read the wrong byte.
+  const { data, info } = await sharp(src)
+    .toColourspace('srgb')
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
 
   const { width, height, channels } = info;
+  if (channels !== 4) {
+    throw new Error(`chroma key expected 4-channel RGBA, got ${channels} channels from ${src}`);
+  }
   const totalPixels = width * height;
 
   if (totalPixels === 0) {
