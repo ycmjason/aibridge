@@ -37,9 +37,9 @@ Write prompts for a capable stranger:
 
 For large or multi-file tasks, use the three-verb workflow instead of raw subagent calls:
 
-1. **`aibridge plan --model xai-grok/grok-4.6 --out .aibridge/plan.md "<prompt>"`**: Produces a detailed plan file (`plan.md`) listing files to touch, design decisions, and verification gates.
-2. **`aibridge implement --model google-antigravity/gemini-3.7-flash plan.md`**: Reads the plan file, implements changes, runs typecheck + tests, and returns a diff summary.
-3. **`aibridge review --model xai-grok/grok-4.6 --out .aibridge/review.md [--plan plan.md]`**: Inspects working tree diffs and verifies implementation against plan contracts.
+1. **`aibridge plan --model xai-grok/grok-4.6 --out .aibridge/plan.md "<prompt>"`**: Produces a detailed plan file listing files to touch, design decisions, and verification gates.
+2. **`aibridge implement --model google-antigravity/gemini-3.7-flash .aibridge/plan.md`**: Reads the plan file, implements changes, runs typecheck + tests, and returns a diff summary.
+3. **`aibridge review --model xai-grok/grok-4.6 --out .aibridge/review.md [--plan .aibridge/plan.md]`**: Inspects working tree diffs and verifies implementation against plan contracts.
 
 ## D. When to stay native instead
 

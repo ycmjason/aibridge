@@ -60,8 +60,8 @@ say so unprompted and propose the cleanup — don't wait to be asked.
 | Help | `node packages/cli/src/cli.ts --help` |
 | Build all dists | `pnpm build` |
 | Plan | `pnpm aibridge plan --model xai-grok/grok-4.6 --out .aibridge/plan.md "<task prompt>"` |
-| Implement | `pnpm aibridge implement --model google-antigravity/gemini-3.7-flash <plan.md>` |
-| Review | `pnpm aibridge review --model xai-grok/grok-4.6 --out .aibridge/review.md [--plan <plan.md>] [--base <ref>]` |
+| Implement | `pnpm aibridge implement --model google-antigravity/gemini-3.7-flash .aibridge/plan.md` |
+| Review | `pnpm aibridge review --model xai-grok/grok-4.6 --out .aibridge/review.md [--plan .aibridge/plan.md] [--base <ref>]` |
 | Subagent | `pnpm aibridge subagent --model xai-grok/grok-4.6 "<prompt>"` |
 | Models | `pnpm aibridge models [--json]` — list every model seat in the registry (efforts, image format, pinned backend model id) |
 | Monitor runs | `pnpm aibridge runs [--watch]` (logs in `~/.aibridge/runs`) |

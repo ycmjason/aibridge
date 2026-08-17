@@ -89,9 +89,10 @@ its real path once it is the one being kept.
 
 - Not inside a git repo → `.aibridge/` under the current working directory.
 - **Check the sketchpad is ignored before the first write of a session:**
-  `git check-ignore -q .aibridge`. If that fails, tell the user to add
-  `.aibridge/` to `.gitignore` (offer to do it) — sketchpad output should never
-  be committed.
+  `git check-ignore -q .aibridge/` — keep the trailing slash, or a dir-only
+  `.aibridge/` rule misses while the dir does not exist yet. If that exits
+  non-zero, tell the user to add `.aibridge/` to `.gitignore` (offer to do it) —
+  sketchpad output should never be committed.
 - An explicit path from the user wins over all of this.
 
 ## Subcommands
