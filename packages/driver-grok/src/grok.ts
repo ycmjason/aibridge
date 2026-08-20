@@ -56,6 +56,12 @@ export interface GrokPrintArgs {
   readonly model: string;
   readonly effort?: GrokEffort;
   readonly skipPermissions?: boolean;
+  /**
+   * Unused by any caller today. If you wire it up, note that grok's
+   * `--json-schema` implies `--output-format json`, which conflicts with the
+   * `--output-format streaming-messages-json` that `run.ts` appends — and that
+   * `json` output welds every assistant turn into one string (see run.ts).
+   */
   readonly jsonSchema?: string;
 }
 
