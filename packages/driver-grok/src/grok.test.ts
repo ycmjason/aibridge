@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import type { RunResult } from '@aibridge/proc';
 import { describe, expect, it, test } from 'vitest';
-import { buildGrokPrintArgs, refreshGrokAuth } from './grok.ts';
+import { buildGrokPrintArgs, grokEnv, refreshGrokAuth } from './grok.ts';
 
 const result = (stdout: string): RunResult => ({
   code: 0,
@@ -35,25 +35,30 @@ describe('buildGrokPrintArgs', () => {
     ]);
   });
 
-  it('assembles headless tools allowlist and max-turns', () => {
-    const args = buildGrokPrintArgs('draw a cat', {
+  it('assembles args with json schema', () => {
+    const args = buildGrokPrintArgs('json task', {
       model: 'grok-4.6',
-      skipPermissions: true,
-      tools: 'image_gen,image_edit',
-      maxTurns: 4,
+      jsonSchema: '{"type":"object"}',
     });
     expect(args).toEqual([
       '-p',
-      'draw a cat',
+      'json task',
       '--model',
       'grok-4.6',
-      '--permission-mode',
-      'bypassPermissions',
-      '--tools',
-      'image_gen,image_edit',
-      '--max-turns',
-      '4',
+      '--json-schema',
+      '{"type":"object"}',
     ]);
+  });
+});
+
+describe('grokEnv', () => {
+  it("sets all four Claude-compat keys to '0' and preserves PATH", () => {
+    const env = grokEnv();
+    expect(env.GROK_CLAUDE_RULES_ENABLED).toBe('0');
+    expect(env.GROK_CLAUDE_SKILLS_ENABLED).toBe('0');
+    expect(env.GROK_CLAUDE_MCPS_ENABLED).toBe('0');
+    expect(env.GROK_CLAUDE_AGENTS_ENABLED).toBe('0');
+    expect(env.PATH).toBe(process.env.PATH);
   });
 });
 

@@ -1,5 +1,5 @@
 import { isNotFound, type RunResult, runCaptured, stripAnsi } from '@aibridge/proc';
-import { buildGrokPrintArgs } from './grok.ts';
+import { buildGrokPrintArgs, grokEnv } from './grok.ts';
 
 export interface DelegationTask {
   readonly prompt: string;
@@ -45,6 +45,7 @@ export async function run(
       result = await exec('grok', args, {
         cwd: task.cwd,
         timeoutMs: (task.timeoutSec + 20) * 1000,
+        env: grokEnv(),
         onStdout: task.onStdout,
         onStderr: task.onStderr,
         onSpawn: task.onSpawn,

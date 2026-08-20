@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
-import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { AuthExpiredError } from '@aibridge/proc';
+import { grokAuthPath, readGrokAuth } from './auth.ts';
 import { refreshGrokAuth } from './grok.ts';
 
 export interface GrokQuotaProduct {
@@ -51,10 +51,6 @@ export interface RawGrokBilling {
   };
 }
 
-export function grokAuthPath(): string {
-  return process.env.GROK_AUTH_PATH ?? join(homedir(), '.grok', 'auth.json');
-}
-
 function parseCent(obj: RawCent | undefined): number | undefined {
   if (obj === undefined) return undefined;
   return typeof obj.val === 'number' ? obj.val : 0;
@@ -100,57 +96,20 @@ export function parseGrokBilling(data: RawGrokBilling): GrokQuotaSnapshot {
   };
 }
 
-interface GrokAuthRecord {
-  key?: string;
-  user_id?: string;
-}
-
 async function requestBilling(fetchImpl: typeof fetch): Promise<Response> {
-  const authPath = grokAuthPath();
-  let rawAuth: string;
-  try {
-    rawAuth = readFileSync(authPath, 'utf8');
-  } catch (_err) {
-    throw new AuthExpiredError('grok auth.json has no usable session (run `grok login`)');
-  }
-
-  let authData: Record<string, GrokAuthRecord>;
-  try {
-    authData = JSON.parse(rawAuth) as Record<string, GrokAuthRecord>;
-  } catch (_err) {
-    throw new AuthExpiredError('grok auth.json has no usable session (run `grok login`)');
-  }
-
-  let record: GrokAuthRecord | undefined;
-  for (const [key, value] of Object.entries(authData)) {
-    if (key.startsWith('https://auth.x.ai::')) {
-      record = value;
-      break;
-    }
-  }
-  if (!record) {
-    const firstKey = Object.keys(authData)[0];
-    if (firstKey) {
-      record = authData[firstKey];
-    }
-  }
-
-  if (!record?.key) {
-    throw new AuthExpiredError('grok auth.json has no usable session (run `grok login`)');
-  }
-
+  const auth = readGrokAuth();
   const headers: Record<string, string> = {
-    Authorization: `Bearer ${record.key}`,
+    Authorization: `Bearer ${auth.key}`,
     'X-XAI-Token-Auth': 'xai-grok-cli',
     'x-grok-client-mode': 'headless',
   };
 
-  if (record.user_id) {
-    headers['x-userid'] = record.user_id;
+  if (auth.userId) {
+    headers['x-userid'] = auth.userId;
   }
 
   try {
-    const versionPath = join(dirname(authPath), 'version.json');
+    const versionPath = join(dirname(grokAuthPath()), 'version.json');
     const versionRaw = readFileSync(versionPath, 'utf8');
     const versionData = JSON.parse(versionRaw) as { version?: string };
     if (typeof versionData.version === 'string') {

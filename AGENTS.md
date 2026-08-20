@@ -89,7 +89,7 @@ Command orchestration uses **`@stricli/core`** (`buildCommand` / `buildRouteMap`
 - `packages/cli/src/drivers.ts` — map `Backend` → `AgentCliDriver` implementations.
 - `packages/cli/src/delegate.ts` — thin delegation engine calling `driver.run(task)`.
 - `packages/cli/src/transparency.ts` — the `--transparent` mechanism: the per-strategy prompt clauses plus `chromaKeyToPng` (sharp). Pure mechanism — no backend switches, no stdout; the impl decides which strategy a seat gets from `imageAlphaFor`.
-- `packages/proc` + `packages/driver-{agy,grok,codex,claude}` — workspace packages driving each backend CLI independently (zero external runtime dependencies).
+- `packages/proc` + `packages/driver-{agy,grok,codex,claude}` — workspace packages driving each backend independently (zero external runtime dependencies). Usually that means spawning its CLI. `driver-grok` also talks to `api.x.ai` over HTTP directly for images and quota, because those are single requests and the CLI's agent loop only added failure modes (see docs/decisions.md). Keeping these packages dependency-free is a real constraint: it is why `generateImage.ts` sends reference images uncompressed instead of pulling in `sharp`.
 
 ### Adding a subagent model
 

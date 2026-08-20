@@ -1,15 +1,12 @@
-import { existsSync, readdirSync, statSync } from 'node:fs';
-import { homedir } from 'node:os';
-import { join, resolve } from 'node:path';
-import { isNotFound, type RunResult, runCaptured, stripAnsi } from '@aibridge/proc';
-import { buildGrokPrintArgs, ensureGrok } from './grok.ts';
+import { readFileSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { type GrokAuthRecord, readGrokAuth } from './auth.ts';
+import { refreshGrokAuth } from './grok.ts';
 
 /**
- * The grok CLI hardcodes `grok-imagine-image-quality` for image_gen/image_edit
- * (see grok-build `image_gen/mod.rs`); 2.0 is the current Imagine model and is
- * cheaper at 1k. `GROK_IMAGE_{GEN,EDIT}_MODEL_OVERRIDE` is the CLI's top
- * precedence tier, above its own config.toml and xAI's remote settings.
- * Neither model can emit alpha — the API only ever returns image/jpeg.
+ * Pinned Imagine model for xAI image generation and editing.
+ * Note: req.backendModel is the seat model (e.g. grok-4.6) and is deliberately
+ * NOT the render model. req.effort and req.forceful are unused by this backend.
  */
 const IMAGINE_MODEL = 'grok-imagine-image-2.0';
 
@@ -30,161 +27,171 @@ export type ImageResult =
   | { readonly kind: 'suspect' }
   | { readonly kind: 'error'; readonly reason: string };
 
-interface Render {
-  readonly path: string;
-  readonly bytes: number;
+function sniffImageMime(buf: Buffer): string | null {
+  if (buf.length >= 8 && buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47) {
+    return 'image/png';
+  }
+  if (buf.length >= 3 && buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) {
+    return 'image/jpeg';
+  }
+  if (
+    buf.length >= 12 &&
+    buf.subarray(0, 4).toString('ascii') === 'RIFF' &&
+    buf.subarray(8, 12).toString('ascii') === 'WEBP'
+  ) {
+    return 'image/webp';
+  }
+  if (buf.length >= 4 && buf.subarray(0, 4).toString('ascii') === 'GIF8') {
+    return 'image/gif';
+  }
+  return null;
+}
+
+async function postImagine(
+  url: string,
+  body: unknown,
+  authKey: string,
+  timeoutSec: number,
+  fetchImpl: typeof fetch,
+): Promise<Response> {
+  return fetchImpl(url, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      authorization: `Bearer ${authKey}`,
+    },
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(timeoutSec * 1000),
+  });
 }
 
 export async function generateImage(
   req: ImageGenRequest,
-  exec: typeof runCaptured = runCaptured,
+  fetchImpl: typeof fetch = fetch,
 ): Promise<ImageResult> {
-  const grok = await ensureGrok(exec);
-  if (!grok.ok) return { kind: 'error', reason: grok.error };
-
-  const aspectClause = req.aspectRatio ? ` aspect_ratio='${req.aspectRatio}'.` : '';
-
-  let instruction: string;
-  let tools: string;
-  if (req.imagePaths.length > 0) {
-    tools = 'image_edit';
-    const refs = req.imagePaths.map(p => JSON.stringify(p)).join(', ');
-    instruction =
-      `Call the image_edit tool once with image=[${refs}] and prompt=${JSON.stringify(req.prompt)}.` +
-      `${req.aspectRatio ? ` Pass aspect_ratio='${req.aspectRatio}' only if the tool accepts it for multi-image edits.` : ''}` +
-      ` After the tool returns, print ONLY the absolute filesystem path of the saved image on a single line. No other text.`;
-  } else {
-    tools = 'image_gen';
-    instruction =
-      `Call the image_gen tool once with prompt=${JSON.stringify(req.prompt)}.${aspectClause}` +
-      ` After the tool returns, print ONLY the absolute filesystem path of the saved image on a single line. No other text.`;
-  }
-
-  let result: RunResult;
+  let auth: GrokAuthRecord;
   try {
-    const args = buildGrokPrintArgs(instruction, {
-      model: req.backendModel,
-      effort: req.effort,
-      skipPermissions: true,
-      tools,
-      maxTurns: 4,
-    });
-    result = await exec('grok', args, {
-      cwd: req.workDir,
-      timeoutMs: req.timeoutSec * 1000,
-      // process.env last: an explicitly exported override still wins.
-      env: {
-        GROK_IMAGE_GEN_MODEL_OVERRIDE: IMAGINE_MODEL,
-        GROK_IMAGE_EDIT_MODEL_OVERRIDE: IMAGINE_MODEL,
-        ...process.env,
-      },
-    });
+    auth = readGrokAuth();
   } catch (err) {
-    if (isNotFound(err)) return { kind: 'error', reason: '"grok" not found on PATH.' };
-    throw err;
+    return { kind: 'error', reason: (err as Error).message };
   }
 
-  if (result.timedOut) {
+  let url: string;
+  let body: Record<string, unknown>;
+
+  if (req.imagePaths.length === 0) {
+    url = 'https://api.x.ai/v1/images/generations';
+    body = {
+      model: IMAGINE_MODEL,
+      prompt: req.prompt,
+      n: 1,
+      aspect_ratio: req.aspectRatio ?? 'auto',
+      resolution: '1k',
+      response_format: 'b64_json',
+    };
+  } else {
+    url = 'https://api.x.ai/v1/images/edits';
+    const dataUrls: string[] = [];
+    for (const p of req.imagePaths) {
+      try {
+        const fileBuf = readFileSync(p);
+        const mime = sniffImageMime(fileBuf);
+        if (!mime) {
+          return { kind: 'error', reason: `reference image not readable/unsupported: ${p}` };
+        }
+        dataUrls.push(`data:${mime};base64,${fileBuf.toString('base64')}`);
+      } catch {
+        return { kind: 'error', reason: `reference image not readable/unsupported: ${p}` };
+      }
+    }
+
+    if (dataUrls.length === 1) {
+      body = {
+        model: IMAGINE_MODEL,
+        prompt: req.prompt,
+        n: 1,
+        resolution: '1k',
+        response_format: 'b64_json',
+        image: { url: dataUrls[0] },
+      };
+    } else {
+      body = {
+        model: IMAGINE_MODEL,
+        prompt: req.prompt,
+        n: 1,
+        aspect_ratio: req.aspectRatio ?? 'auto',
+        resolution: '1k',
+        response_format: 'b64_json',
+        images: dataUrls.map(u => ({ url: u })),
+      };
+    }
+  }
+
+  let res: Response;
+  try {
+    res = await postImagine(url, body, auth.key, req.timeoutSec, fetchImpl);
+    if (res.status === 401) {
+      await refreshGrokAuth();
+      try {
+        auth = readGrokAuth();
+      } catch (err) {
+        return { kind: 'error', reason: (err as Error).message };
+      }
+      res = await postImagine(url, body, auth.key, req.timeoutSec, fetchImpl);
+    }
+  } catch (err: unknown) {
+    if (err instanceof Error && (err.name === 'TimeoutError' || err.name === 'AbortError')) {
+      return {
+        kind: 'error',
+        reason: `grok render timed out after ~${req.timeoutSec}s; raise --timeout.`,
+      };
+    }
     return {
       kind: 'error',
-      reason: `grok render timed out after ~${req.timeoutSec}s; raise --timeout.`,
+      reason: `grok Imagine API failed: ${(err as Error).message}`,
     };
   }
 
-  const pathFromStdout = extractPathFromStdout(result.stdout);
-  if (pathFromStdout && existsSync(pathFromStdout)) {
-    const bytes = safeSize(pathFromStdout);
-    if (bytes >= req.minBytes) {
-      return { kind: 'ok', path: pathFromStdout, bytes };
-    }
+  if (res.status === 401) {
+    return {
+      kind: 'error',
+      reason: 'grok session expired (401) — run `grok login`, then retry',
+    };
   }
 
-  const sessionHit = newestSessionImage(req.workDir);
-  if (sessionHit && sessionHit.bytes >= req.minBytes) {
-    return { kind: 'ok', path: sessionHit.path, bytes: sessionHit.bytes };
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    const first200 = text.trim().slice(0, 200);
+    return {
+      kind: 'error',
+      reason: `grok Imagine API failed: HTTP ${res.status}${first200 ? `: ${first200}` : ''}`,
+    };
   }
 
-  if (result.code !== 0) {
-    const tail = stripAnsi(`${result.stderr}\n${result.stdout}`)
-      .trim()
-      .split('\n')
-      .slice(-3)
-      .join(' ')
-      .slice(0, 300);
-    return { kind: 'error', reason: `grok exited ${result.code}${tail ? `: ${tail}` : ''}.` };
-  }
-  return { kind: 'suspect' };
-}
-
-function extractPathFromStdout(stdout: string): string | null {
-  const text = stripAnsi(stdout).trim();
-  if (!text) return null;
-  for (const line of text
-    .split('\n')
-    .map(l => l.trim())
-    .filter(Boolean)) {
-    if (line.startsWith('/') && existsSync(line) && isImagePath(line)) return line;
-  }
-  const m = text.match(/(\/(?:[^\s'"`]+)\.(?:png|jpe?g|webp|gif))/i);
-  if (m?.[1] && existsSync(m[1])) return m[1];
-  return null;
-}
-
-function isImagePath(p: string): boolean {
-  return /\.(png|jpe?g|webp|gif)$/i.test(p);
-}
-
-function newestSessionImage(workCwd: string): Render | null {
-  const sessionsRoot = join(homedir(), '.grok', 'sessions');
-  if (!existsSync(sessionsRoot)) return null;
-
-  const candidates = new Set<string>([workCwd]);
+  let resJson: { data?: Array<{ b64_json?: string }> };
   try {
-    candidates.add(resolve(workCwd));
+    resJson = (await res.json()) as { data?: Array<{ b64_json?: string }> };
   } catch {
-    // ignore
+    return { kind: 'error', reason: 'grok Imagine API returned no image data.' };
   }
 
-  const hits: Render[] = [];
-  for (const cwd of candidates) {
-    const encoded = encodeURIComponent(cwd);
-    const base = join(sessionsRoot, encoded);
-    if (!existsSync(base)) continue;
-    for (const session of safeReaddir(base)) {
-      const imagesDir = join(base, session, 'images');
-      if (!existsSync(imagesDir)) continue;
-      for (const f of safeReaddir(imagesDir)) {
-        if (!isImagePath(f)) continue;
-        const path = join(imagesDir, f);
-        hits.push({ path, bytes: safeSize(path) });
-      }
-    }
+  const b64 = resJson.data?.[0]?.b64_json;
+  if (!b64 || typeof b64 !== 'string') {
+    return { kind: 'error', reason: 'grok Imagine API returned no image data.' };
   }
-  if (hits.length === 0) return null;
-  hits.sort((a, b) => mtime(b.path) - mtime(a.path));
-  return hits[0] ?? null;
-}
 
-function safeReaddir(dir: string): string[] {
+  const imageBuf = Buffer.from(b64, 'base64');
+  const bytes = imageBuf.length;
+  const outPath = join(req.workDir, 'render.jpg');
   try {
-    return readdirSync(dir);
-  } catch {
-    return [];
+    writeFileSync(outPath, imageBuf);
+  } catch (err) {
+    return { kind: 'error', reason: `failed to write image file: ${(err as Error).message}` };
   }
-}
 
-function safeSize(path: string): number {
-  try {
-    return statSync(path).size;
-  } catch {
-    return 0;
+  if (bytes < req.minBytes) {
+    return { kind: 'suspect' };
   }
-}
 
-function mtime(path: string): number {
-  try {
-    return statSync(path).mtimeMs;
-  } catch {
-    return 0;
-  }
+  return { kind: 'ok', path: outPath, bytes };
 }

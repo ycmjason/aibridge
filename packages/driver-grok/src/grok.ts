@@ -12,6 +12,24 @@ export type GrokCheck =
   | { readonly ok: false; readonly error: string };
 
 /**
+ * grok 1.0.5 loads ~/.claude/CLAUDE.md as <user_rules> and attaches Claude's MCP
+ * servers, so a delegate inherits the operator's own agent instructions — which
+ * burned every turn of image-gen's budget on skill-loading before it could call
+ * the image tool. Delegates get the task, not the operator's rulebook.
+ */
+export const GROK_COMPAT_ENV = {
+  GROK_CLAUDE_RULES_ENABLED: '0',
+  GROK_CLAUDE_SKILLS_ENABLED: '0',
+  GROK_CLAUDE_MCPS_ENABLED: '0',
+  GROK_CLAUDE_AGENTS_ENABLED: '0',
+} as const;
+
+/** process.env last: an explicitly exported override still wins. */
+export function grokEnv(): NodeJS.ProcessEnv {
+  return { ...GROK_COMPAT_ENV, ...process.env };
+}
+
+/**
  * Nudge the CLI into refreshing its own cached token, used by the quota probe
  * after a 401. Verified against grok 1.0.4: `grok models` prints "You are not
  * authenticated." even when `grok -p` answers fine, so its OUTPUT is not a
@@ -20,7 +38,7 @@ export type GrokCheck =
  * refusal text (see run.ts).
  */
 export async function refreshGrokAuth(run: typeof runCaptured = runCaptured): Promise<void> {
-  await run('grok', ['models'], { timeoutMs: 10_000 }).catch(() => {});
+  await run('grok', ['models'], { timeoutMs: 10_000, env: grokEnv() }).catch(() => {});
 }
 
 export async function ensureGrok(run: typeof runCaptured = runCaptured): Promise<GrokCheck> {
@@ -39,8 +57,6 @@ export interface GrokPrintArgs {
   readonly effort?: GrokEffort;
   readonly skipPermissions?: boolean;
   readonly jsonSchema?: string;
-  readonly tools?: string;
-  readonly maxTurns?: number;
 }
 
 export function buildGrokPrintArgs(prompt: string, opts: GrokPrintArgs): string[] {
@@ -49,8 +65,6 @@ export function buildGrokPrintArgs(prompt: string, opts: GrokPrintArgs): string[
   if (opts.effort) args.push('--reasoning-effort', opts.effort);
   if (opts.skipPermissions) args.push('--permission-mode', 'bypassPermissions');
   if (opts.jsonSchema) args.push('--json-schema', opts.jsonSchema);
-  if (opts.tools) args.push('--tools', opts.tools);
-  if (opts.maxTurns !== undefined) args.push('--max-turns', String(opts.maxTurns));
   return args;
 }
 
@@ -66,6 +80,7 @@ export function runGrokPrint(prompt: string, opts: GrokPrintOptions): Promise<Ru
   return runCaptured('grok', buildGrokPrintArgs(prompt, opts), {
     cwd: opts.cwd,
     timeoutMs: opts.timeoutMs,
+    env: grokEnv(),
     onStdout: opts.onStdout,
     onStderr: opts.onStderr,
     onSpawn: opts.onSpawn,
