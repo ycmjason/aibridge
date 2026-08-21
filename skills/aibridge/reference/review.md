@@ -1,22 +1,7 @@
-# review — cross-model review of a diff (or a plan) against a contract
+# review — cross-model review of a diff or a plan
 
-`aibridge review` has a reviewer model inspect a diff, with a plan file as the
-CONTRACT so over-reach is a finding, and write the full report to a FILE. The
-diff is whatever differs from `--base` (default `HEAD`, i.e. the working tree),
-so committed work is reviewable too: `--base main` covers the whole branch.
-stdout carries only a verdict line + paths, so the happy path costs you almost
-nothing in context. Read the report only when findings exist.
-
-## When to use
-
-- After `aibridge implement` (or any delegated edit): cross-check the diff
-  against the plan contract before you commit.
-- Before implementing a high-risk design: on a CLEAN tree with `--plan`, it
-  reviews the plan itself (pre-implementation gate).
-- After you commit, at the end of a session or before a PR: point `--base` at
-  the ref you branched from. Never copy a diff into a file and hand it to
-  `subagent`; that is what `--base` is for.
-- Any time you want a cross-model second opinion on a change, committed or not.
+A reviewer model inspects a diff against a plan contract and writes the report
+to a FILE. stdout is one verdict line plus paths.
 
 ## Usage
 
@@ -24,38 +9,42 @@ nothing in context. Read the report only when findings exist.
 aibridge review --model <slug> --out <file> [options]
   --model <slug>       reviewer model (required, e.g. xai-grok/grok-4.6)
   --plan <file>        plan contract; over-reach against it is a finding
-  --base <ref>         git base to diff against (default: HEAD, i.e. working tree only)
+  --base <ref>         git ref or range to diff (default: HEAD, working tree only)
   --out <file>         full report destination (required)
-  --timeout <secs>     max seconds for review (default: 1200)
-  --no-preflight       skip the backend quota preflight check
+  --timeout <secs>     max seconds (default: 1200)
+  --no-preflight       skip the quota preflight
 ```
 
-### Reviewing already-committed work
+## Picking the diff
+
+`--base` is passed straight to `git diff`, so any ref or range git accepts
+works: `HEAD~3`, a branch, a SHA, a tag, `v1.2.0..HEAD`.
 
 ```bash
+# uncommitted work only (the default base, HEAD)
+aibridge review --model xai-grok/grok-4.6 --out .aibridge/review.md
+
 # the 3 commits you just made
 aibridge review --model xai-grok/grok-4.6 --base HEAD~3 --out .aibridge/review.md
 
-# everything on this branch that main does not have, against the plan contract
+# the whole branch, against the plan contract
 aibridge review --model xai-grok/grok-4.6 --base main \
   --plan .aibridge/plan.md --out .aibridge/review.md
 ```
 
-`--base` goes straight to `git diff`, so anything git accepts works: `HEAD~3`,
-a branch, a SHA, a tag, or a two-dot range like `v1.2.0..HEAD`. Uncommitted work
-on top is included unless you pass a range that pins both ends.
+Reviewing commits is the normal end-of-session case. Never copy a diff into a
+file and hand it to `subagent`; that is what `--base` is for. Uncommitted work
+on top is included unless the range pins both ends.
 
 ## Modes (detected before any model spend)
 
-1. **Diff review** — anything differs from `--base`, committed or not (or
-   untracked files exist). On the default `HEAD` base that means a dirty tree;
-   with an explicit `--base` a clean tree still reviews fine. With
-   `--plan`, any change the contract never asked for is over-reach (major;
-   critical if harmful).
-2. **Plan-only review** — nothing differs from `--base` and `--plan` is given:
-   reviews the plan file for soundness, edge cases, safety, feasibility.
-3. Nothing differs and no `--plan` → `nothing to review`, exit 2. A bad `--base`
-   ref is a hard error (exit 2), not silently treated as dirty.
+1. **Diff review** — anything differs from `--base`, committed or not, or
+   untracked files exist. With `--plan`, any change the contract never asked for
+   is over-reach: major, or critical if harmful.
+2. **Plan review** — nothing differs from `--base` and `--plan` is given.
+   Reviews the plan for soundness, edge cases, safety, feasibility. Use it as a
+   pre-implementation gate on high-risk designs.
+3. Nothing differs and no `--plan` → `nothing to review`, exit 2.
 
 ## Output & exit codes
 
@@ -65,27 +54,24 @@ review: /abs/path/to/review.md
 run: <run id>
 ```
 
-- `0`: PASS, or findings that are minor-only.
-- `1`: critical or major findings; unparseable verdict (the raw answer + paths
-  are still printed so you can recover); missing/empty report file; delegate
-  failure/timeout.
+- `0`: PASS, or minor-only findings.
+- `1`: critical or major findings; unparseable verdict (raw answer + paths still
+  print); missing or empty report file; delegate failure or timeout.
 - `2`: bad flags, missing plan file, nothing to review, bad base ref.
 - `3`: quota preflight refusal.
 
-## After it returns — your job
+## After it returns
 
 - `PASS` → proceed (commit, or report done).
-- Findings → read the report file, then JUDGE: over-reach findings can be
-  intentional scope you added deliberately — the reviewer flags, you decide.
-  Fix what's real, then re-run `review` (cheap) until clean-or-accepted.
+- Findings → read the report, then judge. Over-reach findings can be scope you
+  added deliberately: the reviewer flags, you decide. Fix what is real, re-run.
+- Never let a model review its own diff. The recommended seats (grok reviews,
+  gemini implements) already comply; if you override one, check the other.
 
 ## Gotchas
 
-- Reviewer must be cross-model from the implementer — never let a model review
-  its own diff. Recommended seats (grok reviews, gemini implements) already comply.
-- Backends narrate: the verdict parser accepts the verdict on the first line,
-  last line, or embedded at the end of a narration blob (grok has been observed
-  concatenating progress prose onto the final message). If parsing still fails
-  you get exit 1 WITH the raw answer + report path on stdout.
-- The report file is required even for PASS — a missing/empty report fails the
-  run: a verdict without evidence is not a review.
+- The report file is required even for PASS. Missing or empty fails the run.
+- Verdict parsing accepts the line first, last, or at the end of a narration
+  blob (grok concatenates progress prose). If it still fails, you get exit 1
+  with the raw answer plus the report path on stdout.
+- A bad `--base` ref is a hard error (exit 2), not a silent dirty-tree fallback.

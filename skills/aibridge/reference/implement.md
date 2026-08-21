@@ -1,34 +1,25 @@
-# implement — execute an implementation plan file
+# implement — execute a plan file
 
-`aibridge implement` hands a plan FILE to an implementer model that edits the
-working tree in place and runs the project's real gates. Stage three of
-**`plan` → you read/approve → `implement` → `review`**.
+An implementer model edits the working tree in place and runs the project's real
+gates. Stage three of **`plan` → you read/approve → `implement` → `review`**.
 
-## When to use
-
-- You have a plan file you have READ and approved (from `aibridge plan`, or
-  written yourself). The implementer is a pure do-er: if the plan needs vision
-  or context to execute correctly, the plan is not done — fix the plan, don't
-  brief the implementer.
+Only run it on a plan you have READ and approved. The implementer is a pure
+do-er: if the plan needs vision to execute correctly, fix the plan.
 
 ## Usage
 
 ```bash
 aibridge implement --model <slug> <plan-file>
   --model <slug>       implementer model (required, e.g. google-antigravity/gemini-3.7-flash)
-  --timeout <secs>     max seconds for implementation (default: 1800)
-  --no-preflight       skip the backend quota preflight check
+  --timeout <secs>     max seconds (default: 1800)
+  --no-preflight       skip the quota preflight
 ```
 
-## Behavior
+## Behaviour
 
-1. The plan file must exist (resolved against the cwd); the delegate is
-   prompted to implement it EXACTLY — edit only files it names, run the REAL
-   typecheck/test gates until green, never commit/push or delete unrelated
-   files.
-2. The delegate runs with full tools at the repo root.
-3. After the run: `git diff --stat` + untracked-file count are printed so you
-   can decide whether to inspect before reviewing.
+The delegate runs with full tools at the repo root, prompted to implement the
+plan EXACTLY: edit only the files it names, run the real typecheck and test
+gates until green, never commit, push, or delete unrelated files.
 
 ## Output
 
@@ -40,23 +31,22 @@ untracked files: <count>
 run: <run id>
 ```
 
-Exit 0: completed with working-tree changes. Exit 1: delegate failed, timed
-out, no usable answer, or **zero tree changes** (an implement run that changed
-nothing is a failure by definition). Exit 2: bad args / missing plan file.
-Exit 3: quota preflight refusal.
+Exit 0: completed with tree changes. Exit 1: delegate failed, timed out, gave no
+usable answer, or changed nothing (a no-op implement is a failure). Exit 2: bad
+args or missing plan file. Exit 3: quota preflight refusal.
 
-## After it returns — your job
+## After it returns
 
-- The summary's "gates green" claim is **delegate-reported**. Re-run the real
-  gates yourself before trusting the diff.
-- Then `aibridge review --model xai-grok/grok-4.6 --plan <plan-file> --out .aibridge/review.md` for the cross-model check
-  (recommended seats already make reviewer ≠ implementer).
+1. The summary's "gates green" claim is delegate-reported. **Re-run the real
+   gates yourself.**
+2. Then `aibridge review --model xai-grok/grok-4.6 --plan <plan-file> --out .aibridge/review.md`.
 
 ## Gotchas
 
-- Keep the implementer cross-model from whoever reviews: gemini implements,
-  grok reviews (the recommended seats). If you override `--model`, check the other seat.
-- agy quota is shared per model GROUP — two concurrent agy-heavy implements
-  drain the same window. `aibridge quota` before pipelining.
-- Timeout is for the WHOLE implementation incl. gate-fixing loops; raise it for
-  big plans rather than letting a near-done run get killed.
+- Keep the implementer a different model family from the reviewer. The
+  recommended seats (gemini implements, grok reviews) comply; if you override
+  one, check the other.
+- agy quota is shared per model GROUP: two concurrent agy-heavy implements drain
+  the same window. Run `aibridge quota` before pipelining.
+- The timeout covers the whole run including gate-fixing loops. Raise it for big
+  plans rather than letting a near-done run get killed.

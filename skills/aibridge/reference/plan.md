@@ -1,48 +1,43 @@
-# plan — produce a detailed implementation plan file
+# plan — write a detailed implementation plan file
 
-`aibridge plan` hands a task prompt to a model that studies the real codebase
-and writes an expanded, detailed implementation plan to a FILE. It is stage one
-of the orchestrator-driven workflow: **`plan` → you read/approve → `implement`
-→ `review`**. The plan file is the contract for every later stage — pass its
-PATH around, never re-emit its contents.
+A planner model studies the real codebase and writes an expanded plan to a FILE.
+Stage one of **`plan` → you read/approve → `implement` → `review`**. Pass the
+plan's PATH between stages, never its contents.
 
-## When to use
-
-- A sizeable or risky implementation task where you want a second model to work
-  out the detail against the actual code before anything is edited.
-- NOT for small, fully-specified chunks — hand those straight to `subagent`
-  (or just do them).
+Use it for sizeable or risky work. For small, fully-specified chunks use
+`subagent`, or just do them.
 
 ## Usage
 
 ```bash
 aibridge plan --model <slug> --out <file> "<task prompt>"
   --model <slug>       planner model (required, e.g. xai-grok/grok-4.6)
-  --out <file>         where to write the plan file (required)
-  --timeout <secs>     max seconds for planning (default: 1800)
-  --no-preflight       skip the backend quota preflight check
+  --out <file>         where to write the plan (required)
+  --timeout <secs>     max seconds (default: 1800)
+  --no-preflight       skip the quota preflight
 ```
 
-## Prompt-craft — what to put in the task prompt
+The positional argument is the task prompt, not a file path.
 
-The planner runs WITH tools at your repo root and reads the code itself, so do
-NOT paste file contents. Do give it what it cannot infer:
+## Writing the task prompt
 
-- the goal and the user-visible behavior change;
+The planner has tools and reads the code itself, so do NOT paste file contents.
+Give it what it cannot infer:
+
+- the goal and the user-visible behaviour change;
 - hard constraints (APIs to keep stable, zero-dep rules, style conventions);
 - scope boundaries and NON-goals (the single best over-reach preventer);
-- any architectural calls you have already made — the planner details your
-  design, it does not overrule it;
-- pointers to starting files if the repo is large.
+- architectural calls you have already made, since the planner details your
+  design rather than overruling it;
+- starting files, if the repo is large.
 
-## Behavior
+## Behaviour
 
-1. The positional argument is the **task prompt** (a string), not a file path.
-2. The planner writes **exactly one file** (`--out`) and must leave the working
-   tree otherwise untouched — enforced: `git status --porcelain` is compared
-   before/after and any unexpected path fails the run (exit 1, paths listed).
-3. The plan must end with a `## Open questions` section (`None.` when
-   confident). The question count is surfaced on stdout.
+- The planner writes exactly one file (`--out`). Any other change to the working
+  tree fails the run (exit 1, paths listed). An `--out` inside the repo is
+  exempt.
+- The plan must end with `## Open questions` (`None.` when confident). The count
+  prints on stdout.
 
 ## Output
 
@@ -52,27 +47,23 @@ open questions: 2
 run: <run id>
 ```
 
-Exit 0 even when open questions > 0 — they are data for you, not failure.
-Exit 1: plan missing/empty/section missing, tree dirtied, delegate failure or
-timeout. Exit 2: bad arguments. Exit 3: quota preflight refusal.
+Exit 0 even with open questions. Exit 1: plan missing, empty, no open-questions
+section, tree dirtied, delegate failure or timeout. Exit 2: bad arguments.
+Exit 3: quota preflight refusal.
 
-## After it returns — your job
+## After it returns
 
-1. **Read the plan file.** This sign-off is the entire point of the split; an
-   unread plan is an unreviewed contract.
-2. Resolve every open question — edit the file directly or re-run `plan` with
-   a sharpened prompt.
-3. For high-risk designs, add a cross-model gate before building:
-   `aibridge review --model xai-grok/grok-4.6 --plan <file> --out .aibridge/review.md` on a clean tree reviews the plan itself.
+1. **Read the plan file.** An unread plan is an unreviewed contract.
+2. Resolve every open question: edit the file directly, or re-run `plan` with a
+   sharpened prompt.
+3. High-risk design? Gate it first:
+   `aibridge review --model xai-grok/grok-4.6 --plan <file> --out .aibridge/review.md`
+   on a clean tree.
 4. Then `aibridge implement --model google-antigravity/gemini-3.7-flash <file>`.
 
 ## Gotchas
 
-- `--out` goes in the repo's `.aibridge/` sketchpad (e.g.
-  `--out .aibridge/auth-plan.md`) so the user can open it in the repo they are
-  already in — see [SKILL.md](../SKILL.md); check `.aibridge/` is gitignored
-  once per session.
-- An `--out` inside the repo is allowed (it shows up untracked and is exempted
-  from the cleanliness check); everything else dirty fails the run.
-- grok (the recommended planner) is capped ~30 req/min, ~1k msgs/day, one run at a
-  time — never run two grok stages concurrently.
+- `--out` belongs in `.aibridge/` (see [SKILL.md](../SKILL.md)); check it is
+  gitignored once per session.
+- grok is capped at ~30 req/min, ~1k msgs/day, one run at a time. Never run two
+  grok stages concurrently.

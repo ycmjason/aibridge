@@ -39,7 +39,7 @@ npx -y @aibridge/cli subagent --model xai-grok/grok-4.6 "summarize the architect
 |---|---|
 | `aibridge plan --model xai-grok/grok-4.6 --out plan.md "<task>"` | You want a delegate model to study the repo and expand a task into a detailed, reviewable **plan file** before any code is written |
 | `aibridge implement --model google-antigravity/gemini-3.7-flash <plan.md>` | You have an approved plan file and want it executed in place — with your project's **real typecheck and tests** run until green |
-| `aibridge review --model xai-grok/grok-4.6 --out review.md [--plan <plan.md>]` | You want a **different model** to pressure-test a diff against the plan contract (`--base <ref>` reviews commits, not just the working tree) (over-reach is a finding) — or to review the plan itself before implementing |
+| `aibridge review --model xai-grok/grok-4.6 --out review.md [--plan <plan.md>]` | You want a **different model** to pressure-test a diff against the plan contract, where over-reach is a finding. `--base <ref>` reviews any commit range, not just the working tree. On a clean tree it reviews the plan itself |
 | `aibridge subagent --model xai-grok/grok-4.6 "<task>"` | A self-contained task deserves a concurrent delegate, a cross-model second opinion, or a red-team pass |
 | `aibridge image-gen --model openai-codex/gpt-5.6-sol --out out.png "<prompt>"` | You need a real raster image — on a Codex, Antigravity, or Grok seat, with render verification |
 | `aibridge models [--json]` | You need the exact facts for every registered model seat (accepted efforts, image format, pinned model ID) |
