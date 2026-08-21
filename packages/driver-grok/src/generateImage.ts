@@ -1,6 +1,6 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { type GrokAuthRecord, readGrokAuth } from './auth.ts';
+import { type GrokAuthRecord, getGrokAuth, readGrokAuth } from './auth.ts';
 import { refreshGrokAuth } from './grok.ts';
 
 /**
@@ -71,7 +71,7 @@ export async function generateImage(
 ): Promise<ImageResult> {
   let auth: GrokAuthRecord;
   try {
-    auth = readGrokAuth();
+    auth = await getGrokAuth();
   } catch (err) {
     return { kind: 'error', reason: (err as Error).message };
   }

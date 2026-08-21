@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { AuthExpiredError } from '@aibridge/proc';
-import { grokAuthPath, readGrokAuth } from './auth.ts';
+import { type GrokAuthRecord, getGrokAuth, grokAuthPath, readGrokAuth } from './auth.ts';
 import { refreshGrokAuth } from './grok.ts';
 
 export interface GrokQuotaProduct {
@@ -96,8 +96,7 @@ export function parseGrokBilling(data: RawGrokBilling): GrokQuotaSnapshot {
   };
 }
 
-async function requestBilling(fetchImpl: typeof fetch): Promise<Response> {
-  const auth = readGrokAuth();
+async function requestBilling(fetchImpl: typeof fetch, auth: GrokAuthRecord): Promise<Response> {
   const headers: Record<string, string> = {
     Authorization: `Bearer ${auth.key}`,
     'X-XAI-Token-Auth': 'xai-grok-cli',
@@ -128,10 +127,12 @@ export async function fetchGrokQuota(
   fetchImpl: typeof fetch = fetch,
   refresh: () => Promise<unknown> = refreshGrokAuth,
 ): Promise<GrokQuotaSnapshot> {
-  let res = await requestBilling(fetchImpl);
+  let auth = await getGrokAuth(refresh);
+  let res = await requestBilling(fetchImpl, auth);
   if (res.status === 401) {
     await refresh();
-    res = await requestBilling(fetchImpl);
+    auth = readGrokAuth();
+    res = await requestBilling(fetchImpl, auth);
   }
   if (res.status === 401) {
     throw new AuthExpiredError('grok session expired (401) — run `grok login`, then retry');
