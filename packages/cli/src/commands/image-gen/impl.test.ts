@@ -30,6 +30,7 @@ const flags = (over: Partial<ImageGenFlags>): ImageGenFlags => ({
   out: '/tmp/out.jpg',
   json: false,
   transparent: false,
+  preflight: false,
   ...over,
 });
 

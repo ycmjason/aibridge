@@ -238,6 +238,18 @@ test('renderPreflightRefusal: auth kind uses unauthenticated wording', () => {
   );
 });
 
+test('renderPreflightRefusal: image-gen quota refusal points at other image seats', () => {
+  const msg = renderPreflightRefusal('image-gen', {
+    kind: 'quota',
+    message: 'grok credit quota exhausted',
+    resetAt: undefined,
+  });
+  // No claude seat renders images, so the delegation fallback would be dead advice.
+  assert.ok(!msg.includes('claude-backend fallback'));
+  assert.ok(msg.includes('another image seat'));
+  assert.ok(msg.includes('openai-codex/gpt-5.6-sol'));
+});
+
 test('renderPreflightRefusal: quota kind keeps override wording', () => {
   const msg = renderPreflightRefusal('subagent', {
     kind: 'quota',

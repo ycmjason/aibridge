@@ -25,6 +25,7 @@ import {
   resolveModel,
   supportsImageGen,
 } from '../../models.ts';
+import { preflightModel, renderPreflightRefusal } from '../../quotaPreflight.ts';
 import {
   CHROMA_CLAUSE,
   chromaKeyToPng,
@@ -38,6 +39,7 @@ export interface ImageGenFlags {
   readonly aspectRatio?: string;
   readonly image?: string;
   readonly timeout?: number;
+  readonly preflight: boolean;
   readonly json: boolean;
   readonly transparent: boolean;
 }
@@ -120,6 +122,18 @@ export default async function imageGen(
   const driver = getDriver(model.spec.backend);
   if (!driver.generateImage) {
     return fail(formatImageGenModelError(inputSlug, model));
+  }
+
+  // Last gate before a paid render. Every check above is local and must stay
+  // above it, so a bad --out or aspect ratio still fails without a network call.
+  if (flags.preflight) {
+    const verdict = await preflightModel(model);
+    if (!verdict.ok) {
+      this.process.stderr.write(`${renderPreflightRefusal('image-gen', verdict)}\n`);
+      this.process.exitCode = 3;
+      return;
+    }
+    if (verdict.warning) this.process.stderr.write(`aibridge image-gen: ${verdict.warning}\n`);
   }
 
   const minBytes = model.spec.backend === 'codex' ? MIN_REAL_BYTES_CODEX : MIN_REAL_BYTES_TOOL;

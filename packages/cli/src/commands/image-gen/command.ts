@@ -51,6 +51,11 @@ export const imageGen = buildCommand({
         optional: true,
         brief: 'Max seconds to wait for the render (default: 600)',
       },
+      preflight: {
+        kind: 'boolean',
+        default: true,
+        brief: 'Check model quota before rendering (use --no-preflight to skip)',
+      },
       json: {
         kind: 'boolean',
         withNegated: false,

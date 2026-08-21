@@ -144,5 +144,10 @@ export function renderPreflightRefusal(
     return `aibridge ${cmd}: refusing — ${verdict.message}. Running with --no-preflight would only send the delegate in unauthenticated. Or use a different --model.`;
   }
   const resetClause = verdict.resetAt ? ` Resets ${formatReset(verdict.resetAt)}.` : '';
-  return `aibridge ${cmd}: refusing — ${verdict.message}.${resetClause} Use --no-preflight to override, or a claude-backend fallback (subagent --model sonnet|opus — bills the Claude subscription).`;
+  // The claude fallback is delegation-only advice: no claude seat renders images.
+  const fallback =
+    cmd === 'image-gen'
+      ? 'Use --no-preflight to override, or another image seat (--model openai-codex/gpt-5.6-sol | google-antigravity/gemini-3.7-flash | xai-grok/grok-4.6).'
+      : 'Use --no-preflight to override, or a claude-backend fallback (subagent --model sonnet|opus — bills the Claude subscription).';
+  return `aibridge ${cmd}: refusing — ${verdict.message}.${resetClause} ${fallback}`;
 }
