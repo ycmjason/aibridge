@@ -29,7 +29,7 @@ export const review = buildCommand({
         kind: 'parsed',
         parse: String,
         optional: true,
-        brief: 'Base git ref to diff against (default: HEAD)',
+        brief: 'Base git ref or range to diff against, e.g. HEAD~3 or main (default: HEAD)',
       },
       out: {
         kind: 'parsed',
@@ -50,7 +50,7 @@ export const review = buildCommand({
     },
   },
   docs: {
-    brief: 'Review working tree diff or plan contract',
+    brief: 'Review a diff (working tree, or any commit range via --base) or a plan contract',
     fullDescription,
   },
 });

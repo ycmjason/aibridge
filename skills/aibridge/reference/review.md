@@ -1,9 +1,11 @@
 # review — cross-model review of a diff (or a plan) against a contract
 
-`aibridge review` has a reviewer model inspect the working-tree diff — with a
-plan file as the CONTRACT, so over-reach is a finding — and write the full
-report to a FILE. stdout carries only a verdict line + paths: the happy path
-costs you almost nothing in context; read the report only when findings exist.
+`aibridge review` has a reviewer model inspect a diff, with a plan file as the
+CONTRACT so over-reach is a finding, and write the full report to a FILE. The
+diff is whatever differs from `--base` (default `HEAD`, i.e. the working tree),
+so committed work is reviewable too: `--base main` covers the whole branch.
+stdout carries only a verdict line + paths, so the happy path costs you almost
+nothing in context. Read the report only when findings exist.
 
 ## When to use
 
@@ -11,7 +13,10 @@ costs you almost nothing in context; read the report only when findings exist.
   against the plan contract before you commit.
 - Before implementing a high-risk design: on a CLEAN tree with `--plan`, it
   reviews the plan itself (pre-implementation gate).
-- Any time you want a cross-model second opinion on uncommitted changes.
+- After you commit, at the end of a session or before a PR: point `--base` at
+  the ref you branched from. Never copy a diff into a file and hand it to
+  `subagent`; that is what `--base` is for.
+- Any time you want a cross-model second opinion on a change, committed or not.
 
 ## Usage
 
@@ -19,21 +24,38 @@ costs you almost nothing in context; read the report only when findings exist.
 aibridge review --model <slug> --out <file> [options]
   --model <slug>       reviewer model (required, e.g. xai-grok/grok-4.6)
   --plan <file>        plan contract; over-reach against it is a finding
-  --base <ref>         git base to diff against (default: HEAD)
+  --base <ref>         git base to diff against (default: HEAD, i.e. working tree only)
   --out <file>         full report destination (required)
   --timeout <secs>     max seconds for review (default: 1200)
   --no-preflight       skip the backend quota preflight check
 ```
 
+### Reviewing already-committed work
+
+```bash
+# the 3 commits you just made
+aibridge review --model xai-grok/grok-4.6 --base HEAD~3 --out .aibridge/review.md
+
+# everything on this branch that main does not have, against the plan contract
+aibridge review --model xai-grok/grok-4.6 --base main \
+  --plan .aibridge/plan.md --out .aibridge/review.md
+```
+
+`--base` goes straight to `git diff`, so anything git accepts works: `HEAD~3`,
+a branch, a SHA, a tag, or a two-dot range like `v1.2.0..HEAD`. Uncommitted work
+on top is included unless you pass a range that pins both ends.
+
 ## Modes (detected before any model spend)
 
-1. **Diff review** — tree dirty vs `--base` (or untracked files exist). With
+1. **Diff review** — anything differs from `--base`, committed or not (or
+   untracked files exist). On the default `HEAD` base that means a dirty tree;
+   with an explicit `--base` a clean tree still reviews fine. With
    `--plan`, any change the contract never asked for is over-reach (major;
    critical if harmful).
-2. **Plan-only review** — tree clean + `--plan` given: reviews the plan file
-   for soundness, edge cases, safety, feasibility.
-3. Tree clean + no `--plan` → `nothing to review`, exit 2. A bad `--base` ref
-   is a hard error (exit 2), not silently treated as dirty.
+2. **Plan-only review** — nothing differs from `--base` and `--plan` is given:
+   reviews the plan file for soundness, edge cases, safety, feasibility.
+3. Nothing differs and no `--plan` → `nothing to review`, exit 2. A bad `--base`
+   ref is a hard error (exit 2), not silently treated as dirty.
 
 ## Output & exit codes
 

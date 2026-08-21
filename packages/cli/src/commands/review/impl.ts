@@ -145,7 +145,7 @@ export default async function review(this: LocalContext, flags: ReviewFlags): Pr
   let reviewPrompt: string;
   if (isDirty) {
     reviewPrompt =
-      `You are an expert code reviewer. Inspect the working tree diff against base '${baseRef}' and untracked files at ${cwd}.\n` +
+      `You are an expert code reviewer. Inspect the diff produced by \`git diff ${baseRef}\` (this covers committed and uncommitted changes) plus any untracked files at ${cwd}.\n` +
       (absPlanPath
         ? `Compare the implementation against the plan contract at ${absPlanPath}. Any file modified or feature added outside the plan contract counts as over-reach (severity: major unless harmful, then critical).\n`
         : '') +

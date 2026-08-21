@@ -101,12 +101,18 @@ its real path once it is the one being kept.
 |---|---|---|
 | `plan` | Expand a task into a detailed implementation plan file | [reference/plan.md](reference/plan.md) |
 | `implement` | Implement a plan file in place (edits the working tree, runs real gates) | [reference/implement.md](reference/implement.md) |
-| `review` | Review the working-tree diff (or a plan) against a plan contract | [reference/review.md](reference/review.md) |
+| `review` | Review a diff (working tree, or any commit range via `--base`) or a plan against a plan contract | [reference/review.md](reference/review.md) |
 | `subagent` | Delegate a self-contained task to another model | [reference/subagent.md](reference/subagent.md) |
 | `image-gen` | Generate a raster image via a model seat (codex, agy, or grok backend) | [reference/image-gen.md](reference/image-gen.md) |
 | `runs` | Monitor and inspect execution runs | — |
 | `quota` | Show backend quota and reset times (grok, agy, codex, claude) | — |
 | `models` | List every model seat in the registry (slug, efforts, image format) | — |
+
+**Where the answer lands differs per command.** `plan`, `review` and `image-gen`
+require `--out` and print only a verdict/path line. `subagent` and `implement`
+have no `--out` at all; they print the delegate's answer straight to stdout.
+`aibridge subagent --out foo.md` dies with `No flag registered for --out`
+(exit 2), so redirect if you want a subagent answer in a file.
 
 ## Routing
 
