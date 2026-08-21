@@ -21,7 +21,8 @@ Other seats fail fast with a list of capable models.
 
 - `--out` is required and its extension must match the seat's format above
   (`.png` for any `--transparent` run). A mismatch is rejected before anything
-  runs. The file holds the model's own bytes verbatim.
+  runs. The file holds the model's own bytes verbatim, except on a
+  chroma-keyed `--transparent` run, which writes the locally keyed PNG.
 - **Render into the asset's real home** (`public/icons/settings.png`) when the
   project keeps it. Drafts go to `.aibridge/`; see [SKILL.md](../SKILL.md).
 - `--aspect-ratio N:M` sets geometry. Exact pixels are whatever the model

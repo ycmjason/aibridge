@@ -42,12 +42,13 @@ produce artifacts worth keeping and re-reading, so they take `--out` and keep
 stdout to a verdict line. `subagent` returns an answer you consume immediately,
 and `implement`'s output IS the working tree.
 
-**Verification is the CLI's job, not yours.** Backends fail in ways that look
-like success: an agy model with no quota returns an empty answer and exit 0;
+**The CLI catches fake successes, not bad work.** Backends fail in ways that
+look like success: an agy model with no quota returns an empty answer and exit 0;
 codex sometimes draws a tiny image in code instead of rendering one. So a
 too-small render is rejected as fake, an empty answer is an error, and an
 `implement` that changed nothing exits 1. A review with no report file fails as
-well, because a verdict without evidence is not a review.
+well, because a verdict without evidence is not a review. None of that judges
+the work itself, which is why you still re-run the real gates on a diff.
 
 **Chroma keying is a fallback, not a feature.** Only codex renders true alpha.
 On the JPEG seats aibridge asks for a flat backdrop and removes it locally,

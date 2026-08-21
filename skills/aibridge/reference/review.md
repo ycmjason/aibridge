@@ -9,7 +9,7 @@ to a FILE. stdout is one verdict line plus paths.
 aibridge review --model <slug> --out <file> [options]
   --model <slug>       reviewer model (required, e.g. xai-grok/grok-4.6)
   --plan <file>        plan contract; over-reach against it is a finding
-  --base <ref>         git ref or range to diff (default: HEAD, working tree only)
+  --base <ref>         any git ref or range; the default HEAD is the working tree
   --out <file>         full report destination (required)
   --timeout <secs>     max seconds (default: 1200)
   --no-preflight       skip the quota preflight

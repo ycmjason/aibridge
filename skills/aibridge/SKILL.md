@@ -74,7 +74,8 @@ Backing CLIs must be on `PATH` and authed: `grok`, `agy` (Antigravity), `codex`,
   `.aibridge/` under the cwd.
 - Name files by topic. Promote a draft to its real path once it is the keeper.
 - Once per session, before the first write: `git check-ignore -q .aibridge/`
-  (keep the trailing slash). Non-zero means tell the user to add `.aibridge/` to
+  (keep the trailing slash, or the check misses a dir-only rule while the
+  directory does not exist yet). Non-zero means tell the user to add `.aibridge/` to
   `.gitignore`, and offer to do it.
 - An explicit path from the user wins over all of this.
 
@@ -105,8 +106,9 @@ answer to stdout, and `subagent --out foo.md` exits 2 with
    - an image, icon or graphic to make → `image-gen`;
    - a self-contained task, cross-model second opinion, or red-team → `subagent`;
    - sizeable or risky implementation work → `plan` → *you read, edit and
-     approve the plan file* → `implement` → `review --plan <file>`. On a clean
-     tree, `review --plan` gates the plan before any code is written.
+     approve the plan file* → `implement` → `review --plan <file>`. For
+     high-risk designs only, add a gate before any code is written:
+     `review --plan` on a clean tree.
 
    If genuinely ambiguous, show the table above and ask.
 3. **Unsure of the current flags?** Run `aibridge <command> --help`.
