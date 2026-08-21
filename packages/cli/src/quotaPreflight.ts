@@ -141,7 +141,10 @@ export function renderPreflightRefusal(
   verdict: { kind: 'auth' | 'quota'; message: string; resetAt: string | undefined },
 ): string {
   if (verdict.kind === 'auth') {
-    return `aibridge ${cmd}: refusing — ${verdict.message}. Running with --no-preflight would only send the delegate in unauthenticated. Or use a different --model.`;
+    // "the delegate" was wrong for image-gen, which has no delegate — the grok
+    // seat is a direct API call. Verified: --no-preflight there just fails at
+    // the render with exit 1.
+    return `aibridge ${cmd}: refusing — ${verdict.message}. Running with --no-preflight would only fail unauthenticated later. Or use a different --model.`;
   }
   const resetClause = verdict.resetAt ? ` Resets ${formatReset(verdict.resetAt)}.` : '';
   // The claude fallback is delegation-only advice: no claude seat renders images.

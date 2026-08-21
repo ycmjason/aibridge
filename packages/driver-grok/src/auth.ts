@@ -67,7 +67,7 @@ export function readGrokAuth(): GrokAuthRecord {
 }
 
 /** True when expiresAt is parseable and within EXPIRY_SKEW_MS of now (or already past). Missing/unparseable → false. */
-export function isGrokAuthExpired(auth: GrokAuthRecord): boolean {
+function isGrokAuthExpired(auth: GrokAuthRecord): boolean {
   if (auth.expiresAt === undefined) return false;
   const ms = Date.parse(auth.expiresAt);
   if (Number.isNaN(ms)) return false;

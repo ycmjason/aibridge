@@ -8,7 +8,7 @@ matters even if you only hand the prompt back.
 ```bash
 aibridge image-gen --model <slug> --out <file.png> "<full prompt — see Part B>" \
   [--aspect-ratio 16:9] [--image ref.png] [--transparent] \
-  [--timeout 600] [--json]
+  [--timeout 600] [--no-preflight] [--json]
 ```
 
 `--model` is required and uses the **same canonical slugs as every other command**
@@ -50,6 +50,10 @@ Notes:
   pixels.
 - `--image` attaches reference image(s) (comma-separated paths) — every seat
   routes them to its edit path. See **Reference images** below.
+- `--no-preflight` skips the backend quota check. It is on by default: an
+  exhausted seat refuses with exit 3 and names the other image seats, rather
+  than spending a paid render to find out. Every argument check runs before it,
+  so bad flags still fail with no network call.
 - `--json` prints `{ out, bytes, width, height, aspectRatio, model, backend, transparency, real }`.
 
 ### Reference images (`--image`)
