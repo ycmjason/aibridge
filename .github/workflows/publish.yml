@@ -138,6 +138,29 @@ jobs:
           #   repo ycmjason/aibridge, workflow publish.yml
           # Subsequent version bumps on main publish automatically via this job.
           set -euo pipefail
+
+          # `pnpm publish` returning 0 means npm accepted the PUT, NOT that the
+          # version is installable: npm stages a publish first, and the version
+          # 404s until it finalises (observed: ~4 minutes for one package while
+          # its siblings were already live). Publishing in dependency order only
+          # protects consumers if each version is actually resolvable before the
+          # package that pins it goes out, so wait for it here. On timeout, fail
+          # loudly rather than publish a dependent against a version nobody can
+          # install; re-running the job skips whatever already landed.
+          wait_for_version() {
+            local name="$1" version="$2" attempts=30
+            echo "waiting for $name@$version to be resolvable..."
+            for i in $(seq 1 "$attempts"); do
+              if npm view "$name@$version" version >/dev/null 2>&1; then
+                echo "verified $name@$version is resolvable (attempt $i)"
+                return 0
+              fi
+              sleep 10
+            done
+            echo "::error::$name@$version was published but is still not resolvable after $((attempts * 10))s. npm is probably still staging it; re-run this job once 'npm view $name@$version' succeeds."
+            return 1
+          }
+
           for pkg in proc driver-agy driver-grok driver-codex driver-claude cli; do
             dir="packages/$pkg"
             name="$(node -p "require('./$dir/package.json').name")"
@@ -170,6 +193,7 @@ jobs:
               if echo "$ver_info" | grep -q "E404"; then
                 echo "publish $name@$version"
                 (cd "$dir" && pnpm publish --provenance --access public --no-git-checks)
+                wait_for_version "$name" "$version"
               else
                 echo "Error checking $name@$version on npm: $ver_info"
                 exit 1
