@@ -17,9 +17,10 @@ aibridge image-gen --model <slug> --out <file.png> "<full prompt — see part B>
 | `google-antigravity/gemini-3.7-flash` | Antigravity CLI (`agy`) | JPEG |
 | `xai-grok/grok-4.6` | `api.x.ai` directly, on `~/.grok/auth.json` | JPEG |
 
-Other seats fail fast with a list of capable models. The grok seat does not need
-`grok` on `PATH` to render; the CLI is spawned only to refresh a near-expired
-token, so `grok login` is still what sets the seat up.
+Other seats fail fast with a list of capable models. The grok seat renders
+without `grok` on `PATH`; the CLI is spawned only to refresh the token, before a
+request when `expires_at` is close and again as a backstop if one comes back
+401. `grok login` is still what sets the seat up.
 
 - `--out` is required and its extension must match the seat's format above
   (`.png` for any `--transparent` run). A mismatch is rejected before anything
