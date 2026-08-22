@@ -115,8 +115,10 @@ answer to stdout, and `subagent --out foo.md` exits 2 with
 
 ## Model seats
 
-`--model` is required everywhere; nothing is chosen for you. Starting points,
-not benchmarks:
+`--model` is required on every command that spends a delegate (`plan`,
+`implement`, `review`, `subagent`, `image-gen`); nothing is chosen for you.
+`quota`, `models` and `runs` take no `--model`. Starting points, not
+benchmarks:
 
 | slug | plan | implement | review | image-gen |
 |---|---|---|---|---|
