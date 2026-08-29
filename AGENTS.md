@@ -132,9 +132,3 @@ This repo's remote is **`git@github.com:ycmjason/aibridge.git`** (branch `main`)
 **After any meaningful change, commit and push — you do not need to ask.** Keep commits small and messages clear.
 
 - **The global skill install auto-refreshes on commit.** A `post-commit` hook re-runs `pnpm skill:install` (backgrounded, logged to `/tmp/aibridge-skill-install.log`) whenever a commit touches `skills/aibridge/`; run it manually to sync uncommitted edits. Hooks are wired on `pnpm install` via the `prepare` script: a `pre-commit` hook runs `biome check` on staged files, and a `pre-push` hook runs `pnpm typecheck`.
-
-End commit messages with a `Co-Authored-By` trailer naming the agent/model that did the work, e.g.:
-
-```
-Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>
-```
