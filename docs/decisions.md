@@ -1,6 +1,7 @@
-# Architecture & decisions
+# Architecture decisions
 
-> Working log since 2026-06-08. Operational backend facts live in [`backends.md`](backends.md); current dev docs in [`AGENTS.md`](../AGENTS.md).
+> Decision log since 2026-06-08. See [`backends.md`](backends.md) for runtime
+> facts and [`AGENTS.md`](../AGENTS.md) for current development instructions.
 
 ## Active decisions
 

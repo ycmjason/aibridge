@@ -1,7 +1,7 @@
 # review — cross-model review of a diff or a plan
 
-A reviewer model inspects a diff against a plan contract and writes the report
-to a FILE. stdout is one verdict line plus paths.
+A reviewer inspects a diff, optionally against a plan contract, and writes its
+report to a file. Standard output contains only the verdict and paths.
 
 ## Usage
 
@@ -32,19 +32,17 @@ aibridge review --model xai-grok/grok-4.6 --base main \
   --plan .aibridge/plan.md --out .aibridge/review.md
 ```
 
-Reviewing commits is the normal end-of-session case. Never copy a diff into a
-file and hand it to `subagent`; that is what `--base` is for. Uncommitted work
-on top is included unless the range pins both ends.
+Use `--base` to review committed work. Do not copy a diff into a file for
+`subagent`. Uncommitted changes are included unless the range fixes both ends.
 
 ## Modes (detected before any model spend)
 
-1. **Diff review** — anything differs from `--base`, committed or not, or
-   untracked files exist. With `--plan`, any change the contract never asked for
-   is over-reach: major, or critical if harmful.
-2. **Plan review** — nothing differs from `--base` and `--plan` is given.
+1. **Diff review:** changes or untracked files exist relative to `--base`. With
+   `--plan`, unrequested changes count as over-reach.
+2. **Plan review:** nothing differs from `--base` and `--plan` is given.
    Reviews the plan for soundness, edge cases, safety, feasibility. Use it as a
    pre-implementation gate on high-risk designs.
-3. Nothing differs and no `--plan` → `nothing to review`, exit 2.
+3. **No input:** nothing differs and no `--plan` is given. Exits 2.
 
 ## Output & exit codes
 

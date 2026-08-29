@@ -3,7 +3,7 @@
 
   # aibridge
 
-  **Let your coding agent drive the other AIs on your machine.** Cross-provider agent-to-agent delegation — plan, implement, review, red-team, and generate images across Grok, Gemini, Codex & Claude through the CLIs you already have. No API keys.
+  **Let your coding agent use the other AI CLIs on your machine.** Plan, implement, review, red-team, and generate images with Grok, Gemini, Codex, and Claude. No API keys.
 
   [![skills.sh](https://skills.sh/b/ycmjason/aibridge)](https://skills.sh/ycmjason/aibridge)
   [![npm](https://img.shields.io/npm/v/%40aibridge%2Fcli)](https://www.npmjs.com/package/@aibridge/cli)
@@ -15,38 +15,42 @@
 
 ---
 
-Your agent is one model, from one provider. Your machine probably has several more sitting behind CLIs you already use — `grok`, `agy` (Antigravity), `codex`, `claude`. **aibridge** turns them into seats your agent can drive: a planner that studies your repo, an implementer that edits it and runs your real tests, a reviewer from a *different* model family that cross-checks the diff against the plan, concurrent one-shot delegates — and capabilities your agent's own provider may not offer at all, like real image generation (Codex, Antigravity, or Grok seats).
+Your coding agent uses one model. Your machine may already have others available
+through `grok`, `agy` (Antigravity), `codex`, or `claude`. **aibridge** lets your
+agent use those models as planners, implementers, reviewers, one-shot delegates,
+and image generators. Each model runs through its existing CLI login.
 
 ## Install
 
-One step — install the skill into your agent(s):
+Install the skill into your agent:
 
 ```bash
 npx skills add ycmjason/aibridge
 ```
 
-That's it. The skill runs the CLI on demand via `npx -y @aibridge/cli` — nothing else to install. Ask your agent to "use aibridge", or try it yourself:
+The skill runs the CLI on demand with `npx -y @aibridge/cli`. Ask your agent to
+"use aibridge", or run a command directly:
 
 ```bash
 npx -y @aibridge/cli subagent --model xai-grok/grok-4.6 "summarize the architecture of this repo"
 ```
 
-<sup>Want the `aibridge` command on your PATH for manual use? `npm i -g @aibridge/cli` (optional).</sup>
+<sup>Optional: install `aibridge` on your PATH with `npm i -g @aibridge/cli`.</sup>
 
 ## Commands
 
 | Command | Use when |
 |---|---|
-| `aibridge plan --model xai-grok/grok-4.6 --out plan.md "<task>"` | You want a delegate model to study the repo and expand a task into a detailed, reviewable **plan file** before any code is written |
-| `aibridge implement --model google-antigravity/gemini-3.7-flash <plan.md>` | You have an approved plan file and want it executed in place — with your project's **real typecheck and tests** run until green |
-| `aibridge review --model xai-grok/grok-4.6 --out review.md [--plan <plan.md>]` | You want a **different model** to pressure-test a diff against the plan contract, where over-reach is a finding. `--base <ref>` reviews any commit range, not just the working tree. On a clean tree it reviews the plan itself |
-| `aibridge subagent --model xai-grok/grok-4.6 "<task>"` | A self-contained task deserves a concurrent delegate, a cross-model second opinion, or a red-team pass |
-| `aibridge image-gen --model openai-codex/gpt-5.6-sol --out out.png "<prompt>"` | You need a real raster image — on a Codex, Antigravity, or Grok seat, with render verification |
-| `aibridge models [--json]` | You need the exact facts for every registered model seat (accepted efforts, image format, pinned model ID) |
-| `aibridge quota` | Two-second check of every backend's remaining quota before you pipeline work |
-| `aibridge runs` | Inspect or watch past delegation runs (`~/.aibridge/runs`) |
+| `aibridge plan --model xai-grok/grok-4.6 --out plan.md "<task>"` | Study the repo and write a detailed plan file |
+| `aibridge implement --model google-antigravity/gemini-3.7-flash <plan.md>` | Execute an approved plan and run the project's checks |
+| `aibridge review --model xai-grok/grok-4.6 --out review.md [--plan <plan.md>] [--base <ref>]` | Review a diff or, on a clean tree, a plan |
+| `aibridge subagent --model xai-grok/grok-4.6 "<task>"` | Delegate a self-contained task or request a second opinion |
+| `aibridge image-gen --model openai-codex/gpt-5.6-sol --out out.png "<prompt>"` | Generate and verify a raster image |
+| `aibridge models [--json]` | List registered models and their capabilities |
+| `aibridge quota` | Show quota remaining for every backend |
+| `aibridge runs` | Inspect or watch run logs in `~/.aibridge/runs` |
 
-The three verbs compose into an orchestrator-driven loop your agent stays in charge of:
+Use `plan`, `implement`, and `review` as one controlled workflow:
 
 ```
 aibridge plan --model xai-grok/grok-4.6 --out plan.md "add rate limiting to the API"   # delegate writes plan.md
@@ -55,21 +59,26 @@ aibridge implement --model google-antigravity/gemini-3.7-flash plan.md          
 aibridge review --model xai-grok/grok-4.6 --out review.md --plan plan.md               # a third seat cross-checks the diff
 ```
 
-Plan files — not their contents — travel between stages, so the loop is nearly free on your agent's context.
+Only the plan path passes between stages, which keeps the plan out of the
+orchestrator's conversation context.
 
 ## How it works
 
-- **The skill carries judgment; the CLI owns execution.** The skill teaches your agent prompt-craft, seat selection, and when to gate; the CLI deterministically drives the backing CLIs, captures their output, verifies results (a "generated image" under 100 KB is a code-drawn fake, an empty answer is a quota death), and logs every run.
-- **Seats stay cross-model by default.** Grok plans and reviews, Gemini implements — a model never reviews its own diff, and independent eyes catch what shared blind spots miss.
-- **No API keys.** Delegation runs on the backing CLIs' existing logins, each spending its own quota. (The skill treats a backend that shares your agent's own quota pool as a last resort.)
-- **Models are canonical slugs**: `<vendor>-<cli>/<model>[-<effort>]` — e.g. `xai-grok/grok-4.6`, `google-antigravity/gemini-3.7-flash`, `openai-codex/gpt-5.6-sol-high`, `anthropic-claude/opus-5`. No aliases — not short ones, and not moving vendor aliases like `opus`: every seat pins an exact model version. `aibridge <command> --help` lists every seat.
+- **The skill decides; the CLI executes.** The skill covers routing and prompt
+  design. The CLI starts the backend, captures output, validates known failure
+  modes, and logs the run.
+- **Review stays cross-model.** The recommended workflow uses Grok to plan and
+  review, and Gemini to implement.
+- **Existing logins, no API keys.** Each backend uses its CLI login and quota.
+- **Every model has a canonical slug:**
+  `<vendor>-<cli>/<model>[-<effort>]`, such as `xai-grok/grok-4.6` or
+  `openai-codex/gpt-5.6-sol-high`. There are no aliases. Run
+  `aibridge <command> --help` for the current list.
 
 ## Tell your agent when to reach for it
 
-aibridge doesn't decide when to delegate — your agent does, and left alone it will
-mostly keep the work for itself. Put the routing rule in whatever instructions file
-your agent already reads at the start of every session (`AGENTS.md`, `CLAUDE.md`,
-`.cursorrules`, …). Something like:
+aibridge does not decide when to delegate. Put a routing rule in the instructions
+file your agent reads (`AGENTS.md`, `CLAUDE.md`, `.cursorrules`, and so on):
 
 ```markdown
 ## Delegation gate — decide before you implement
@@ -91,21 +100,32 @@ Delegated work is yours to verify: re-run the real gates before trusting a diff.
 Prefer a reviewer from a different model family than whoever implemented.
 ```
 
-Tune the seats and thresholds to your own quotas. The value is that the decision is
-explicit and made *before* the work starts, rather than rationalised afterwards.
+Adjust the models and thresholds for your quotas. Make the routing decision before
+implementation starts.
 
 ## Requirements
 
 - **Node ≥ 24.11**
-- The backing CLIs you want to use, on `PATH` and authed: [`grok`](https://github.com/superagent-ai/grok-cli), `agy` (Antigravity), [`codex`](https://github.com/openai/codex), [`claude`](https://claude.com/claude-code) — any subset works; commands fail fast with install hints for missing ones.
+- At least one authenticated backend CLI on `PATH`:
+  [`grok`](https://github.com/superagent-ai/grok-cli), `agy` (Antigravity),
+  [`codex`](https://github.com/openai/codex), or
+  [`claude`](https://claude.com/claude-code). Missing CLIs produce install hints.
 
 ## Packages
 
-Everything is published under the [`@aibridge`](https://www.npmjs.com/org/aibridge) scope: [`@aibridge/cli`](https://www.npmjs.com/package/@aibridge/cli) (the command), `@aibridge/proc` (spawn/capture), and one driver per backing CLI — `@aibridge/driver-agy`, `@aibridge/driver-grok`, `@aibridge/driver-codex`, `@aibridge/driver-claude` — reusable if you want to drive a single CLI from your own code.
+Packages use the [`@aibridge`](https://www.npmjs.com/org/aibridge) scope:
+[`@aibridge/cli`](https://www.npmjs.com/package/@aibridge/cli),
+`@aibridge/proc`, and one reusable driver for each backend:
+`driver-agy`, `driver-grok`, `driver-codex`, and `driver-claude`.
 
 ## Security
 
-aibridge executes real delegation — that's the product, and security scanners rightly notice: backing CLIs read/write files and run shell in tools mode, **at the same trust level as the agent you already run**. Nothing gains more access than you granted your agent and those CLIs when you installed them. Task content goes to the delegate's provider (use `--no-tools` for untrusted input — reasoning only, no file/shell access). All packages publish from this public repo via OIDC with [SLSA provenance](https://www.npmjs.com/package/@aibridge/cli), with no install-time scripts.
+In tools mode, delegates can read files, write files, and run shell commands with
+the same access as the invoking agent. Task content is sent to the selected
+provider. Use `--no-tools` for untrusted input. Packages are published from this
+public repository through OIDC with
+[SLSA provenance](https://www.npmjs.com/package/@aibridge/cli) and no install-time
+scripts.
 
 ## Contributing & development
 

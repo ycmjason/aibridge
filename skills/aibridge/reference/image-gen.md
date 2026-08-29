@@ -1,7 +1,7 @@
 # image-gen — generate an image via a model seat
 
-Part A is how to call it, part B is how to write the prompt. B decides the
-quality, and matters even when you only hand the prompt back.
+Part A covers the command. Part B covers prompt design, which applies even when
+you only need to return a prompt.
 
 ## A. Calling it
 
@@ -84,8 +84,24 @@ reference carries identity, framing and style.
 > no gradient.`
 
 Locked: ratio, background hex, subject, brand orange, the no-text/border/gradient
-constraints. Free: fan angle, shadow softness, spacing.
+constraints. Free: fan angle, shadow softness, spacing. On a `--transparent` run,
+drop the background sentence and the drop shadow: a soft shadow has no flat
+backdrop colour to key against and survives as a pale halo.
 
-For a `--transparent` run, drop the background sentence and the drop shadow. A
-soft shadow has no flat backdrop colour to key against and survives as a pale
-halo.
+### Edits and retries
+
+1. **Describe the desired result.** State what the finished image contains,
+   rather than only what to remove or correct.
+2. **Name the visual criterion first.** Phrases such as "the near plane" or
+   "everyone waiting" often work better than an object inventory. Enumerate
+   objects only if the criterion fails.
+3. **Rewrite failed prompts; do not append to them.** Simplify the request. For
+   a near-correct render, make the next instruction as short as possible.
+4. **Change strategy after the same failure occurs twice.** Try a different
+   reference, composition, or fresh generation instead of another rewording.
+5. **Retry from the original reference.** Chaining generated outputs causes
+   unrequested details to drift.
+6. **Check your terminology.** A near-miss word can produce a coherent image of
+   the wrong concept.
+7. **Verify unchanged details in context.** Inspect the asset in its final
+   placement and, when relevant, in motion.

@@ -1,8 +1,8 @@
 # plan — write a detailed implementation plan file
 
-A planner model studies the real codebase and writes an expanded plan to a FILE.
-Stage one of **`plan` → you read/approve → `implement` → `review`**. Pass the
-plan's PATH between stages, never its contents.
+A planner studies the codebase and writes a detailed plan to a file. This is the
+first step in **`plan` → read and approve → `implement` → `review`**. Pass the
+file path—not its contents—between stages.
 
 Use it for sizeable or risky work. For small, fully-specified chunks use
 `subagent`, or just do them.
@@ -21,12 +21,12 @@ The positional argument is the task prompt, not a file path.
 
 ## Writing the task prompt
 
-The planner has tools and reads the code itself, so do NOT paste file contents.
-Give it what it cannot infer:
+The planner can read the code. Do not paste file contents. Provide only what it
+cannot infer:
 
 - the goal and the user-visible behaviour change;
 - hard constraints (APIs to keep stable, zero-dep rules, style conventions);
-- scope boundaries and NON-goals (the single best over-reach preventer);
+- scope boundaries and non-goals;
 - architectural calls you have already made, since the planner details your
   design rather than overruling it;
 - starting files, if the repo is large.
@@ -53,7 +53,7 @@ Exit 3: quota preflight refusal.
 
 ## After it returns
 
-1. **Read the plan file.** An unread plan is an unreviewed contract.
+1. **Read the plan file.** It is the implementation contract.
 2. Resolve every open question: edit the file directly, or re-run `plan` with a
    sharpened prompt.
 3. High-risk design? Gate it first:

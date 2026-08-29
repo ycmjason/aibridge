@@ -1,9 +1,8 @@
 # subagent — delegate a task to another model
 
-One-shot delegation: another provider's model, working concurrently, with
-different training and blind spots. Use it for cross-model second opinions,
-red-teaming, long-context analysis, and any well-defined self-contained chunk.
-Default to delegating such work.
+Delegate one self-contained task to another provider's model. Use this for a
+second opinion, red-team review, long-context analysis, or a clearly specified
+piece of work.
 
 ## Usage
 
@@ -27,12 +26,12 @@ Effort suffixes work on seats that support them
 
 ## Writing the prompt
 
-Write for a capable stranger:
+Write for a capable model with no conversation context:
 
 1. **Self-contained.** Paste the code or spec to act on. Never reference "what
    we discussed".
-2. **Specify approach, not code.** Design, interfaces, files to touch,
-   constraints.
+2. **Specify the approach.** Include design decisions, interfaces, files, and
+   constraints without prescribing every line of code.
 3. **State the constraints.** Run the real typecheck and tests until green;
    write code only, no commit/push/deploy/delete; reply with a short summary.
 4. **Verify the result.** Re-run the real gates yourself.

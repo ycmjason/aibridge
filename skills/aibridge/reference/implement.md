@@ -1,10 +1,10 @@
 # implement — execute a plan file
 
-An implementer model edits the working tree in place and runs the project's real
-gates. Stage three of **`plan` → you read/approve → `implement` → `review`**.
+An implementer edits the working tree and runs the project's checks. This is the
+third step in **`plan` → read and approve → `implement` → `review`**.
 
-Only run it on a plan you have READ and approved. The implementer is a pure
-do-er: if the plan needs vision to execute correctly, fix the plan.
+Run this only after reading and approving the plan. If the implementer would
+need to make a product or architecture decision, fix the plan first.
 
 ## Usage
 
@@ -17,9 +17,9 @@ aibridge implement --model <slug> <plan-file>
 
 ## Behaviour
 
-The delegate runs with full tools at the repo root, prompted to implement the
-plan EXACTLY: edit only the files it names, run the real typecheck and test
-gates until green, never commit, push, or delete unrelated files.
+The delegate runs with full tools at the repository root. It must follow the
+plan, edit only named files, run the specified checks until they pass, and avoid
+commits, pushes, and unrelated deletions.
 
 ## Output
 
@@ -37,8 +37,7 @@ args or missing plan file. Exit 3: quota preflight refusal.
 
 ## After it returns
 
-1. The summary's "gates green" claim is delegate-reported. **Re-run the real
-   gates yourself.**
+1. **Re-run the checks yourself.** The summary reports the delegate's claim.
 2. Then `aibridge review --model xai-grok/grok-4.6 --plan <plan-file> --out .aibridge/review.md`.
 
 ## Gotchas
@@ -46,7 +45,7 @@ args or missing plan file. Exit 3: quota preflight refusal.
 - Keep the implementer a different model family from the reviewer. The
   recommended seats (gemini implements, grok reviews) comply; if you override
   one, check the other.
-- agy quota is shared per model GROUP: two concurrent agy-heavy implements drain
+- agy quota is shared by model group. Two concurrent agy-heavy runs drain
   the same window. Run `aibridge quota` before pipelining.
 - The timeout covers the whole run including gate-fixing loops. Raise it for big
   plans rather than letting a near-done run get killed.

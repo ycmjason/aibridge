@@ -1,42 +1,59 @@
 # aibridge — AGENTS.md
 
-`aibridge` is a TypeScript CLI that bridges tasks to **other AI CLIs** already installed and authed on this machine. Workspace driver packages (`proc`, `agy`, `grok`, `codex`, `claude`) and app package (`cli`) are published to npm under `@aibridge/*`. The codebase is organized as a pnpm monorepo under `packages/*`:
+`aibridge` is a TypeScript CLI for delegating work to authenticated AI CLIs on
+the same machine. It is a pnpm monorepo under `packages/*`. The CLI, process
+utilities, and backend drivers are published under `@aibridge/*`.
 
-- **`node packages/cli/src/cli.ts plan`** (or installed **`aibridge plan`**) → a delegate model studies the repo and writes a detailed implementation plan to a FILE (recommended planner **`xai-grok/grok-4.6`**, own xAI login — pass `--model` and `--out` explicitly). The orchestrator reads/edits/approves it — plans are passed between stages as paths, not content.
-- **`node packages/cli/src/cli.ts implement`** → a delegate model implements a plan file in place, running the project's real typecheck/tests (recommended implementers **`xai-grok/grok-4.5`** — the grok tier that executes a detailed plan blind — or **`google-antigravity/gemini-3.7-flash`** via `agy`, own Antigravity login; pass `--model` explicitly). Prints the delegate's summary + `git diff --stat`.
-- **`node packages/cli/src/cli.ts review`** → a delegate model reviews a diff against a base ref (`--base` is passed straight to `git diff`, so already-committed work and ranges review fine; the default `HEAD` is working-tree-only) — with `--plan <file>` as the contract, over-reach is a finding — writing the full report to a file (pass `--model` and `--out` explicitly); stdout is just the verdict line (`PASS` / `FINDINGS: …`) + path. With a clean tree and `--plan`, it reviews the plan itself (pre-implementation gate).
-- **`node packages/cli/src/cli.ts subagent`** → delegate a self-contained task to another model through the canonical registry (pass `--model` explicitly): recommended **`xai-grok/grok-4.6`** via the **Grok CLI** (own xAI login; ~30 req/min + ~1k msgs/day caps, one run at a time); **`google-antigravity/gemini-3.7-flash`** via the **Antigravity CLI** (`agy`, own Antigravity login) when grok is capped/dead; **`openai-codex/gpt-5.6-sol`** via the **Codex CLI** (own ChatGPT login); **`anthropic-claude/fable-5`** / **`opus-5`** (1M context) / **`sonnet-5`** / **`haiku-4-5`** via the **claude CLI** (bills the claude CLI's subscription — last resort for agents whose own budget that is).
-- **`node packages/cli/src/cli.ts image-gen`** → image generation via a model seat (pass `--model` explicitly; recommended `openai-codex/gpt-5.6-sol`; `google-antigravity/gemini-3.7-flash`; `xai-grok/grok-4.6`). `--transparent` works on every image seat — native alpha on codex, local `#00ff00` chroma keying on the JPEG-only seats.
+## Delegation commands
 
-Model slugs are canonical `<vendor>-<cli>/<model>[-<effort>]` (e.g. `openai-codex/gpt-5.6-sol-high`); there are NO short aliases — always pass the full slug. Effort in the slug maps to each backend's own knob; an un-suffixed slug uses the backend's default.
+- **`plan`** — a delegate studies the repository and writes a detailed plan to
+  a file. Use `xai-grok/grok-4.6`; pass `--model` and `--out`. The orchestrator
+  reads, edits, and approves the plan. Pass its path—not its contents—to later
+  stages.
+- **`implement`** — a delegate executes a plan in place and runs the project's
+  checks. Use `xai-grok/grok-4.5` for literal plan execution or
+  `google-antigravity/gemini-3.7-flash` through `agy`. Pass `--model`. Output is
+  the delegate summary followed by `git diff --stat`.
+- **`review`** — a delegate reviews `git diff <base>` and writes a report. The
+  default base, `HEAD`, covers uncommitted work; refs and ranges cover committed
+  work. With `--plan`, unrequested changes are findings. On a clean tree,
+  `--plan` reviews the plan itself. Pass `--model` and `--out`. Standard output
+  contains only the verdict and path.
+- **`subagent`** — delegate one self-contained task. Pass a canonical model slug
+  with `--model`. Prefer `xai-grok/grok-4.6`; use
+  `google-antigravity/gemini-3.7-flash` when Grok is unavailable, or
+  `openai-codex/gpt-5.6-sol` as another independent seat. Claude seats consume
+  the Claude CLI subscription and are a last resort for Claude-based agents.
+- **`image-gen`** — generate an image with `openai-codex/gpt-5.6-sol`,
+  `google-antigravity/gemini-3.7-flash`, or `xai-grok/grok-4.6`. Pass `--model`.
+  `--transparent` uses native alpha on Codex and local `#00ff00` chroma keying
+  on JPEG-only backends.
 
-It is the execution layer for the `aibridge` agent skill — one router skill with `plan` + `implement` + `review` + `subagent` + `image-gen` subskills (under [`skills/`](skills/), dispatched from `skills/aibridge/reference/`): the skill carries the *judgment / prompt-craft*, while the CLI on `PATH` (`@aibridge/cli`) owns the *brittle execution* — driving the external CLIs and verifying their output.
+Model slugs use `<vendor>-<cli>/<model>[-<effort>]`, for example
+`openai-codex/gpt-5.6-sol-high`. There are no short aliases. An effort suffix
+maps to the backend's native setting; an unsuffixed slug uses its default.
 
-## Working style — act as Jason's CTO (orchestrated three-verb flow)
+The agent skill under [`skills/`](skills/) owns routing and prompt design. The
+CLI (`@aibridge/cli`) owns backend execution and output validation.
 
-Jason's standing instruction (2026-07-02; flow reshaped 2026-07-24). In this
-repo you (the orchestrating agent) are the **CTO**, not a coder-with-helpers. The orchestrator drives
-each stage explicitly — `plan` → read/approve → `implement` → `review` — and
-the seats are:
+## Working style: act as Jason's CTO
 
-- **You (CTO / orchestrator)** — owns the architecture. Before ANY
-  delegation, design it properly: module boundaries, interfaces, data flow,
-  naming. The plan file is the contract — if a structural question is still
-  open, the design isn't done; answer it (with a `review --plan` gate for
-  large/risky designs) BEFORE `implement`. Never leave architectural calls as
-  "implementer's choice". The orchestrator reads the plan file between `plan` and
-  `implement` — that sign-off is the point of the split.
-- **Planner / reviewer (grok recommended)** — expands designs against the real
-  codebase (`plan`) and pressure-tests diffs (`review`). Keep the reviewer
-  cross-model from the implementer; treat findings as design input, not
-  friction.
-- **Implementer (gemini recommended)** — a pure do-er. It executes
-  fully-designed, self-contained plan files and does NOT need (and shouldn't
-  be asked to hold) the bigger vision. If a plan requires vision context to
-  implement correctly, the design work upstream was insufficient.
+The orchestrating agent owns architecture and drives each stage explicitly:
+`plan` → read and approve → `implement` → `review`.
 
-Corollary: architecture debt is CTO debt. When a slice ships fast and dirty,
-say so unprompted and propose the cleanup — don't wait to be asked.
+- **Orchestrator:** define module boundaries, interfaces, data flow, and naming
+  before delegation. The plan is the contract. Resolve every structural
+  question before `implement`; use `review --plan` for large or risky designs.
+  Never leave architecture to the implementer.
+- **Planner and reviewer:** expand the design against the repository and test
+  the resulting diff. Grok is recommended. The reviewer must use a different
+  model family from the implementer.
+- **Implementer:** execute a complete, self-contained plan. Gemini is
+  recommended. If implementation requires additional product or architecture
+  context, the plan is incomplete.
+
+Architecture debt belongs to the orchestrator. If a change ships with known
+debt, state it and propose the cleanup.
 
 ## Hard rules
 

@@ -1,11 +1,13 @@
 # @aibridge/driver-claude
 
-Anthropic Claude CLI driver for [aibridge](https://github.com/ycmjason/aibridge): build print-mode invocations with effort mapping, probe availability, run delegated tasks, and read Claude subscription quota windows.
+Driver for the Claude CLI. It builds print-mode commands, maps effort levels,
+checks availability, runs delegated tasks, and reads subscription quota windows.
 
 ```ts
 import { probe, run, fetchClaudeQuota } from '@aibridge/driver-claude';
 ```
 
-Requires the `claude` CLI on `PATH` and authed. Part of the [aibridge](https://github.com/ycmjason/aibridge) monorepo — the agent skill + CLI that lets coding agents drive models from other providers.
+Requires an authenticated `claude` CLI on `PATH`. Part of the
+[aibridge](https://github.com/ycmjason/aibridge) monorepo.
 
 [MIT](https://github.com/ycmjason/aibridge/blob/main/LICENSE)

@@ -1,8 +1,7 @@
 # why — the reasoning behind the rules
 
-The other docs give rules without arguing for them. This one argues. Read it
-when a rule looks wrong for your case, so you can tell a bad fit from a
-guardrail you are about to walk through.
+This page explains rules that the command guides state without rationale. Read
+it when a rule appears unsuitable for your case.
 
 **Paths travel between stages, not contents.** A plan re-emitted into your
 context costs you the tokens the split was meant to save. `plan` writes a file,
