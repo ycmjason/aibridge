@@ -59,6 +59,10 @@ jobs:
                   console.error("cli bin must resolve to ./dist/cli.mjs in packed publish shape, got", a);
                   process.exit(1);
                 }
+                if (!fs.existsSync(require("path").join(require("path").dirname(path), "instructions", "SKILL.md"))) {
+                  console.error("cli package is missing canonical skill instructions");
+                  process.exit(1);
+                }
               }
               console.log("ok", pkg.name, pkg.version);
             ' "$tmp/$pkg/package/package.json"
@@ -70,6 +74,9 @@ jobs:
           npm install "$tmp"/aibridge-*.tgz
           ./node_modules/.bin/aibridge --version
           ./node_modules/.bin/aibridge --help
+          ./node_modules/.bin/aibridge skill plan > skill-plan.md
+          grep -F '# aibridge' skill-plan.md
+          grep -F '# plan — write a detailed implementation plan file' skill-plan.md
 
           node --input-type=module -e '
             const pkgs = ["proc", "driver-agy", "driver-grok", "driver-codex", "driver-claude", "cli"];

@@ -84,7 +84,16 @@ describe('stricli exit-code lock & routing', () => {
     const ctx = fakeCtx();
     await runCli(ctx, ['--help']);
     const output = ctx._stdout.join('');
-    for (const cmd of ['plan', 'implement', 'review', 'subagent', 'image-gen', 'runs', 'quota']) {
+    for (const cmd of [
+      'plan',
+      'implement',
+      'review',
+      'subagent',
+      'image-gen',
+      'runs',
+      'quota',
+      'skill',
+    ]) {
       expect(output).toContain(cmd);
     }
   });
