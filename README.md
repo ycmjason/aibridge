@@ -28,8 +28,10 @@ Install the skill into your agent:
 npx skills add ycmjason/aibridge
 ```
 
-The skill runs the CLI on demand with `npx -y @aibridge/cli`. Ask your agent to
-"use aibridge", or run a command directly:
+The installed skill is a small evergreen loader. It asks the latest CLI package
+for canonical instructions, then pins that exact version for the rest of the
+session. Routing guidance and executable behavior therefore update together.
+Ask your agent to "use aibridge", or run a command directly:
 
 ```bash
 npx -y @aibridge/cli subagent --model xai-grok/grok-4.6 "summarize the architecture of this repo"
@@ -49,6 +51,7 @@ npx -y @aibridge/cli subagent --model xai-grok/grok-4.6 "summarize the architect
 | `aibridge models [--json]` | List registered models and their capabilities |
 | `aibridge quota` | Show quota remaining for every backend |
 | `aibridge runs` | Inspect or watch run logs in `~/.aibridge/runs` |
+| `aibridge skill [topic]` | Print the canonical agent instructions bundled with this CLI version |
 
 Use `plan`, `implement`, and `review` as one controlled workflow:
 
@@ -64,9 +67,9 @@ orchestrator's conversation context.
 
 ## How it works
 
-- **The skill decides; the CLI executes.** The skill covers routing and prompt
-  design. The CLI starts the backend, captures output, validates known failure
-  modes, and logs the run.
+- **One package owns instructions and execution.** The installed skill only
+  bootstraps the latest package. That package supplies routing guidance, starts
+  the backend, validates known failure modes, and logs the run.
 - **Review stays cross-model.** The recommended workflow uses Grok to plan and
   review, and Gemini to implement.
 - **Existing logins, no API keys.** Each backend uses its CLI login and quota.

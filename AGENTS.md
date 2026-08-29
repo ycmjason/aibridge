@@ -4,53 +4,35 @@
 the same machine. It is a pnpm monorepo under `packages/*`. The CLI, process
 utilities, and backend drivers are published under `@aibridge/*`.
 
-## Delegation commands
+## Delegation workflow
 
-- **`plan`** — a delegate studies the repository and writes a detailed plan to
-  a file. Use `xai-grok/grok-4.6`; pass `--model` and `--out`. The orchestrator
-  reads, edits, and approves the plan. Pass its path—not its contents—to later
-  stages.
-- **`implement`** — a delegate executes a plan in place and runs the project's
-  checks. Use `xai-grok/grok-4.5` for literal plan execution or
-  `google-antigravity/gemini-3.7-flash` through `agy`. Pass `--model`. Output is
-  the delegate summary followed by `git diff --stat`.
-- **`review`** — a delegate reviews `git diff <base>` and writes a report. The
-  default base, `HEAD`, covers uncommitted work; refs and ranges cover committed
-  work. With `--plan`, unrequested changes are findings. On a clean tree,
-  `--plan` reviews the plan itself. Pass `--model` and `--out`. Standard output
-  contains only the verdict and path.
-- **`subagent`** — delegate one self-contained task. Pass a canonical model slug
-  with `--model`. Prefer `xai-grok/grok-4.6`; use
-  `google-antigravity/gemini-3.7-flash` when Grok is unavailable, or
-  `openai-codex/gpt-5.6-sol` as another independent seat. Claude seats consume
-  the Claude CLI subscription and are a last resort for Claude-based agents.
-- **`image-gen`** — generate an image with `openai-codex/gpt-5.6-sol`,
-  `google-antigravity/gemini-3.7-flash`, or `xai-grok/grok-4.6`. Pass `--model`.
-  `--transparent` uses native alpha on Codex and local `#00ff00` chroma keying
-  on JPEG-only backends.
+- Small edits may stay with the orchestrator.
+- Use `subagent` for a well-defined, self-contained task.
+- Use `plan` → read and approve → `implement` → `review` for sizeable or risky
+  implementation.
+- Keep the reviewer in a different model family from the implementer.
 
-Model slugs use `<vendor>-<cli>/<model>[-<effort>]`, for example
-`openai-codex/gpt-5.6-sol-high`. There are no short aliases. An effort suffix
-maps to the backend's native setting; an unsuffixed slug uses its default.
-
-The agent skill under [`skills/`](skills/) owns routing and prompt design. The
-CLI (`@aibridge/cli`) owns backend execution and output validation.
+The evergreen loader at [`skills/aibridge/SKILL.md`](skills/aibridge/SKILL.md)
+loads canonical routing and prompt guidance from the current CLI package. Do not
+duplicate model recommendations here. During repository development, run the
+source CLI directly with `node packages/cli/src/cli.ts`; do not test through the
+published package.
 
 ## Working style: act as Jason's CTO
 
-The orchestrating agent owns architecture and drives each stage explicitly:
-`plan` → read and approve → `implement` → `review`.
+The orchestrating agent owns architecture. For sizeable or risky implementation,
+it drives `plan` → read and approve → `implement` → `review`.
 
 - **Orchestrator:** define module boundaries, interfaces, data flow, and naming
   before delegation. The plan is the contract. Resolve every structural
   question before `implement`; use `review --plan` for large or risky designs.
-  Never leave architecture to the implementer.
+  Do not leave unresolved product or structural decisions to the implementer.
 - **Planner and reviewer:** expand the design against the repository and test
   the resulting diff. Grok is recommended. The reviewer must use a different
   model family from the implementer.
-- **Implementer:** execute a complete, self-contained plan. Gemini is
-  recommended. If implementation requires additional product or architecture
-  context, the plan is incomplete.
+- **Implementer:** execute a complete, self-contained plan. It may choose local
+  names, helper boundaries, and equivalent implementation mechanics. If it
+  needs product or structural direction, the plan is incomplete.
 
 Architecture debt belongs to the orchestrator. If a change ships with known
 debt, state it and propose the cleanup.
@@ -64,7 +46,8 @@ debt, state it and propose the cleanup.
 - **Published packages use real `dependencies`.** Dependencies use `workspace:*` / `catalog:` in workspace manifests and are rewritten to concrete versions on publish.
 - **Per-package `dist/` builds.** Each package builds to `dist/` via tsdown. `publishConfig` overrides exports and bin for published packages.
 - **Root stays `private: true`. Version bump = release trigger** for the OIDC publish workflow on `main`.
-- **Skill is prose-only.** The skill wraps the `aibridge` CLI on `PATH`.
+- **The installed skill is an evergreen prose-only loader.** Canonical skill
+  instructions ship in `@aibridge/cli`; executable logic remains in the CLI.
 - **`--out` goes to the asset's real home if the project keeps it** (e.g. an icon straight into `public/icons/`); otherwise `<repo root>/.aibridge/` — the sketchpad for plans, reviews, and draft images, in the repo the user is already in. Keep it gitignored (this repo does) and never commit its contents.
 
 ## Commands
@@ -82,7 +65,8 @@ debt, state it and propose the cleanup.
 | Subagent | `pnpm aibridge subagent --model xai-grok/grok-4.6 "<prompt>"` |
 | Models | `pnpm aibridge models [--json]` — list every model seat in the registry (efforts, image format, pinned backend model id) |
 | Monitor runs | `pnpm aibridge runs [--watch]` (logs in `~/.aibridge/runs`) |
-| Quota (all backends) | `pnpm aibridge quota [--json]` — grok weekly credit %, agy group windows (weekly+5h) & per-model, codex 5h/weekly, claude session/weekly. Check BEFORE delegating: agy quota is shared per model GROUP (all Gemini tiers drain together) |
+| Quota (all backends) | `pnpm aibridge quota [--json]` — inspect quota before a multi-stage pipeline; individual commands preflight automatically |
+| Skill instructions | `pnpm aibridge skill [plan|implement|review|subagent|image-gen|why]` |
 | Check / Type-check / Repo / Test | `pnpm check` · `pnpm typecheck` · `pnpm repojj:check` · `pnpm test` |
 
 ## Dev-flow
@@ -119,16 +103,17 @@ Full verified findings and per-command implementation recipes live in [`docs/`](
 - [`docs/decisions.md`](docs/decisions.md) — active decisions + one-liner history.
 - [`docs/backends.md`](docs/backends.md) — operational backend facts (agy workspace/TTY/quota, codex sandbox/redraw/schema, grok/claude caps).
 
-## Critical runtime gotchas (read before implementing the impls)
+## Runtime behavior
 
-- **`agy` stdout capture — no TTY workaround needed (re-verified agy 1.0.6).** An earlier note claimed `agy -p` only emits to a TTY and hangs when piped/redirected (Antigravity issue #76). Re-tested on agy 1.0.6 from this repo: **false here** — agy emits clean text to a piped, redirected, or fully-headless stdout (`runCaptured` in `@aibridge/proc`). See [`docs/backends.md`](docs/backends.md).
-- **Verify codex image renders.** A real gpt-image-2 PNG is hundreds of KB–MB; a code-drawn (PIL) substitute is tiny (~10–30 KB). Always check output file size (> ~100 KB) before declaring success; raw renders are cached under `~/.codex/generated_images/<uuid>/ig_*.png`.
-- **agy quota death shows up as an empty answer.** An exhausted model makes `agy -p` return an empty answer after ~6s (the CLI exits 0). Quota preflight is the guard: `preflightModel` refuses before spawning when agy snapshot says model group is exhausted.
+Backend-specific behavior belongs in [`docs/backends.md`](docs/backends.md) and
+must be enforced by drivers or tests where possible. Read that document before
+changing a driver, quota handling, output capture, or image generation.
 
 ## Git — commit & push anytime
 
 This repo's remote is **`git@github.com:ycmjason/aibridge.git`** (branch `main`).
 
-**After any meaningful change, commit and push — you do not need to ask.** Keep commits small and messages clear.
+Commit completed, meaningful changes without asking. Push only after the
+relevant checks pass. Keep commits small and messages clear.
 
 - **The global skill install auto-refreshes on commit.** A `post-commit` hook re-runs `pnpm skill:install` (backgrounded, logged to `/tmp/aibridge-skill-install.log`) whenever a commit touches `skills/aibridge/`; run it manually to sync uncommitted edits. Hooks are wired on `pnpm install` via the `prepare` script: a `pre-commit` hook runs `biome check` on staged files, and a `pre-push` hook runs `pnpm typecheck`.

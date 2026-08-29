@@ -5,6 +5,16 @@
 
 ## Active decisions
 
+- **The installed skill is an evergreen loader; the CLI package is canonical**
+  (2026-08-29). `skills/aibridge/SKILL.md` contains only trigger metadata and a
+  bootstrap command. It runs `npx -y @aibridge/cli@latest skill [topic]`. The
+  CLI emits instructions with an exact-version runner, and the agent must use
+  that runner for later commands. Canonical prose lives under
+  `packages/cli/instructions/` and ships in the npm tarball beside the matching
+  executable. This removes independently maintained runtime copies while
+  keeping the discovery skill evergreen. Repository development is the explicit
+  exception: use `node packages/cli/src/cli.ts` to test local source.
+
 - **Skill + CLI, not an MCP server.** The skill carries judgment/prompt-craft as on-demand context; the CLI owns brittle execution. MCP's ~60s default tool timeout fights multi-minute delegations, and cross-client reuse wasn't needed. If another surface ever needs these tools, wrap this same CLI in a thin MCP server.
 - **Two-step distribution** (2026-07-24): `@aibridge/*` packages on npm + a prose-only skill that runs `npx -y @aibridge/cli` zero-install. Transparency (users see exactly what's installed), standard skill-wraps-a-CLI pattern, and it deleted the entire committed-bundle gate apparatus.
 - **OIDC version-triggered publishing** (modeled on fishballapp/acme): bump a package version, merge to main → `publish.yml` verify job (full gates + pack/consumer smoke) then OIDC publish with provenance, skip-if-exists. First-ever publish of a NEW package needs a one-time manual bootstrap + Trusted Publisher config.
