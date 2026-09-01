@@ -87,7 +87,7 @@ detailed the plan must be.
 rather than guess.**
 
 Also registered: `openai-codex/gpt-5.6-terra` / `-luna` (cheaper coding tiers),
-`anthropic-claude/fable-5` (hardest, longest-running work),
+`anthropic-claude/fable-5.1` (hardest, longest-running work),
 `anthropic-claude/haiku-4-5` (quick answers),
 `google-antigravity/gemini-3.6-flash`, `google-antigravity/gemini-3.1-pro`
 (`-high`/`-low` only), and agy's `claude-sonnet-4-6` /

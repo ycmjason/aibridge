@@ -114,14 +114,14 @@ export const MODELS: Record<string, ModelSpec> = {
     efforts: ['low', 'medium', 'high', 'xhigh'],
     brief: 'OpenAI gpt-5.6-luna via codex CLI — fast and affordable coding; own ChatGPT login',
   },
-  'anthropic-claude/fable-5': {
-    slug: 'anthropic-claude/fable-5',
+  'anthropic-claude/fable-5.1': {
+    slug: 'anthropic-claude/fable-5.1',
     backend: 'claude',
-    backendModel: 'claude-fable-5',
+    backendModel: 'claude-fable-5-1',
     efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
     defaultEffort: 'high',
     brief:
-      'Claude Fable 5 via claude CLI — hardest, longest-running work; bills the claude CLI subscription',
+      'Claude Fable 5.1 via claude CLI — hardest, longest-running work; bills the claude CLI subscription',
   },
   'anthropic-claude/opus-5': {
     slug: 'anthropic-claude/opus-5',
