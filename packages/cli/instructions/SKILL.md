@@ -89,7 +89,8 @@ rather than guess.**
 Also registered: `openai-codex/gpt-5.6-terra` / `-luna` (cheaper coding tiers),
 `anthropic-claude/fable-5.1` (hardest, longest-running work),
 `anthropic-claude/haiku-4-5` (quick answers),
-`google-antigravity/gemini-3.6-flash`, `google-antigravity/gemini-3.1-pro`
+`google-antigravity/gemini-3.8-flash` (newest flash tier, no per-model quota
+guard yet), `google-antigravity/gemini-3.6-flash`, `google-antigravity/gemini-3.1-pro`
 (`-high`/`-low` only), and agy's `claude-sonnet-4-6` /
 `claude-opus-4-6-thinking` / `gpt-oss-120b-medium`. Run `aibridge models
 [--json]` for exact per-seat facts, or `aibridge <command> --help` for the list.

@@ -42,6 +42,15 @@ export const MODELS: Record<string, ModelSpec> = {
     efforts: ['low', 'medium', 'high'],
     brief: 'xAI Grok 4.5 via grok CLI — own xAI login; ~30 req/min, ~1k msgs/day, single-flight',
   },
+  'google-antigravity/gemini-3.8-flash': {
+    slug: 'google-antigravity/gemini-3.8-flash',
+    backend: 'agy',
+    backendModel: 'gemini-3.8-flash',
+    efforts: ['low', 'medium', 'high'],
+    defaultEffort: 'high',
+    brief:
+      'Google Gemini 3.8 Flash via agy — own Antigravity login; quota shared across all Gemini tiers (not itemised per-model, so no exhaustion preflight)',
+  },
   'google-antigravity/gemini-3.7-flash': {
     slug: 'google-antigravity/gemini-3.7-flash',
     backend: 'agy',
