@@ -1,6 +1,6 @@
 {
   "name": "@aibridge/cli",
-  "version": "0.10.3",
+  "version": "0.10.4",
   "description": "Agent instructions and CLI for delegating work to authenticated AI CLIs",
   "type": "module",
   "license": "MIT",

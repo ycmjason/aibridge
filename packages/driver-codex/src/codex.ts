@@ -27,7 +27,6 @@ export interface CodexExecOptions {
   readonly model: string;
   readonly images?: readonly string[];
   readonly outputLastMessage?: string;
-  readonly outputSchema?: string;
   readonly config?: readonly string[];
   readonly timeoutMs: number;
   readonly onStdout?: (chunk: string) => void;
@@ -71,7 +70,6 @@ export function buildCodexExecArgs(prompt: string, opts: CodexExecOptions): stri
   args.push('--skip-git-repo-check', '-C', opts.cwd);
   args.push('-m', opts.model);
   for (const c of opts.config ?? []) args.push('-c', c);
-  if (opts.outputSchema) args.push('--output-schema', opts.outputSchema);
   if (opts.outputLastMessage) args.push('--output-last-message', opts.outputLastMessage);
   for (const img of opts.images ?? []) args.push(`--image=${img}`);
   args.push(prompt);

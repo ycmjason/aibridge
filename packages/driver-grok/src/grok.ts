@@ -56,13 +56,6 @@ export interface GrokPrintArgs {
   readonly model: string;
   readonly effort?: GrokEffort;
   readonly skipPermissions?: boolean;
-  /**
-   * Unused by any caller today. If you wire it up, note that grok's
-   * `--json-schema` implies `--output-format json`, which conflicts with the
-   * `--output-format streaming-messages-json` that `run.ts` appends — and that
-   * `json` output welds every assistant turn into one string (see run.ts).
-   */
-  readonly jsonSchema?: string;
 }
 
 export function buildGrokPrintArgs(prompt: string, opts: GrokPrintArgs): string[] {
@@ -70,7 +63,6 @@ export function buildGrokPrintArgs(prompt: string, opts: GrokPrintArgs): string[
   args.push('--model', opts.model);
   if (opts.effort) args.push('--reasoning-effort', opts.effort);
   if (opts.skipPermissions) args.push('--permission-mode', 'bypassPermissions');
-  if (opts.jsonSchema) args.push('--json-schema', opts.jsonSchema);
   return args;
 }
 

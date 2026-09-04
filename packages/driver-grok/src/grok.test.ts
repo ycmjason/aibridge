@@ -34,21 +34,6 @@ describe('buildGrokPrintArgs', () => {
       'bypassPermissions',
     ]);
   });
-
-  it('assembles args with json schema', () => {
-    const args = buildGrokPrintArgs('json task', {
-      model: 'grok-4.6',
-      jsonSchema: '{"type":"object"}',
-    });
-    expect(args).toEqual([
-      '-p',
-      'json task',
-      '--model',
-      'grok-4.6',
-      '--json-schema',
-      '{"type":"object"}',
-    ]);
-  });
 });
 
 describe('grokEnv', () => {

@@ -12,7 +12,6 @@ export interface ClaudePrintArgs {
   readonly effort?: ClaudeEffort;
   readonly skipPermissions?: boolean;
   readonly addDirs?: readonly string[];
-  readonly jsonSchema?: string;
 }
 
 export interface ClaudePrintOptions extends ClaudePrintArgs {
@@ -43,7 +42,6 @@ export function buildClaudePrintArgs(prompt: string, opts: ClaudePrintArgs): str
   if (opts.effort) args.push('--effort', opts.effort);
   if (opts.skipPermissions) args.push('--dangerously-skip-permissions');
   for (const dir of opts.addDirs ?? []) args.push('--add-dir', dir);
-  if (opts.jsonSchema) args.push('--json-schema', opts.jsonSchema);
   return args;
 }
 
