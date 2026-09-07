@@ -88,6 +88,7 @@ rather than guess.**
 
 Also registered: `openai-codex/gpt-6-astra` (newest codex frontier tier),
 `openai-codex/gpt-5.6-terra` / `-luna` (cheaper coding tiers),
+`openai-codex/gpt-5.5` / `gpt-5.4-mini` (older codex tiers, still served),
 `anthropic-claude/fable-5.1` (hardest, longest-running work),
 `anthropic-claude/haiku-4-5` (quick answers),
 `google-antigravity/gemini-3.8-flash` (newest flash tier, no per-model quota

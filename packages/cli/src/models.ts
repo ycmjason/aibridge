@@ -132,6 +132,21 @@ export const MODELS: Record<string, ModelSpec> = {
     efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
     brief: 'OpenAI gpt-5.6-luna via codex CLI — fast and affordable coding; own ChatGPT login',
   },
+  // Every id the latest codex lists as visible stays registered (2026-09-07).
+  'openai-codex/gpt-5.5': {
+    slug: 'openai-codex/gpt-5.5',
+    backend: 'codex',
+    backendModel: 'gpt-5.5',
+    efforts: ['low', 'medium', 'high', 'xhigh'],
+    brief: 'OpenAI gpt-5.5 via codex CLI — previous-generation general model; own ChatGPT login',
+  },
+  'openai-codex/gpt-5.4-mini': {
+    slug: 'openai-codex/gpt-5.4-mini',
+    backend: 'codex',
+    backendModel: 'gpt-5.4-mini',
+    efforts: ['low', 'medium', 'high', 'xhigh'],
+    brief: 'OpenAI gpt-5.4-mini via codex CLI — small, cheap; own ChatGPT login',
+  },
   'anthropic-claude/fable-5.1': {
     slug: 'anthropic-claude/fable-5.1',
     backend: 'claude',
