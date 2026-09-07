@@ -86,7 +86,8 @@ detailed the plan must be.
 **If the task fits no row, or the user has said how they want work routed, ask
 rather than guess.**
 
-Also registered: `openai-codex/gpt-5.6-terra` / `-luna` (cheaper coding tiers),
+Also registered: `openai-codex/gpt-6-astra` (newest codex frontier tier),
+`openai-codex/gpt-5.6-terra` / `-luna` (cheaper coding tiers),
 `anthropic-claude/fable-5.1` (hardest, longest-running work),
 `anthropic-claude/haiku-4-5` (quick answers),
 `google-antigravity/gemini-3.8-flash` (newest flash tier, no per-model quota

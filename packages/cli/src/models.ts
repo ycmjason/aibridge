@@ -102,25 +102,34 @@ export const MODELS: Record<string, ModelSpec> = {
     efforts: null,
     brief: 'GPT-OSS 120B (medium) via agy — own Antigravity login',
   },
+  // Codex serves `ultra` on astra/sol/terra too; it is not in `Effort` yet.
+  // ponytail: add 'ultra' to Effort when a run actually needs it.
+  'openai-codex/gpt-6-astra': {
+    slug: 'openai-codex/gpt-6-astra',
+    backend: 'codex',
+    backendModel: 'gpt-6-astra',
+    efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
+    brief: 'OpenAI gpt-6-astra via codex CLI — newest frontier tier; own ChatGPT login',
+  },
   'openai-codex/gpt-5.6-sol': {
     slug: 'openai-codex/gpt-5.6-sol',
     backend: 'codex',
     backendModel: 'gpt-5.6-sol',
-    efforts: ['low', 'medium', 'high', 'xhigh'],
+    efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
     brief: 'OpenAI gpt-5.6-sol via codex CLI — frontier agentic coding; own ChatGPT login',
   },
   'openai-codex/gpt-5.6-terra': {
     slug: 'openai-codex/gpt-5.6-terra',
     backend: 'codex',
     backendModel: 'gpt-5.6-terra',
-    efforts: ['low', 'medium', 'high', 'xhigh'],
+    efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
     brief: 'OpenAI gpt-5.6-terra via codex CLI — balanced, everyday coding; own ChatGPT login',
   },
   'openai-codex/gpt-5.6-luna': {
     slug: 'openai-codex/gpt-5.6-luna',
     backend: 'codex',
     backendModel: 'gpt-5.6-luna',
-    efforts: ['low', 'medium', 'high', 'xhigh'],
+    efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
     brief: 'OpenAI gpt-5.6-luna via codex CLI — fast and affordable coding; own ChatGPT login',
   },
   'anthropic-claude/fable-5.1': {
