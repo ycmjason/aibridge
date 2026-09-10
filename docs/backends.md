@@ -5,6 +5,7 @@
 ## Antigravity (`agy`)
 
 - Google's terminal agent, successor to Gemini CLI. Auth = the user's Google login (OS keyring), no API key. Config under `~/.gemini/antigravity-cli/`.
+- **Credential store: keyring first, file only as fallback.** agy uses go-keyring (service `gemini`, account `antigravity`); it writes `antigravity-oauth-token` only when the keyring is bypassed or unreachable (no D-Bus, timeout), so that file goes stale once the keyring works (verified 2026-09-10, agy 1.1.27: file 7 days expired, keychain fresh). The macOS payload is `go-keyring-base64:` + base64 of the same JSON as the file; Linux stores it raw. The quota probe reads via `security` (macOS) / `secret-tool` (Linux, package `libsecret-tools`) with a 5s timeout, then the file; `AGY_OAUTH_TOKEN_PATH` skips the keyring. Windows keyring (wincred) is not read.
 - **Effort is baked into the model id** (`gemini-3.7-flash-high|-medium|-low`; no un-suffixed id). The registry stores the base id + `defaultEffort`; `backendModelId()` appends the suffix. `agy models` lists current ids.
 - Headless: `agy -p "<prompt>"` (+ `--model`, `--dangerously-skip-permissions` for tools, `--add-dir`, `--print-timeout`, default 5m). **No JSON output mode.**
 - **agy ignores its spawn cwd** — it treats the FIRST `--add-dir` as the workspace. Delegation must pass the caller's repo as the first `--add-dir` (temp answer dir second) or all edits land in the wrong directory and vanish.

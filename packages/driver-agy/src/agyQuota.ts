@@ -3,11 +3,15 @@
  * token — no separate login. Mechanism learned from
  * github.com/skainguyen1412/antigravity-usage (reimplemented, not vendored):
  *
- *   1. Read `~/.gemini/antigravity-cli/antigravity-oauth-token`
- *      ({ token: { access_token, refresh_token, expiry } }) — agy refreshes
- *      this file itself whenever it runs. If expired, refresh in-memory via
- *      Google's token endpoint with Antigravity's installed-app client
- *      (public by design for installed apps); we NEVER write agy's file.
+ *   1. Read agy's credential — the OS keyring entry (go-keyring, service
+ *      `gemini`, account `antigravity`) first, then the fallback file
+ *      `~/.gemini/antigravity-cli/antigravity-oauth-token`. Both hold
+ *      { token: { access_token, refresh_token, expiry }, auth_method }; agy
+ *      only writes the file when the keyring is bypassed or unreachable, so
+ *      the file goes stale once the keyring works. If expired, refresh
+ *      in-memory via Google's token endpoint with Antigravity's installed-app
+ *      client (public by design for installed apps); we NEVER write agy's
+ *      store.
  *   2. POST cloudcode-pa.googleapis.com/v1internal:loadCodeAssist
  *      (metadata ideType ANTIGRAVITY / pluginType GEMINI) → project id.
  *   3. POST /v1internal:fetchAvailableModels { project } — the
@@ -21,7 +25,7 @@
 import { readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
-import { AuthExpiredError } from '@aibridge/proc';
+import { AuthExpiredError, runCaptured } from '@aibridge/proc';
 import { AGY_CANONICAL_TO_NATIVE } from './registry.ts';
 
 const CLOUDCODE_BASE = 'https://cloudcode-pa.googleapis.com';
@@ -95,9 +99,50 @@ interface AgyTokenFile {
   token?: { access_token?: string; refresh_token?: string; expiry?: string };
 }
 
+const KEYRING_B64_PREFIX = 'go-keyring-base64:';
+
+/**
+ * go-keyring base64-wraps the secret on macOS (`go-keyring-base64:` prefix)
+ * and stores it raw on Linux. Returns undefined unless the result parses as
+ * the token JSON, so a malformed keyring entry falls through to the file.
+ */
+export function decodeKeyringSecret(raw: string): AgyTokenFile | undefined {
+  const s = raw.trim();
+  const json = s.startsWith(KEYRING_B64_PREFIX)
+    ? Buffer.from(s.slice(KEYRING_B64_PREFIX.length), 'base64').toString('utf8')
+    : s;
+  try {
+    const parsed: unknown = JSON.parse(json);
+    return parsed && typeof parsed === 'object' ? (parsed as AgyTokenFile) : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+async function readKeyringCredential(): Promise<AgyTokenFile | undefined> {
+  const lookup: Record<string, [string, string[]]> = {
+    darwin: ['security', ['find-generic-password', '-s', 'gemini', '-a', 'antigravity', '-w']],
+    linux: ['secret-tool', ['lookup', 'service', 'gemini', 'username', 'antigravity']],
+  };
+  const cmd = lookup[process.platform];
+  if (!cmd) return undefined;
+  // ponytail: a locked keyring may pop a desktop unlock prompt that the 5s
+  // timeout then abandons; the file fallback covers it. Surface the reason in
+  // the preflight warning if this ever needs diagnosing.
+  const res = await runCaptured(cmd[0], cmd[1], { timeoutMs: 5_000 }).catch(() => undefined);
+  return res?.code === 0 ? decodeKeyringSecret(res.stdout) : undefined;
+}
+
+async function readAgyCredential(): Promise<AgyTokenFile> {
+  if (!process.env.AGY_OAUTH_TOKEN_PATH) {
+    const fromKeyring = await readKeyringCredential();
+    if (fromKeyring) return fromKeyring;
+  }
+  return JSON.parse(readFileSync(agyTokenPath(), 'utf8')) as AgyTokenFile;
+}
+
 async function getAccessToken(): Promise<string> {
-  const raw = readFileSync(agyTokenPath(), 'utf8');
-  const parsed = JSON.parse(raw) as AgyTokenFile;
+  const parsed = await readAgyCredential();
   const access = parsed.token?.access_token;
   const refresh = parsed.token?.refresh_token;
   const expiry = parsed.token?.expiry;

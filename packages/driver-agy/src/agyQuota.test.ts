@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'vitest';
-import { findModelQuota, parseModels, parseQuotaGroups } from './agyQuota.ts';
+import { decodeKeyringSecret, findModelQuota, parseModels, parseQuotaGroups } from './agyQuota.ts';
 
 test('parseQuotaGroups preserves fractions or defaults to 0 if absent', () => {
   const groups = [
@@ -123,4 +123,21 @@ test('findModelQuota hits modelId id-form', () => {
 
   const found = findModelQuota(snapshot, 'gemini-3.7-flash-high');
   assert.equal(found?.modelId, 'gemini-3.7-flash-high');
+});
+
+test('decodeKeyringSecret accepts raw JSON (linux) and go-keyring base64 (macOS)', () => {
+  const token = {
+    token: { access_token: 'a', refresh_token: 'r', expiry: '2026-01-01T00:00:00Z' },
+  };
+  const json = JSON.stringify(token);
+  assert.deepEqual(decodeKeyringSecret(`${json}\n`), token);
+  const b64 = Buffer.from(json).toString('base64');
+  assert.deepEqual(decodeKeyringSecret(`go-keyring-base64:${b64}\n`), token);
+});
+
+test('decodeKeyringSecret returns undefined for malformed payloads so the file fallback runs', () => {
+  assert.equal(decodeKeyringSecret(''), undefined);
+  assert.equal(decodeKeyringSecret('not json'), undefined);
+  assert.equal(decodeKeyringSecret('go-keyring-base64:!!!'), undefined);
+  assert.equal(decodeKeyringSecret('"a string"'), undefined);
 });
