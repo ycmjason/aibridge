@@ -1,4 +1,5 @@
 import { buildApplication, buildRouteMap, run } from '@stricli/core';
+import { imageCutout } from './commands/image-cutout/command.ts';
 import { imageGen } from './commands/image-gen/command.ts';
 import { implement } from './commands/implement/command.ts';
 import { models } from './commands/models/command.ts';
@@ -13,7 +14,7 @@ import { normalizeExitCode } from './exitCode.ts';
 import { PACKAGE_VERSION } from './package.ts';
 
 const BRIEF =
-  'Bridge tasks to the other AI CLIs on this machine — a plan → implement → review workflow, task delegation, and image generation (codex / agy / grok models).';
+  'Bridge tasks to the other AI CLIs on this machine — a plan → implement → review workflow, task delegation, image generation and background cutout (codex / agy / grok models).';
 
 const routes = buildRouteMap({
   routes: {
@@ -22,6 +23,7 @@ const routes = buildRouteMap({
     review,
     subagent,
     'image-gen': imageGen,
+    'image-cutout': imageCutout,
     runs,
     quota,
     models,

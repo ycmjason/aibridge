@@ -100,14 +100,14 @@ describe('models registry', () => {
     expect(supportsImageGen(claudeSonnet)).toBe(false);
   });
 
-  it('lists only image-capable models when imageOnly and shows --transparent capability', () => {
+  it('lists only image-capable models when imageOnly and shows how each gets alpha', () => {
     const lines = listModelHelpLines({ imageOnly: true }).join('\n');
     expect(lines).toContain('xai-grok/grok-4.6');
     expect(lines).toContain('openai-codex/gpt-5.6-sol');
     expect(lines).toContain('google-antigravity/gemini-3.7-flash');
     expect(lines).not.toContain('anthropic-claude/sonnet-5');
-    expect(lines).toContain('--transparent: native alpha (soft edges)');
-    expect(lines).toContain('--transparent: chroma-keyed (binary edges)');
+    expect(lines).toContain('transparency: native alpha');
+    expect(lines).toContain('then `aibridge image-cutout`');
   });
 
   it('reports correct imageAlpha for models', () => {
@@ -117,8 +117,8 @@ describe('models registry', () => {
     const claudeSonnet = resolveModel('anthropic-claude/sonnet-5');
     if (!codex || !grok || !gemini || !claudeSonnet) throw new Error('resolution failed');
     expect(imageAlphaFor(codex)).toBe('native');
-    expect(imageAlphaFor(grok)).toBe('chroma');
-    expect(imageAlphaFor(gemini)).toBe('chroma');
+    expect(imageAlphaFor(grok)).toBe('cutout');
+    expect(imageAlphaFor(gemini)).toBe('cutout');
     expect(imageAlphaFor(claudeSonnet)).toBeUndefined();
   });
 

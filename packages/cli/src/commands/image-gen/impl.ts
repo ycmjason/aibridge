@@ -11,28 +11,20 @@ import {
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
-import sharp from 'sharp';
 import type { LocalContext } from '../../context.ts';
-import type { ImageResult } from '../../driver.ts';
 import { getDriver } from '../../drivers.ts';
+import { renderImage } from '../../imageRender.ts';
 import { detectInstalled, installedBackends, requireBackend } from '../../installed.ts';
 import {
   backendModelId,
   formatImageGenModelError,
   formatUnknownModelError,
-  type ImageFormat,
   imageAlphaFor,
   imageFormatFor,
   resolveModel,
   supportsImageGen,
 } from '../../models.ts';
 import { alternativeModels, preflightModel, renderPreflightRefusal } from '../../quotaPreflight.ts';
-import {
-  CHROMA_CLAUSE,
-  chromaKeyToPng,
-  mentionsTransparentBackground,
-  NATIVE_ALPHA_CLAUSE,
-} from '../../transparency.ts';
 
 export interface ImageGenFlags {
   readonly model: string;
@@ -42,11 +34,20 @@ export interface ImageGenFlags {
   readonly timeout?: number;
   readonly preflight: boolean;
   readonly json: boolean;
-  readonly transparent: boolean;
 }
 
-const MIN_REAL_BYTES_CODEX = 100_000;
-const MIN_REAL_BYTES_TOOL = 10_000;
+/**
+ * Background-scoped only. `transparent` on its own describes subjects far more
+ * often than backdrops ("transparent glass bottle", "goldfish in a transparent
+ * bowl"), and those are ordinary briefs on every model.
+ */
+const TRANSPARENT_BACKGROUND =
+  /\b(transparent (background|backdrop)|no background|without a background|alpha channel|chroma[- ]?key)/i;
+
+/** Does the prompt ask for a see-through *background* (as opposed to a see-through subject)? */
+export function mentionsTransparentBackground(prompt: string): boolean {
+  return TRANSPARENT_BACKGROUND.test(prompt);
+}
 
 export default async function imageGen(
   this: LocalContext,
@@ -76,30 +77,32 @@ export default async function imageGen(
   }
 
   const expected = imageFormatFor(model);
-  if (expected === undefined) return fail(formatImageGenModelError(inputSlug, model));
-
   const alpha = imageAlphaFor(model);
-  if (alpha === undefined) return fail(formatImageGenModelError(inputSlug, model));
+  if (expected === undefined || alpha === undefined) {
+    return fail(formatImageGenModelError(inputSlug, model));
+  }
 
-  const outFormat: ImageFormat = flags.transparent ? 'png' : expected;
-  const label = outFormat === 'png' ? 'PNG' : 'JPEG';
-  const extValid = outFormat === 'png' ? /\.png$/i.test(flags.out) : /\.jpe?g$/i.test(flags.out);
+  const label = expected === 'png' ? 'PNG' : 'JPEG';
+  const extValid = expected === 'png' ? /\.png$/i.test(flags.out) : /\.jpe?g$/i.test(flags.out);
   if (!extValid) {
-    const reason =
-      flags.transparent && expected === 'jpg'
-        ? '--transparent always writes PNG'
-        : `the ${model.spec.slug} model renders ${label} and aibridge does not convert`;
     return fail(
-      `--out "${flags.out}" must end in ${outFormat === 'png' ? '.png' : '.jpg or .jpeg'} — ${reason}.`,
+      `--out "${flags.out}" must end in ${expected === 'png' ? '.png' : '.jpg or .jpeg'} — the ${model.spec.slug} model renders ${label} and aibridge does not convert.`,
     );
   }
 
-  if (!flags.transparent && alpha === 'chroma' && mentionsTransparentBackground(prompt)) {
-    return fail(
-      `the prompt asks for a transparent background but the ${model.spec.slug} model cannot render alpha — ` +
-        `pass --transparent (aibridge chroma-keys it locally, binary edges) or use a native-alpha model ` +
-        `(PNG in \`aibridge models\`). Re-run with --transparent to proceed.`,
-    );
+  // Two refusals that save a paid render which cannot come back with alpha.
+  if (mentionsTransparentBackground(prompt)) {
+    const cutout = `render it on a flat solid white background, then run \`aibridge image-cutout --model ${model.spec.slug} --out <file>.png <that render>\``;
+    if (alpha === 'cutout') {
+      return fail(
+        `the prompt asks for a transparent background but the ${model.spec.slug} model renders ${label} with no alpha — ${cutout}.`,
+      );
+    }
+    if (flags.image !== undefined) {
+      return fail(
+        `the prompt asks for a transparent background with a reference attached, and ${model.spec.slug} paints a fake checkerboard instead of alpha in that case — drop --image, or ${cutout}.`,
+      );
+    }
   }
 
   let aspectRatio: string | undefined;
@@ -152,89 +155,28 @@ export default async function imageGen(
     if (verdict.warning) this.process.stderr.write(`aibridge image-gen: ${verdict.warning}\n`);
   }
 
-  const minBytes = model.spec.backend === 'codex' ? MIN_REAL_BYTES_CODEX : MIN_REAL_BYTES_TOOL;
   const work = mkdtempSync(join(tmpdir(), 'aibridge-imagegen-'));
 
-  // Single space, never a newline: the codex driver wraps the prompt in a one-line
-  // `$imagegen …` invocation, and a blank line there makes it code-draw a substitute
-  // instead of calling the image tool (observed: --transparent failed while the same
-  // prompt without the clause rendered fine).
-  const effectivePrompt = flags.transparent
-    ? `${prompt} ${alpha === 'chroma' ? CHROMA_CLAUSE : NATIVE_ALPHA_CLAUSE}`
-    : prompt;
-
   try {
-    let outcome: ImageResult = await driver.generateImage({
-      prompt: effectivePrompt,
+    const outcome = await renderImage(driver, model, {
+      prompt,
       workDir: work,
       backendModel: backendModelId(model),
       effort: model.effort,
       aspectRatio,
       imagePaths,
       timeoutSec,
-      forceful: false,
-      minBytes,
     });
-
-    if (model.spec.backend === 'codex' && outcome.kind === 'suspect') {
-      outcome = await driver.generateImage({
-        prompt: effectivePrompt,
-        workDir: work,
-        backendModel: backendModelId(model),
-        effort: model.effort,
-        aspectRatio,
-        imagePaths,
-        timeoutSec,
-        forceful: true,
-        minBytes,
-      });
-    }
-
-    if (outcome.kind === 'ok' && outcome.bytes < minBytes) {
-      outcome = { kind: 'suspect' };
-    }
-
     if (outcome.kind === 'error') return fail(outcome.reason);
-    if (outcome.kind === 'suspect') {
-      return fail(
-        model.spec.backend === 'agy'
-          ? 'agy produced no usable image. Re-run with a simpler prompt, or check Antigravity image access.'
-          : model.spec.backend === 'grok'
-            ? 'grok produced no usable image. Check SuperGrok image access and re-run with a simpler prompt.'
-            : 'codex produced only a tiny/code-drawn image, not a real render. ' +
-              'Try a clearer, simpler prompt.',
-      );
-    }
 
     const local = join(work, 'result.bin');
     copyFileSync(outcome.path, local);
 
-    let artefact = local;
-    let transparency: 'native' | 'chroma' | null = null;
-    if (flags.transparent) {
-      const meta = await sharp(local).metadata();
-      const alreadyAlpha = meta.hasAlpha === true;
-      if (alreadyAlpha) {
-        transparency = 'native';
-      } else {
-        const keyed = join(work, 'keyed.png');
-        const { transparentRatio } = await chromaKeyToPng(local, keyed);
-        transparency = 'chroma';
-        if (transparentRatio < 0.02) {
-          this.process.stderr.write(
-            `aibridge image-gen: --transparent keyed only ${(transparentRatio * 100).toFixed(1)}% of the image — ` +
-              `the model likely ignored the chroma-key instruction; wrote it anyway. Re-run, or use a native-alpha model.\n`,
-          );
-        }
-        artefact = keyed;
-      }
-    }
-
-    const dims = imageSize(artefact);
-    const actual = pngSize(artefact) ? 'png' : jpegSize(artefact) ? 'jpg' : null;
+    const dims = imageSize(local);
+    const actual = pngSize(local) ? 'png' : jpegSize(local) ? 'jpg' : null;
 
     // ponytail: guard for a backend changing formats in the future without throwing away a paid render
-    if (actual !== null && actual !== outFormat) {
+    if (actual !== null && actual !== expected) {
       this.process.stderr.write(
         `aibridge image-gen: expected a ${label} render from this model but got ${actual === 'png' ? 'PNG' : 'JPEG'}; wrote the raw bytes to ${outPath} anyway — the extension does not match the contents.\n`,
       );
@@ -242,7 +184,7 @@ export default async function imageGen(
 
     // The render is already paid for — don't lose it to a missing --out directory.
     mkdirSync(dirname(outPath), { recursive: true });
-    copyFileSync(artefact, outPath);
+    copyFileSync(local, outPath);
     const bytes = statSync(outPath).size;
 
     if (flags.json) {
@@ -255,19 +197,13 @@ export default async function imageGen(
           aspectRatio: flags.aspectRatio ?? null,
           model: model.spec.slug,
           backend: model.spec.backend,
-          transparency,
           real: true,
         })}\n`,
       );
     } else {
       const kb = Math.round(bytes / 1024);
       const dimStr = dims ? `${dims.width}x${dims.height}, ` : '';
-      const transparencyStr = flags.transparent
-        ? `, transparency: ${transparency === 'native' ? 'native alpha' : 'chroma-keyed'}`
-        : '';
-      this.process.stdout.write(
-        `✓ Wrote ${outPath} (${dimStr}${kb} KB, ${model.spec.slug}${transparencyStr})\n`,
-      );
+      this.process.stdout.write(`✓ Wrote ${outPath} (${dimStr}${kb} KB, ${model.spec.slug})\n`);
     }
   } finally {
     rmSync(work, { recursive: true, force: true });

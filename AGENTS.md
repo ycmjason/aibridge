@@ -66,7 +66,7 @@ debt, state it and propose the cleanup.
 | Models | `pnpm aibridge models [--json]` — list every model in the registry (efforts, image format, pinned backend model id) |
 | Monitor runs | `pnpm aibridge runs [--watch]` (logs in `~/.aibridge/runs`) |
 | Quota (all backends) | `pnpm aibridge quota [--json]` — inspect quota before a multi-stage pipeline; individual commands preflight automatically |
-| Skill instructions | `pnpm aibridge skill [plan|implement|review|subagent|image-gen|why]` |
+| Skill instructions | `pnpm aibridge skill [plan|implement|review|subagent|image-gen|image-cutout|why]` |
 | Check / Type-check / Repo / Test | `pnpm check` · `pnpm typecheck` · `pnpm repojj:check` · `pnpm test` |
 
 ## Dev-flow
@@ -89,7 +89,8 @@ Command orchestration uses **`@stricli/core`** (`buildCommand` / `buildRouteMap`
 - `packages/cli/src/driver.ts` — structural `AgentCliDriver` interface.
 - `packages/cli/src/drivers.ts` — map `Backend` → `AgentCliDriver` implementations.
 - `packages/cli/src/delegate.ts` — thin delegation engine calling `driver.run(task)`.
-- `packages/cli/src/transparency.ts` — the `--transparent` mechanism: the per-strategy prompt clauses plus `chromaKeyToPng` (sharp). Pure mechanism — no backend switches, no stdout; the impl decides which strategy a model gets from `imageAlphaFor`.
+- `packages/cli/src/matte.ts` — difference matting (sharp): solves a pixel-aligned pair of renders on two flat backdrops into a PNG with real alpha, plus the flat-border pre-check. Pure mechanism — no backend switches, no stdout; `image-cutout`'s impl owns the prompts and the two-call policy.
+- `packages/cli/src/imageRender.ts` — one paid render with the size sanity check and codex's forceful retry, shared by `image-gen` and `image-cutout`.
 - `packages/proc` + `packages/driver-{agy,grok,codex,claude}` — workspace packages driving each backend independently (zero external runtime dependencies). Usually that means spawning its CLI. `driver-grok` also talks to `api.x.ai` over HTTP directly for images and quota, because those are single requests and the CLI's agent loop only added failure modes (see docs/decisions.md). Keeping these packages dependency-free is a real constraint: it is why `generateImage.ts` sends reference images uncompressed instead of pulling in `sharp`.
 
 ### Adding a subagent model

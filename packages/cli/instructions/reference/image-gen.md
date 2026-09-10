@@ -7,7 +7,7 @@ you only need to return a prompt.
 
 ```bash
 aibridge image-gen --model <slug> --out <file.png> "<full prompt — see part B>" \
-  [--aspect-ratio 16:9] [--image ref.png] [--transparent] \
+  [--aspect-ratio 16:9] [--image ref.png] \
   [--timeout 600] [--no-preflight] [--json]
 ```
 
@@ -20,37 +20,28 @@ refresh the token, before a request when `expires_at` is close and again as a
 backstop if one comes back 401. `grok login` is still what sets the model up.
 <!-- endif -->
 
-- `--out` is required and its extension must match the model's format above
-  (`.png` for any `--transparent` run). A mismatch is rejected before anything
-  runs. The file holds the model's own bytes verbatim, except on a
-  chroma-keyed `--transparent` run, which writes the locally keyed PNG.
+- `--out` is required and its extension must match the model's format above.
+  A mismatch is rejected before anything runs. The file holds the model's own
+  bytes verbatim; aibridge never converts or processes a render here.
 - **Render into the asset's real home** (`public/icons/settings.png`) when the
   project keeps it. Drafts go to `.aibridge/`; see [SKILL.md](../SKILL.md).
 - `--aspect-ratio N:M` sets geometry. Exact pixels are whatever the model
   renders; resize downstream.
 - `--image a.png,b.png` attaches references and routes to the model's edit path.
-- `--json` prints `{ out, bytes, width, height, aspectRatio, model, backend, transparency, real }`.
+- `--json` prints `{ out, bytes, width, height, aspectRatio, model, backend, real }`.
 - Preflight is on by default: an exhausted model exits 3 and names the
   alternatives instead of spending a paid render. Argument checks run first, so
   bad flags still cost no network call.
 
 ### Transparency
 
-- `--transparent` works on every image model and always writes PNG. PNG models
-  give native alpha; JPEG models are chroma-keyed with binary edges. Fine for
-  flat icons, logos and stickers; not for hair, smoke or glass.
-- **Say nothing about the background in the prompt when using it.** The CLI
-  writes the backdrop instruction per model, and a colour of your own overrides
-  it: the key then finds nothing and the paid render comes back opaque. Writing
-  "transparent background" into the prompt without the flag is refused on
-  chroma models.
-- **A green subject is keyed away with the backdrop** on chroma models. Anything
-  that must be green needs a native-alpha (PNG) model<!-- if:codex --> such as
-  `openai-codex/gpt-5.6-sol`<!-- endif -->.
-- Both surfaces report the path taken: the result line says
-  `transparency: native` / `chroma-keyed`, `--json` carries
-  `"native" | "chroma" | null`. Quote it when the edges matter. Keying under 2%
-  of the image warns: the model likely ignored the backdrop instruction.
+Alpha is a model capability, not a flag. A PNG model renders it when the prompt
+asks for a transparent background and no `--image` is attached (with a
+reference, codex paints a fake checkerboard, and that combination is refused).
+JPEG models cannot render alpha at any setting: render on a flat solid white
+background with no shadow, then run `aibridge image-cutout` on the file
+(`aibridge skill image-cutout`). Asking a JPEG model for a transparent
+background is refused before the render is paid for.
 
 ### Reference images
 
@@ -68,8 +59,8 @@ reference carries identity, framing and style.
 1. **Never state the image's purpose** (no "app icon", "hero banner"). Describe
    how it looks, not its job.
 2. **Give the aspect ratio** via `--aspect-ratio` and/or the prompt text.
-3. **Always specify the background**: a hex colour, or `opaque`/`auto`. Except
-   on a `--transparent` run, where you say nothing about it.
+3. **Always specify the background**: a hex colour, or `opaque`/`auto`. For a
+   later `image-cutout`, that is flat solid white with no shadow.
 4. **Specify** subject, composition, palette, style/medium, mood, lighting.
 5. **Lock the critical, free the rest.** Lock verbatim text in straight quotes,
    brand hex, required layout, the hero subject, and every "no X". Over-specified
@@ -83,9 +74,9 @@ reference carries identity, framing and style.
 > no gradient.`
 
 Locked: ratio, background hex, subject, brand orange, the no-text/border/gradient
-constraints. Free: fan angle, shadow softness, spacing. On a `--transparent` run,
-drop the background sentence and the drop shadow: a soft shadow has no flat
-backdrop colour to key against and survives as a pale halo.
+constraints. Free: fan angle, shadow softness, spacing. When the render is
+headed for `image-cutout`, make the background flat white and drop the shadow:
+to the matte a soft shadow is part of the subject and survives as a grey halo.
 
 ### Edits and retries
 

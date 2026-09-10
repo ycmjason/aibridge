@@ -237,8 +237,13 @@ export const MODELS: Record<string, ModelSpec> = {
 
 export type ImageFormat = 'jpg' | 'png';
 
-/** Whether a model's image tool can emit a real alpha channel, or needs local chroma keying. */
-export type ImageAlpha = 'native' | 'chroma';
+/**
+ * How a model gets to a transparent PNG: `native` renders alpha when the prompt
+ * asks for it (generate only — with a reference attached codex paints a fake
+ * checkerboard instead); `cutout` means render on a flat backdrop, then
+ * `image-cutout`.
+ */
+export type ImageAlpha = 'native' | 'cutout';
 
 const IMAGE_GEN_FORMATS: ReadonlyMap<Backend, ImageFormat> = new Map([
   ['agy', 'jpg'],
@@ -247,9 +252,9 @@ const IMAGE_GEN_FORMATS: ReadonlyMap<Backend, ImageFormat> = new Map([
 ]);
 
 const IMAGE_ALPHA: ReadonlyMap<Backend, ImageAlpha> = new Map([
-  ['agy', 'chroma'],
+  ['agy', 'cutout'],
   ['codex', 'native'],
-  ['grok', 'chroma'],
+  ['grok', 'cutout'],
 ]);
 
 export function supportsImageGen(resolved: ResolvedModel): boolean {
@@ -338,7 +343,7 @@ export function listModelHelpLines(opts: ListOptions = {}): string[] {
       const alpha = IMAGE_ALPHA.get(spec.backend);
       if (alpha !== undefined) {
         lines.push(
-          `    --transparent: ${alpha === 'native' ? 'native alpha (soft edges)' : 'chroma-keyed (binary edges)'}`,
+          `    transparency: ${alpha === 'native' ? 'native alpha — ask for a transparent background in the prompt (no --image)' : 'none — render on flat white, then `aibridge image-cutout`'}`,
         );
       }
     }

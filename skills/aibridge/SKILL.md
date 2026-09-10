@@ -9,7 +9,7 @@ description: >-
   Delegate with canonical model slugs such as `xai-grok/grok-4.6` and pass plan
   file paths—not their contents—between stages. Prefer a backend that does not
   share the current agent's quota.
-argument-hint: "[plan|implement|review|subagent|image-gen|runs|quota] [options]"
+argument-hint: "[plan|implement|review|subagent|image-gen|image-cutout|runs|quota] [options]"
 user-invocable: true
 allowed-tools:
   - Bash(npx -y @aibridge/cli@latest *)
@@ -22,7 +22,7 @@ Load the canonical instructions from the latest CLI package before taking any
 other action.
 
 1. If the user's first argument names `plan`, `implement`, `review`, `subagent`,
-   `image-gen`, or `why`, run:
+   `image-gen`, `image-cutout`, or `why`, run:
 
    ```bash
    npx -y @aibridge/cli@latest skill <first-argument>

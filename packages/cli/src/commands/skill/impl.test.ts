@@ -74,7 +74,14 @@ describe('skill command', () => {
   });
 
   it('omits absent backends from every instruction topic', () => {
-    for (const topic of ['plan', 'implement', 'review', 'subagent', 'image-gen'] as const) {
+    for (const topic of [
+      'plan',
+      'implement',
+      'review',
+      'subagent',
+      'image-gen',
+      'image-cutout',
+    ] as const) {
       const output = renderSkill(topic, CODEX_AGY);
       expect(output, topic).not.toContain('xai-grok');
       expect(output, topic).not.toContain('anthropic-claude/');

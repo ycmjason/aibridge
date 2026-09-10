@@ -41,11 +41,12 @@ exits 2 with an install hint before anything runs.
 | `review` | Review a diff, commit range, or plan contract |
 | `subagent` | Delegate a self-contained task to another model |
 | `image-gen` | Generate a raster image with an image-capable model |
+| `image-cutout` | Cut the background out of an image into a PNG with real alpha |
 | `runs` | Monitor and inspect execution runs |
 | `quota` | Show backend quota and reset times |
 | `models` | List registered models and capabilities |
 
-`plan`, `review` and `image-gen` require `--out` and print only a verdict/path
+`plan`, `review`, `image-gen` and `image-cutout` require `--out` and print only a verdict/path
 line. `subagent` and `implement` have no `--out`; they print the delegate's
 answer to stdout, and `subagent --out foo.md` exits 2 with
 `No flag registered for --out`. Redirect if you want that answer in a file.
@@ -57,6 +58,8 @@ answer to stdout, and `subagent --out foo.md` exits 2 with
    taking action.
 2. **No subcommand** → infer:
    - an image, icon or graphic to make → `image-gen`;
+   - a transparent PNG from an existing image, or from a JPEG model's render →
+     `image-cutout`;
    - a self-contained task, cross-model second opinion, or red-team → `subagent`;
    - sizeable or risky implementation work → `plan` → *you read, edit and
      approve the plan file* → `implement` → `review --plan <file>`. For
@@ -69,7 +72,8 @@ answer to stdout, and `subagent --out foo.md` exits 2 with
 ## Models
 
 `--model` is required on every command that spends a delegate (`plan`,
-`implement`, `review`, `subagent`, `image-gen`); nothing is chosen for you.
+`implement`, `review`, `subagent`, `image-gen`, `image-cutout`); nothing is
+chosen for you.
 `quota`, `models` and `runs` take no `--model`. Starting points, not
 benchmarks:
 

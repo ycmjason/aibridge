@@ -22,6 +22,7 @@ const TOPICS = {
   review: 'reference/review.md',
   subagent: 'reference/subagent.md',
   'image-gen': 'reference/image-gen.md',
+  'image-cutout': 'reference/image-cutout.md',
   why: 'reference/why.md',
 } as const;
 

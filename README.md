@@ -48,6 +48,7 @@ npx -y @aibridge/cli subagent --model xai-grok/grok-4.6 "summarize the architect
 | `aibridge review --model xai-grok/grok-4.6 --out review.md [--plan <plan.md>] [--base <ref>]` | Review a diff or, on a clean tree, a plan |
 | `aibridge subagent --model xai-grok/grok-4.6 "<task>"` | Delegate a self-contained task or request a second opinion |
 | `aibridge image-gen --model openai-codex/gpt-5.6-sol --out out.png "<prompt>"` | Generate and verify a raster image |
+| `aibridge image-cutout --model google-antigravity/gemini-3.7-flash --out out.png in.jpg ["<what to keep>"]` | Cut the background out into a PNG with real alpha |
 | `aibridge models [--json]` | List registered models and their capabilities |
 | `aibridge quota` | Show quota remaining for every backend |
 | `aibridge runs` | Inspect or watch run logs in `~/.aibridge/runs` |
