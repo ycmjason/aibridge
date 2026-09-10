@@ -10,7 +10,7 @@ need to make a product or architecture decision, fix the plan first.
 
 ```bash
 aibridge implement --model <slug> <plan-file>
-  --model <slug>       implementer model (required, e.g. google-antigravity/gemini-3.7-flash)
+  --model <slug>       implementer model (required, e.g. {{implement}})
   --timeout <secs>     max seconds (default: 1800)
   --no-preflight       skip the quota preflight
 ```
@@ -38,14 +38,15 @@ args or missing plan file. Exit 3: quota preflight refusal.
 ## After it returns
 
 1. **Re-run the checks yourself.** The summary reports the delegate's claim.
-2. Then `aibridge review --model xai-grok/grok-4.6 --plan <plan-file> --out .aibridge/review.md`.
+2. Then `aibridge review --model {{review}} --plan <plan-file> --out .aibridge/review.md`.
 
 ## Gotchas
 
-- Keep the implementer a different model family from the reviewer. The
-  recommended seats (gemini implements, grok reviews) comply; if you override
-  one, check the other.
+- Keep the implementer a different model family from the reviewer. The seats
+  named above comply; if you override one, check the other.
+<!-- if:agy -->
 - agy quota is shared by model group. Two concurrent agy-heavy runs drain
   the same window. Run `aibridge quota` before pipelining.
+<!-- endif -->
 - The timeout covers the whole run including gate-fixing loops. Raise it for big
   plans rather than letting a near-done run get killed.

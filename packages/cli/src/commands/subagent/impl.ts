@@ -1,7 +1,8 @@
 import type { LocalContext } from '../../context.ts';
 import { delegate } from '../../delegate.ts';
+import { detectInstalled, installedBackends, requireBackend } from '../../installed.ts';
 import { backendModelId, formatUnknownModelError, resolveModel } from '../../models.ts';
-import { preflightModel, renderPreflightRefusal } from '../../quotaPreflight.ts';
+import { alternativeSeats, preflightModel, renderPreflightRefusal } from '../../quotaPreflight.ts';
 import { startRun } from '../../runlog.ts';
 
 export interface SubagentFlags {
@@ -20,10 +21,14 @@ export default async function subagent(
   const inputSlug = flags.model;
   const model = resolveModel(inputSlug);
   if (!model) {
-    this.process.stderr.write(`${formatUnknownModelError(inputSlug)}\n`);
+    this.process.stderr.write(
+      `${formatUnknownModelError(inputSlug, installedBackends(await detectInstalled()))}
+`,
+    );
     this.process.exitCode = 2;
     return;
   }
+  if (!(await requireBackend(this, 'subagent', model.spec.backend))) return;
 
   if (flags.preflight) {
     const verdict = await preflightModel(model);
@@ -38,7 +43,9 @@ export default async function subagent(
           })}\n`,
         );
       } else {
-        this.process.stderr.write(`${renderPreflightRefusal('subagent', verdict)}\n`);
+        this.process.stderr.write(
+          `${renderPreflightRefusal('subagent', verdict, alternativeSeats(model, installedBackends(await detectInstalled())))}\n`,
+        );
       }
       this.process.exitCode = 3;
       return;

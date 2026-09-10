@@ -11,7 +11,7 @@ Use it for sizeable or risky work. For small, fully-specified chunks use
 
 ```bash
 aibridge plan --model <slug> --out <file> "<task prompt>"
-  --model <slug>       planner model (required, e.g. xai-grok/grok-4.6)
+  --model <slug>       planner model (required, e.g. {{plan}})
   --out <file>         where to write the plan (required)
   --timeout <secs>     max seconds (default: 1800)
   --no-preflight       skip the quota preflight
@@ -57,13 +57,15 @@ Exit 3: quota preflight refusal.
 2. Resolve every open question: edit the file directly, or re-run `plan` with a
    sharpened prompt.
 3. High-risk design? Gate it first:
-   `aibridge review --model xai-grok/grok-4.6 --plan <file> --out .aibridge/review.md`
+   `aibridge review --model {{review}} --plan <file> --out .aibridge/review.md`
    on a clean tree.
-4. Then `aibridge implement --model google-antigravity/gemini-3.7-flash <file>`.
+4. Then `aibridge implement --model {{implement}} <file>`.
 
 ## Gotchas
 
 - `--out` belongs in `.aibridge/` (see [SKILL.md](../SKILL.md)); check it is
   gitignored once per session.
+<!-- if:grok -->
 - grok is capped at ~30 req/min, ~1k msgs/day, one run at a time. Never run two
   grok stages concurrently.
+<!-- endif -->

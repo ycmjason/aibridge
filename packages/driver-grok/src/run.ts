@@ -1,5 +1,6 @@
 import { isNotFound, type RunResult, runCaptured, stripAnsi } from '@aibridge/proc';
 import { buildGrokPrintArgs, grokEnv } from './grok.ts';
+import { INSTALL_HINT } from './probe.ts';
 
 export interface DelegationTask {
   readonly prompt: string;
@@ -23,7 +24,6 @@ export type DelegationResult =
     };
 
 const NOISE_RE = /^Shell cwd was reset[^\n]*$/gm;
-const INSTALL_HINT = 'Install the Grok CLI (npm i -g @xai-official/grok) and run `grok login`.';
 
 /**
  * grok's `plain` and `json` output concatenate every assistant turn into one

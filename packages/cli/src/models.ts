@@ -11,6 +11,21 @@
 export type Backend = 'agy' | 'claude' | 'codex' | 'grok';
 export type Effort = 'low' | 'medium' | 'high' | 'xhigh' | 'max';
 
+/** Every backend, in the order listings print them. */
+export const BACKENDS: readonly Backend[] = ['grok', 'agy', 'codex', 'claude'];
+
+export const BACKEND_NAMES: Record<Backend, string> = {
+  grok: 'grok (Grok CLI)',
+  agy: 'agy (Antigravity)',
+  codex: 'codex (Codex CLI)',
+  claude: 'claude (Claude Code CLI)',
+};
+
+/** The verbs a seat can be recommended for. `subagent` takes any seat. */
+export type Role = 'plan' | 'implement' | 'review' | 'image-gen';
+export type RoleLevel = 'recommended' | 'supported';
+export type Roles = Partial<Record<Role, { readonly level: RoleLevel; readonly note?: string }>>;
+
 export interface ModelSpec {
   readonly slug: string; // canonical, effort-less
   readonly backend: Backend;
@@ -18,6 +33,11 @@ export interface ModelSpec {
   readonly efforts: readonly Effort[] | null;
   readonly defaultEffort?: Effort; // only when backend REQUIRES one (agy gemini)
   readonly brief: string;
+  /**
+   * Curated starting points, not benchmarks. Seats without roles are still
+   * usable everywhere; they just do not appear in the instructions' seat table.
+   */
+  readonly roles?: Roles;
 }
 
 export interface ResolvedModel {
@@ -28,6 +48,12 @@ export interface ResolvedModel {
 export const MODELS: Record<string, ModelSpec> = {
   'xai-grok/grok-4.6': {
     slug: 'xai-grok/grok-4.6',
+    roles: {
+      plan: { level: 'recommended', note: 'small–mid, well-scoped' },
+      implement: { level: 'supported' },
+      review: { level: 'recommended' },
+      'image-gen': { level: 'supported' },
+    },
     backend: 'grok',
     backendModel: 'grok-4.6',
     efforts: ['low', 'medium', 'high'],
@@ -37,6 +63,12 @@ export const MODELS: Record<string, ModelSpec> = {
   // recency, so this is two seats of one class rather than a superseded pin.
   'xai-grok/grok-4.5': {
     slug: 'xai-grok/grok-4.5',
+    roles: {
+      plan: { level: 'supported' },
+      implement: { level: 'recommended', note: 'any fidelity' },
+      review: { level: 'supported' },
+      'image-gen': { level: 'supported' },
+    },
     backend: 'grok',
     backendModel: 'grok-4.5',
     efforts: ['low', 'medium', 'high'],
@@ -53,6 +85,12 @@ export const MODELS: Record<string, ModelSpec> = {
   },
   'google-antigravity/gemini-3.7-flash': {
     slug: 'google-antigravity/gemini-3.7-flash',
+    roles: {
+      plan: { level: 'supported' },
+      implement: { level: 'recommended', note: 'needs high–xhigh detail' },
+      review: { level: 'supported' },
+      'image-gen': { level: 'supported' },
+    },
     backend: 'agy',
     backendModel: 'gemini-3.7-flash',
     efforts: ['low', 'medium', 'high'],
@@ -113,6 +151,12 @@ export const MODELS: Record<string, ModelSpec> = {
   },
   'openai-codex/gpt-5.6-sol': {
     slug: 'openai-codex/gpt-5.6-sol',
+    roles: {
+      plan: { level: 'recommended', note: 'mid–big, ambiguous' },
+      implement: { level: 'supported' },
+      review: { level: 'recommended' },
+      'image-gen': { level: 'recommended' },
+    },
     backend: 'codex',
     backendModel: 'gpt-5.6-sol',
     efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
@@ -158,6 +202,11 @@ export const MODELS: Record<string, ModelSpec> = {
   },
   'anthropic-claude/opus-5': {
     slug: 'anthropic-claude/opus-5',
+    roles: {
+      plan: { level: 'recommended', note: 'mid–big, ambiguous' },
+      implement: { level: 'supported' },
+      review: { level: 'recommended' },
+    },
     backend: 'claude',
     backendModel: 'claude-opus-5[1m]',
     efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
@@ -167,6 +216,11 @@ export const MODELS: Record<string, ModelSpec> = {
   },
   'anthropic-claude/sonnet-5': {
     slug: 'anthropic-claude/sonnet-5',
+    roles: {
+      plan: { level: 'supported' },
+      implement: { level: 'recommended', note: 'needs high detail' },
+      review: { level: 'supported' },
+    },
     backend: 'claude',
     backendModel: 'claude-sonnet-5',
     efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
@@ -248,11 +302,37 @@ export function backendModelId(resolved: ResolvedModel): string {
   return resolved.spec.backendModel;
 }
 
-export function listModelHelpLines(opts: { readonly imageOnly?: boolean } = {}): string[] {
+export interface ListOptions {
+  readonly imageOnly?: boolean;
+  /** When given, only seats on these backends are listed. */
+  readonly installed?: ReadonlySet<Backend>;
+}
+
+/** Registry entries, optionally narrowed to installed backends and image seats. */
+export function listSeats(opts: ListOptions = {}): ModelSpec[] {
+  return Object.values(MODELS).filter(
+    spec =>
+      (!opts.imageOnly || IMAGE_GEN_FORMATS.has(spec.backend)) &&
+      (!opts.installed || opts.installed.has(spec.backend)),
+  );
+}
+
+/**
+ * The seat to name in instructions for a role: first installed `recommended`,
+ * else first installed `supported`, else undefined.
+ */
+export function seatFor(role: Role, installed: ReadonlySet<Backend>): ModelSpec | undefined {
+  const seats = listSeats({ installed, imageOnly: role === 'image-gen' });
+  return (
+    seats.find(s => s.roles?.[role]?.level === 'recommended') ??
+    seats.find(s => s.roles?.[role]?.level === 'supported')
+  );
+}
+
+export function listModelHelpLines(opts: ListOptions = {}): string[] {
   const lines: string[] = [];
-  for (const [slug, spec] of Object.entries(MODELS)) {
-    if (opts.imageOnly && !IMAGE_GEN_FORMATS.has(spec.backend)) continue;
-    lines.push(`  ${slug}`);
+  for (const spec of listSeats(opts)) {
+    lines.push(`  ${spec.slug}`);
     lines.push(`    ${spec.brief}`);
     if (opts.imageOnly) {
       const alpha = IMAGE_ALPHA.get(spec.backend);
@@ -263,18 +343,38 @@ export function listModelHelpLines(opts: { readonly imageOnly?: boolean } = {}):
       }
     }
   }
+  if (opts.installed) {
+    lines.push(`  (installed backends: ${formatBackends(opts.installed)})`);
+  } else {
+    lines.push(
+      '  (every registered seat; run `aibridge models` to see which backends are installed here)',
+    );
+  }
   return lines;
 }
 
-export function formatUnknownModelError(input: string): string {
-  const lines = [`Unknown model "${input}".`, 'Available models:', ...listModelHelpLines()];
+export function formatBackends(installed: ReadonlySet<Backend>): string {
+  const names = BACKENDS.filter(b => installed.has(b));
+  return names.length > 0 ? names.join(', ') : 'none';
+}
+
+export function formatUnknownModelError(input: string, installed?: ReadonlySet<Backend>): string {
+  const lines = [
+    `Unknown model "${input}".`,
+    'Available models:',
+    ...listModelHelpLines({ installed }),
+  ];
   return lines.join('\n');
 }
 
-export function formatImageGenModelError(input: string, resolved: ResolvedModel): string {
+export function formatImageGenModelError(
+  input: string,
+  resolved: ResolvedModel,
+  installed?: ReadonlySet<Backend>,
+): string {
   return [
     `Model "${input}" (${resolved.spec.slug}) cannot generate images — backend "${resolved.spec.backend}" has no image path.`,
     'Image-gen seats (canonical slug):',
-    ...listModelHelpLines({ imageOnly: true }),
+    ...listModelHelpLines({ imageOnly: true, installed }),
   ].join('\n');
 }

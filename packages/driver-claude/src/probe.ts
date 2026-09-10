@@ -5,7 +5,7 @@ export type Availability =
   | { readonly ok: true; readonly version: string }
   | { readonly ok: false; readonly error: string };
 
-const INSTALL_HINT = 'Install Claude Code and sign in.';
+export const INSTALL_HINT = 'Install Claude Code and sign in.';
 
 export async function probe(_run: typeof runCaptured = runCaptured): Promise<Availability> {
   try {

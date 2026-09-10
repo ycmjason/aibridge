@@ -5,7 +5,8 @@ export type Availability =
   | { readonly ok: true; readonly version: string }
   | { readonly ok: false; readonly error: string };
 
-const INSTALL_HINT = 'Install the Grok CLI (npm i -g @xai-official/grok) and run `grok login`.';
+export const INSTALL_HINT =
+  'Install the Grok CLI (npm i -g @xai-official/grok) and run `grok login`.';
 
 export async function probe(run: typeof runCaptured = runCaptured): Promise<Availability> {
   try {

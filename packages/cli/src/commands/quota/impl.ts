@@ -1,8 +1,12 @@
-import { type AgyQuotaSnapshot, fetchAgyQuota } from '@aibridge/driver-agy';
-import { type ClaudeQuotaSnapshot, fetchClaudeQuota } from '@aibridge/driver-claude';
-import { type CodexQuotaSnapshot, fetchCodexQuota } from '@aibridge/driver-codex';
-import { fetchGrokQuota, type GrokQuotaSnapshot } from '@aibridge/driver-grok';
+import type { AgyQuotaSnapshot } from '@aibridge/driver-agy';
+import type { ClaudeQuotaSnapshot } from '@aibridge/driver-claude';
+import type { CodexQuotaSnapshot } from '@aibridge/driver-codex';
+import type { GrokQuotaSnapshot } from '@aibridge/driver-grok';
 import type { LocalContext } from '../../context.ts';
+import type { QuotaSnapshot } from '../../driver.ts';
+import { getDriver } from '../../drivers.ts';
+import { detectInstalled, type Installed } from '../../installed.ts';
+import { BACKENDS, type Backend } from '../../models.ts';
 
 export interface QuotaFlags {
   readonly json: boolean;
@@ -74,58 +78,78 @@ function renderClaude(ctx: LocalContext, snapshot: ClaudeQuotaSnapshot): void {
   }
 }
 
-function renderSection<T>(
-  ctx: LocalContext,
-  result: PromiseSettledResult<T>,
-  title: string,
-  render: (ctx: LocalContext, snapshot: T) => void,
-): void {
-  if (result.status === 'fulfilled') {
-    render(ctx, result.value);
-  } else {
-    ctx.process.stdout.write(
-      `=== ${title} ===\nunavailable: ${(result.reason as Error).message}\n`,
-    );
+// Rendering only; the process work lives in each driver's quota().
+const RENDERERS: Record<Backend, (ctx: LocalContext, snapshot: never) => void> = {
+  grok: renderGrok,
+  agy: renderAgy,
+  codex: renderCodex,
+  claude: renderClaude,
+};
+
+const TITLES: Record<Backend, string> = {
+  grok: 'grok (xAI)',
+  agy: 'agy (Antigravity)',
+  codex: 'codex (ChatGPT)',
+  claude: 'claude (Claude Code subscription)',
+};
+
+type Outcome =
+  | { readonly kind: 'not-installed'; readonly hint: string }
+  | { readonly kind: 'ok'; readonly snapshot: QuotaSnapshot }
+  | { readonly kind: 'error'; readonly message: string };
+
+async function fetchOne(backend: Backend, installed: Installed): Promise<Outcome> {
+  const probe = installed.get(backend);
+  if (!probe?.ok) {
+    return { kind: 'not-installed', hint: probe?.error.replace(/^aibridge: /, '') ?? 'not probed' };
+  }
+  const quota = getDriver(backend).quota;
+  if (!quota) return { kind: 'error', message: 'no quota endpoint for this backend' };
+  try {
+    return { kind: 'ok', snapshot: await quota() };
+  } catch (err) {
+    return { kind: 'error', message: (err as Error).message };
   }
 }
 
-export default async function quotaImpl(this: LocalContext, flags: QuotaFlags): Promise<void> {
-  const [grok, agy, codex, claude] = await Promise.allSettled([
-    fetchGrokQuota(),
-    fetchAgyQuota(),
-    fetchCodexQuota(),
-    fetchClaudeQuota(),
-  ]);
-
-  const allFailed =
-    grok.status === 'rejected' &&
-    agy.status === 'rejected' &&
-    codex.status === 'rejected' &&
-    claude.status === 'rejected';
+export default async function quotaImpl(
+  this: LocalContext,
+  flags: QuotaFlags,
+  installed?: Installed,
+): Promise<void> {
+  const detected = installed ?? (await detectInstalled());
+  const outcomes = await Promise.all(BACKENDS.map(b => fetchOne(b, detected)));
+  const anyOk = outcomes.some(o => o.kind === 'ok');
 
   if (flags.json) {
-    this.process.stdout.write(
-      `${JSON.stringify(
-        {
-          grok: grok.status === 'fulfilled' ? grok.value : { error: String(grok.reason) },
-          agy: agy.status === 'fulfilled' ? agy.value : { error: String(agy.reason) },
-          codex: codex.status === 'fulfilled' ? codex.value : { error: String(codex.reason) },
-          claude: claude.status === 'fulfilled' ? claude.value : { error: String(claude.reason) },
-        },
-        null,
-        2,
-      )}\n`,
+    const body = Object.fromEntries(
+      BACKENDS.map((b, i) => {
+        const o = outcomes[i] as Outcome;
+        return [
+          b,
+          o.kind === 'ok'
+            ? o.snapshot
+            : o.kind === 'not-installed'
+              ? { installed: false, hint: o.hint }
+              : { error: o.message },
+        ];
+      }),
     );
-    if (allFailed) this.process.exitCode = 1;
+    this.process.stdout.write(`${JSON.stringify(body, null, 2)}\n`);
+    if (!anyOk) this.process.exitCode = 1;
     return;
   }
 
-  renderSection(this, grok, 'grok (xAI)', renderGrok);
-  this.process.stdout.write('\n');
-  renderSection(this, agy, 'agy (Antigravity)', renderAgy);
-  this.process.stdout.write('\n');
-  renderSection(this, codex, 'codex (ChatGPT)', renderCodex);
-  this.process.stdout.write('\n');
-  renderSection(this, claude, 'claude (Claude Code subscription)', renderClaude);
-  if (allFailed) this.process.exitCode = 1;
+  BACKENDS.forEach((b, i) => {
+    if (i > 0) this.process.stdout.write('\n');
+    const o = outcomes[i] as Outcome;
+    if (o.kind === 'ok') {
+      RENDERERS[b](this, o.snapshot as never);
+    } else if (o.kind === 'not-installed') {
+      this.process.stdout.write(`=== ${TITLES[b]} ===\nnot installed: ${o.hint}\n`);
+    } else {
+      this.process.stdout.write(`=== ${TITLES[b]} ===\nunavailable: ${o.message}\n`);
+    }
+  });
+  if (!anyOk) this.process.exitCode = 1;
 }

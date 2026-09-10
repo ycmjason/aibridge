@@ -5,7 +5,7 @@ export type Availability =
   | { readonly ok: true; readonly version: string }
   | { readonly ok: false; readonly error: string };
 
-const INSTALL_HINT = 'Install the Codex CLI and sign in to ChatGPT.';
+export const INSTALL_HINT = 'Install the Codex CLI and sign in to ChatGPT.';
 
 export async function probe(run: typeof runCaptured = runCaptured): Promise<Availability> {
   try {

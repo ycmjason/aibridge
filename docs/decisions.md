@@ -5,6 +5,18 @@
 
 ## Active decisions
 
+- **Instructions and listings are filtered to installed backends; recommendations
+  live in the registry** (2026-09-10). `aibridge skill` probes every backend CLI
+  once (the drivers' `probe()`), then renders `packages/cli/instructions/` as a
+  template: `{{seats}}` becomes a table generated from `ModelSpec.roles`,
+  `{{plan}}`/`{{implement}}`/`{{review}}`/`{{image}}` resolve to the first
+  installed recommended seat, and `<!-- if:grok -->` blocks drop with their
+  backend. `models` and `quota` collapse absent backends to an install hint,
+  and every delegating command exits 2 with the installed seat list before any
+  quota call when its `--model` names a missing CLI. `--help` stays static
+  (stricli builds it synchronously) and points at `aibridge models`. The grok
+  image seat is exempt from the guard: it renders over HTTP on `~/.grok/auth.json`.
+
 - **The installed skill is an evergreen loader; the CLI package is canonical**
   (2026-08-29). `skills/aibridge/SKILL.md` contains only trigger metadata and a
   bootstrap command. It runs `npx -y @aibridge/cli@latest skill [topic]`. The

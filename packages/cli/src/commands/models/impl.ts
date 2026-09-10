@@ -1,50 +1,55 @@
 import type { LocalContext } from '../../context.ts';
-import { type Backend, imageAlphaFor, imageFormatFor, MODELS } from '../../models.ts';
+import { detectInstalled, type Installed } from '../../installed.ts';
+import { BACKEND_NAMES, BACKENDS, imageAlphaFor, imageFormatFor, MODELS } from '../../models.ts';
 
 export interface ModelsFlags {
   readonly json: boolean;
 }
 
-const BACKEND_DISPLAY_NAMES: Record<Backend, string> = {
-  grok: 'grok (Grok CLI)',
-  agy: 'agy (Antigravity)',
-  codex: 'codex (Codex CLI)',
-  claude: 'claude (Claude Code CLI)',
-};
-
-export default function modelsImpl(this: LocalContext, flags: ModelsFlags): void {
+export default async function modelsImpl(
+  this: LocalContext,
+  flags: ModelsFlags,
+  installed?: Installed,
+): Promise<void> {
+  const detected = installed ?? (await detectInstalled());
   const specs = Object.values(MODELS);
 
   if (flags.json) {
-    const jsonOutput = specs.map(spec => ({
-      slug: spec.slug,
-      backend: spec.backend,
-      backendModel: spec.backendModel,
-      efforts: spec.efforts ? [...spec.efforts] : [],
-      defaultEffort: spec.defaultEffort ?? null,
-      image: imageFormatFor({ spec, effort: undefined }) ?? null,
-      imageAlpha: imageAlphaFor({ spec, effort: undefined }) ?? null,
-      brief: spec.brief,
-    }));
+    const jsonOutput = specs.map(spec => {
+      const probe = detected.get(spec.backend);
+      return {
+        slug: spec.slug,
+        backend: spec.backend,
+        backendModel: spec.backendModel,
+        efforts: spec.efforts ? [...spec.efforts] : [],
+        defaultEffort: spec.defaultEffort ?? null,
+        image: imageFormatFor({ spec, effort: undefined }) ?? null,
+        imageAlpha: imageAlphaFor({ spec, effort: undefined }) ?? null,
+        brief: spec.brief,
+        roles: spec.roles ?? null,
+        installed: probe?.ok === true,
+        version: probe?.ok ? probe.version : null,
+      };
+    });
     this.process.stdout.write(`${JSON.stringify(jsonOutput)}\n`);
     return;
   }
 
-  const backends: Backend[] = [];
-  for (const spec of specs) {
-    if (!backends.includes(spec.backend)) {
-      backends.push(spec.backend);
-    }
-  }
-
   let firstBackend = true;
-  for (const backend of backends) {
+  for (const backend of BACKENDS) {
     if (!firstBackend) {
       this.process.stdout.write('\n');
     }
     firstBackend = false;
 
-    this.process.stdout.write(`=== ${BACKEND_DISPLAY_NAMES[backend]} ===\n`);
+    const probe = detected.get(backend);
+    if (!probe?.ok) {
+      const hint = probe ? probe.error.replace(/^aibridge: /, '') : 'not probed';
+      this.process.stdout.write(`=== ${BACKEND_NAMES[backend]} — not installed ===\n  ${hint}\n`);
+      continue;
+    }
+
+    this.process.stdout.write(`=== ${BACKEND_NAMES[backend]} — ${probe.version} ===\n`);
     const backendSpecs = specs.filter(spec => spec.backend === backend);
     for (const spec of backendSpecs) {
       this.process.stdout.write(`  ${spec.slug}\n`);

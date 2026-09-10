@@ -94,7 +94,7 @@ Command orchestration uses **`@stricli/core`** (`buildCommand` / `buildRouteMap`
 
 ### Adding a subagent model
 
-Edit `packages/cli/src/models.ts`: add an entry to `MODELS` mapping a canonical slug → `{ backend, backendModel, efforts, defaultEffort?, brief }`. Every command surface (`--model <slug>`) picks it up automatically.
+Edit `packages/cli/src/models.ts`: add an entry to `MODELS` mapping a canonical slug → `{ backend, backendModel, efforts, defaultEffort?, brief, roles? }`. Every command surface (`--model <slug>`) picks it up automatically. `roles` (recommended/supported per verb, with an optional qualifier) is what the skill's seat table and the `{{plan}}`/`{{implement}}`/`{{review}}`/`{{image}}` placeholders in `packages/cli/instructions/` are generated from; seats without `roles` are listed as "also registered". Instructions and every listing are filtered to backends whose CLI is on `PATH` (`packages/cli/src/installed.ts`); wrap backend-specific prose in `<!-- if:grok -->…<!-- endif -->`.
 
 ## Further reading — research & implementation notes
 

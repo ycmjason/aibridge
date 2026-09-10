@@ -6,6 +6,7 @@ import {
   imageAlphaFor,
   listModelHelpLines,
   resolveModel,
+  seatFor,
   supportsImageGen,
 } from './models.ts';
 
@@ -119,6 +120,26 @@ describe('models registry', () => {
     expect(imageAlphaFor(grok)).toBe('chroma');
     expect(imageAlphaFor(gemini)).toBe('chroma');
     expect(imageAlphaFor(claudeSonnet)).toBeUndefined();
+  });
+
+  it('narrows listings and errors to installed backends', () => {
+    const installed = new Set(['codex', 'agy'] as const);
+    const lines = listModelHelpLines({ installed }).join('\n');
+    expect(lines).toContain('openai-codex/gpt-5.6-sol');
+    expect(lines).toContain('google-antigravity/gemini-3.7-flash');
+    expect(lines).not.toContain('xai-grok');
+    expect(lines).not.toContain('anthropic-claude');
+    expect(lines).toContain('installed backends: agy, codex');
+    expect(formatUnknownModelError('nope', installed)).not.toContain('xai-grok');
+    expect(listModelHelpLines().join('\n')).toContain('run `aibridge models`');
+  });
+
+  it('seatFor picks the first installed recommended seat, then supported, then nothing', () => {
+    expect(seatFor('review', new Set(['grok', 'codex']))?.slug).toBe('xai-grok/grok-4.6');
+    expect(seatFor('review', new Set(['codex']))?.slug).toBe('openai-codex/gpt-5.6-sol');
+    expect(seatFor('review', new Set(['agy']))?.slug).toBe('google-antigravity/gemini-3.7-flash');
+    expect(seatFor('image-gen', new Set(['claude']))).toBeUndefined();
+    expect(seatFor('plan', new Set())).toBeUndefined();
   });
 
   it('formats image-gen model errors with capable seats only', () => {

@@ -3,8 +3,9 @@ import { isAbsolute, resolve } from 'node:path';
 import { runCaptured } from '@aibridge/proc';
 import type { LocalContext } from '../../context.ts';
 import { delegate } from '../../delegate.ts';
+import { detectInstalled, installedBackends, requireBackend } from '../../installed.ts';
 import { formatUnknownModelError, resolveModel } from '../../models.ts';
-import { preflightModel, renderPreflightRefusal } from '../../quotaPreflight.ts';
+import { alternativeSeats, preflightModel, renderPreflightRefusal } from '../../quotaPreflight.ts';
 import { startRun } from '../../runlog.ts';
 
 export interface ImplementFlags {
@@ -21,10 +22,14 @@ export default async function implement(
   const inputSlug = flags.model;
   const model = resolveModel(inputSlug);
   if (!model) {
-    this.process.stderr.write(`${formatUnknownModelError(inputSlug)}\n`);
+    this.process.stderr.write(
+      `${formatUnknownModelError(inputSlug, installedBackends(await detectInstalled()))}
+`,
+    );
     this.process.exitCode = 2;
     return;
   }
+  if (!(await requireBackend(this, 'implement', model.spec.backend))) return;
 
   const cwd = this.process.cwd();
   const absPlanPath = isAbsolute(planFile) ? planFile : resolve(cwd, planFile);
@@ -37,7 +42,9 @@ export default async function implement(
   if (flags.preflight) {
     const verdict = await preflightModel(model);
     if (!verdict.ok) {
-      this.process.stderr.write(`${renderPreflightRefusal('implement', verdict)}\n`);
+      this.process.stderr.write(
+        `${renderPreflightRefusal('implement', verdict, alternativeSeats(model, installedBackends(await detectInstalled())))}\n`,
+      );
       this.process.exitCode = 3;
       return;
     }

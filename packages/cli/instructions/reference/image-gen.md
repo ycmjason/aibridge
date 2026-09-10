@@ -11,16 +11,14 @@ aibridge image-gen --model <slug> --out <file.png> "<full prompt — see part B>
   [--timeout 600] [--no-preflight] [--json]
 ```
 
-| slug | renders via | format |
-|---|---|---|
-| `openai-codex/gpt-5.6-sol` (recommended) | Codex CLI | PNG |
-| `google-antigravity/gemini-3.7-flash` | Antigravity CLI (`agy`) | JPEG |
-| `xai-grok/grok-4.6` | `api.x.ai` directly, on `~/.grok/auth.json` | JPEG |
+{{image-seats}}
 
-Other seats fail fast with a list of capable models. The grok seat renders
-without `grok` on `PATH`; the CLI is spawned only to refresh the token, before a
-request when `expires_at` is close and again as a backstop if one comes back
-401. `grok login` is still what sets the seat up.
+Other seats fail fast with a list of capable models.
+<!-- if:grok -->
+The grok seat renders without `grok` on `PATH`; the CLI is spawned only to
+refresh the token, before a request when `expires_at` is close and again as a
+backstop if one comes back 401. `grok login` is still what sets the seat up.
+<!-- endif -->
 
 - `--out` is required and its extension must match the seat's format above
   (`.png` for any `--transparent` run). A mismatch is rejected before anything
@@ -47,7 +45,7 @@ request when `expires_at` is close and again as a backstop if one comes back
   "transparent background" into the prompt without the flag is refused on
   chroma seats.
 - **A green subject is keyed away with the backdrop** on chroma seats. Anything
-  that must be green needs `openai-codex/*`.
+  that must be green needs a native-alpha seat (`openai-codex/*`).
 - Both surfaces report the path taken: the result line says
   `transparency: native` / `chroma-keyed`, `--json` carries
   `"native" | "chroma" | null`. Quote it when the edges matter. Keying under 2%
@@ -56,7 +54,7 @@ request when `expires_at` is close and again as a backstop if one comes back
 ### Reference images
 
 ```bash
-aibridge image-gen --model openai-codex/gpt-5.6-sol \
+aibridge image-gen --model {{image}} \
   "the same woman, now in a denim shirt in a bright kitchen, waist-up" \
   --out avatar2.png --image avatar.png --aspect-ratio 9:16
 ```

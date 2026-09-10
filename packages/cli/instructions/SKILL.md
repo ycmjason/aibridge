@@ -15,8 +15,10 @@ runner. This keeps instructions and executable behavior on the same version.
 Requires Node 24.11 or later. If Node is older, ask the user to upgrade with
 `nvm install 24` or `mise use node@24`. Ask before any global install.
 
-Backing CLIs must be on `PATH` and authed: `grok`, `agy` (Antigravity), `codex`,
-`claude`. Any subset works; commands fail fast with install hints.
+{{installed}}
+
+Every seat below runs on an installed CLI. A `--model` on a missing backend
+exits 2 with an install hint before anything runs.
 
 ## Where `--out` goes
 
@@ -38,7 +40,7 @@ Backing CLIs must be on `PATH` and authed: `grok`, `agy` (Antigravity), `codex`,
 | `implement` | Implement a plan file in place and run the real checks |
 | `review` | Review a diff, commit range, or plan contract |
 | `subagent` | Delegate a self-contained task to another model |
-| `image-gen` | Generate a raster image with a Codex, Antigravity, or Grok seat |
+| `image-gen` | Generate a raster image with an image-capable seat |
 | `runs` | Monitor and inspect execution runs |
 | `quota` | Show backend quota and reset times |
 | `models` | List registered model seats and capabilities |
@@ -71,14 +73,7 @@ answer to stdout, and `subagent --out foo.md` exits 2 with
 `quota`, `models` and `runs` take no `--model`. Starting points, not
 benchmarks:
 
-| slug | plan | implement | review | image-gen |
-|---|---|---|---|---|
-| `xai-grok/grok-4.6` | ✅ small–mid, well-scoped | ○ | ✅ | ○ JPEG |
-| `xai-grok/grok-4.5` | ○ | ✅ any fidelity | ○ | ○ JPEG |
-| `openai-codex/gpt-5.6-sol` | ✅ mid–big, ambiguous | ○ | ✅ | ✅ PNG |
-| `anthropic-claude/opus-5` | ✅ mid–big, ambiguous | ○ | ✅ | ✗ |
-| `google-antigravity/gemini-3.7-flash` | ○ | ✅ needs high–xhigh detail | ○ | ○ JPEG |
-| `anthropic-claude/sonnet-5` | ○ | ✅ needs high detail | ○ | ✗ |
+{{seats}}
 
 ✅ recommended · ○ supported · ✗ unsupported. For `plan`, the qualifier describes
 how much ambiguity the model can resolve. For `implement`, it describes how
@@ -86,27 +81,20 @@ detailed the plan must be.
 **If the task fits no row, or the user has said how they want work routed, ask
 rather than guess.**
 
-Also registered: `openai-codex/gpt-6-astra` (newest codex frontier tier),
-`openai-codex/gpt-5.6-terra` / `-luna` (cheaper coding tiers),
-`openai-codex/gpt-5.5` / `gpt-5.4-mini` (older codex tiers, still served),
-`anthropic-claude/fable-5.1` (hardest, longest-running work),
-`anthropic-claude/haiku-4-5` (quick answers),
-`google-antigravity/gemini-3.8-flash` (newest flash tier, no per-model quota
-guard yet), `google-antigravity/gemini-3.6-flash`, `google-antigravity/gemini-3.1-pro`
-(`-high`/`-low` only), and agy's `claude-sonnet-4-6` /
-`claude-opus-4-6-thinking` / `gpt-oss-120b-medium`. Run `aibridge models
-[--json]` for exact per-seat facts, or `aibridge <command> --help` for the list.
-
+<!-- if:grok -->
 - **One grok stage at a time.** ~30 req/min, ~1k msgs/day, and both tiers share
   that budget.
 - **`grok-4.6` plans and reviews, `grok-4.5` implements.** They are different
   seats, not old and new.
+<!-- endif -->
 - **The reviewer must be a different model family from whoever implemented**,
   including when that was you.
-- **A backend that shares YOUR quota is a last resort**: `anthropic-claude/*`
-  for Claude-based agents, `google-antigravity/*` for Antigravity-based agents.
-  Say so when you reach for it.
+- **A backend on the same provider as the agent you orchestrate from is a last
+  resort**: it spends the pool you are already burning. Say so when you reach
+  for it.
+<!-- if:codex -->
 - **Swap on quota**: `openai-codex/gpt-5.6-sol[-<effort>]` is the usual alternate.
+<!-- endif -->
 - Preflight runs before every delegation. `aibridge quota` is the manual check
   before you pipeline several stages.
 

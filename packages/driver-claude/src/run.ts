@@ -1,5 +1,6 @@
 import { isNotFound, type RunResult, runCaptured, stripAnsi } from '@aibridge/proc';
 import { buildClaudePrintArgs } from './claude.ts';
+import { INSTALL_HINT } from './probe.ts';
 
 export interface DelegationTask {
   readonly prompt: string;
@@ -23,7 +24,6 @@ export type DelegationResult =
     };
 
 const NOISE_RE = /^Shell cwd was reset[^\n]*$/gm;
-const INSTALL_HINT = 'Install Claude Code and sign in.';
 
 function clean(s: string): string {
   return stripAnsi(s).replace(NOISE_RE, '').trim();

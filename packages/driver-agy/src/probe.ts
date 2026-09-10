@@ -4,7 +4,7 @@ export type Availability =
   | { readonly ok: true; readonly version: string }
   | { readonly ok: false; readonly error: string };
 
-const INSTALL_HINT = 'Install the Antigravity CLI and sign in.';
+export const INSTALL_HINT = 'Install the Antigravity CLI and sign in.';
 
 export async function probe(run: typeof runCaptured = runCaptured): Promise<Availability> {
   try {

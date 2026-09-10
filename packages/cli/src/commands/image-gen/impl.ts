@@ -15,6 +15,7 @@ import sharp from 'sharp';
 import type { LocalContext } from '../../context.ts';
 import type { ImageResult } from '../../driver.ts';
 import { getDriver } from '../../drivers.ts';
+import { detectInstalled, installedBackends, requireBackend } from '../../installed.ts';
 import {
   backendModelId,
   formatImageGenModelError,
@@ -25,7 +26,7 @@ import {
   resolveModel,
   supportsImageGen,
 } from '../../models.ts';
-import { preflightModel, renderPreflightRefusal } from '../../quotaPreflight.ts';
+import { alternativeSeats, preflightModel, renderPreflightRefusal } from '../../quotaPreflight.ts';
 import {
   CHROMA_CLAUSE,
   chromaKeyToPng,
@@ -59,8 +60,14 @@ export default async function imageGen(
 
   const inputSlug = flags.model;
   const model = resolveModel(inputSlug);
-  if (!model) return fail(formatUnknownModelError(inputSlug));
-  if (!supportsImageGen(model)) return fail(formatImageGenModelError(inputSlug, model));
+  if (!model) {
+    return fail(formatUnknownModelError(inputSlug, installedBackends(await detectInstalled())));
+  }
+  if (!supportsImageGen(model)) {
+    return fail(
+      formatImageGenModelError(inputSlug, model, installedBackends(await detectInstalled())),
+    );
+  }
 
   if (model.spec.backend === 'codex' && model.effort) {
     return fail(
@@ -123,13 +130,22 @@ export default async function imageGen(
   if (!driver.generateImage) {
     return fail(formatImageGenModelError(inputSlug, model));
   }
+  // The grok seat renders over HTTP on ~/.grok/auth.json and only spawns the CLI
+  // to refresh a token, so a missing `grok` binary is not a reason to refuse.
+  if (
+    model.spec.backend !== 'grok' &&
+    !(await requireBackend(this, 'image-gen', model.spec.backend, { imageOnly: true }))
+  )
+    return;
 
   // Last gate before a paid render. Every check above is local and must stay
   // above it, so a bad --out or aspect ratio still fails without a network call.
   if (flags.preflight) {
     const verdict = await preflightModel(model);
     if (!verdict.ok) {
-      this.process.stderr.write(`${renderPreflightRefusal('image-gen', verdict)}\n`);
+      this.process.stderr.write(
+        `${renderPreflightRefusal('image-gen', verdict, alternativeSeats(model, installedBackends(await detectInstalled()), true))}\n`,
+      );
       this.process.exitCode = 3;
       return;
     }

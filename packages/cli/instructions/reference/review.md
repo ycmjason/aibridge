@@ -7,7 +7,7 @@ report to a file. Standard output contains only the verdict and paths.
 
 ```bash
 aibridge review --model <slug> --out <file> [options]
-  --model <slug>       reviewer model (required, e.g. xai-grok/grok-4.6)
+  --model <slug>       reviewer model (required, e.g. {{review}})
   --plan <file>        plan contract; over-reach against it is a finding
   --base <ref>         any git ref or range to diff against (default: HEAD)
   --out <file>         full report destination (required)
@@ -22,13 +22,13 @@ works: `HEAD~3`, a branch, a SHA, a tag, `v1.2.0..HEAD`.
 
 ```bash
 # uncommitted work only (the default base, HEAD)
-aibridge review --model xai-grok/grok-4.6 --out .aibridge/review.md
+aibridge review --model {{review}} --out .aibridge/review.md
 
 # the 3 commits you just made
-aibridge review --model xai-grok/grok-4.6 --base HEAD~3 --out .aibridge/review.md
+aibridge review --model {{review}} --base HEAD~3 --out .aibridge/review.md
 
 # the whole branch, against the plan contract
-aibridge review --model xai-grok/grok-4.6 --base main \
+aibridge review --model {{review}} --base main \
   --plan .aibridge/plan.md --out .aibridge/review.md
 ```
 
@@ -63,8 +63,8 @@ run: <run id>
 - `PASS` → proceed (commit, or report done).
 - Findings → read the report, then judge. Over-reach findings can be scope you
   added deliberately: the reviewer flags, you decide. Fix what is real, re-run.
-- Never let a model review its own diff. The recommended seats (grok reviews,
-  gemini implements) already comply; if you override one, check the other.
+- Never let a model review its own diff. The seat table's recommended reviewer
+  and implementer already differ; if you override one, check the other.
 
 ## Gotchas
 

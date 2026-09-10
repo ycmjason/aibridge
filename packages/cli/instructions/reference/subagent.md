@@ -12,14 +12,13 @@ aibridge subagent --model <slug> "<self-contained prompt>" [options]
   --timeout <secs>     max seconds (default: 600)
   --no-tools           reasoning only: no file or shell access
   --no-preflight       skip the quota preflight
-  --json               machine-readable, e.g. {"model": "grok-4.6", "slug": "xai-grok/grok-4.6", ...}
+  --json               machine-readable: {"model": <backend id>, "slug": <canonical slug>, "response", "exitCode"}
 ```
 
 The answer prints to stdout. There is no `--out`; redirect if you want a file.
 
-Effort suffixes work on seats that support them
-(`xai-grok/grok-4.6-medium`, `google-antigravity/gemini-3.7-flash-low`,
-`anthropic-claude/sonnet-5-max`). The seat table is in [SKILL.md](../SKILL.md);
+Effort suffixes work on seats that support them (`{{review}}-low`; `aibridge
+models` lists each seat's efforts). The seat table is in [SKILL.md](../SKILL.md);
 `aibridge subagent --help` prints the live list.
 
 **Tools are ON by default** — the delegate reads/writes files and runs shell.

@@ -3,7 +3,9 @@ import type { AgyQuotaSnapshot } from '@aibridge/driver-agy';
 import type { CodexQuotaSnapshot } from '@aibridge/driver-codex';
 import type { GrokQuotaSnapshot } from '@aibridge/driver-grok';
 import { test } from 'vitest';
+import { resolveModel } from './models.ts';
 import {
+  alternativeSeats,
   evaluateAgyPreflight,
   evaluateCodexPreflight,
   evaluateGrokPreflight,
@@ -227,11 +229,15 @@ test('evaluateGrokPreflight: healthy (17% used) returns ok:true', () => {
 });
 
 test('renderPreflightRefusal: auth kind uses unauthenticated wording', () => {
-  const msg = renderPreflightRefusal('plan', {
-    kind: 'auth',
-    message: 'grok session expired (401) — run `grok login`, then retry',
-    resetAt: undefined,
-  });
+  const msg = renderPreflightRefusal(
+    'plan',
+    {
+      kind: 'auth',
+      message: 'grok session expired (401) — run `grok login`, then retry',
+      resetAt: undefined,
+    },
+    [],
+  );
   assert.strictEqual(
     msg,
     'aibridge plan: refusing — grok session expired (401) — run `grok login`, then retry. Running with --no-preflight would only fail unauthenticated later. Or use a different --model.',
@@ -239,25 +245,40 @@ test('renderPreflightRefusal: auth kind uses unauthenticated wording', () => {
 });
 
 test('renderPreflightRefusal: image-gen quota refusal points at other image seats', () => {
-  const msg = renderPreflightRefusal('image-gen', {
-    kind: 'quota',
-    message: 'grok credit quota exhausted',
-    resetAt: undefined,
-  });
-  // No claude seat renders images, so the delegation fallback would be dead advice.
-  assert.ok(!msg.includes('claude-backend fallback'));
-  assert.ok(msg.includes('another image seat'));
-  assert.ok(msg.includes('openai-codex/gpt-5.6-sol'));
+  const msg = renderPreflightRefusal(
+    'image-gen',
+    {
+      kind: 'quota',
+      message: 'grok credit quota exhausted',
+      resetAt: undefined,
+    },
+    ['openai-codex/gpt-5.6-sol'],
+  );
+  assert.ok(msg.includes('another installed seat (--model openai-codex/gpt-5.6-sol)'));
 });
 
 test('renderPreflightRefusal: quota kind keeps override wording', () => {
-  const msg = renderPreflightRefusal('subagent', {
-    kind: 'quota',
-    message: 'grok credit quota exhausted',
-    resetAt: undefined,
-  });
+  const msg = renderPreflightRefusal(
+    'subagent',
+    {
+      kind: 'quota',
+      message: 'grok credit quota exhausted',
+      resetAt: undefined,
+    },
+    [],
+  );
   assert.strictEqual(
     msg,
-    'aibridge subagent: refusing — grok credit quota exhausted. Use --no-preflight to override, or a claude-backend fallback (subagent --model sonnet|opus — bills the Claude subscription).',
+    'aibridge subagent: refusing — grok credit quota exhausted. Use --no-preflight to override; no other backend CLI is installed to fall back to.',
   );
+});
+
+test('alternativeSeats: curated seats on other installed backends first, never the refused backend', () => {
+  const grok = resolveModel('xai-grok/grok-4.6');
+  if (!grok) throw new Error('resolution failed');
+  const alts = alternativeSeats(grok, new Set(['grok', 'codex']));
+  assert.strictEqual(alts[0], 'openai-codex/gpt-5.6-sol');
+  assert.ok(alts.every(s => s.startsWith('openai-codex/')));
+  assert.deepStrictEqual(alternativeSeats(grok, new Set(['grok'])), []);
+  assert.deepStrictEqual(alternativeSeats(grok, new Set(['grok', 'claude']), true), []);
 });
