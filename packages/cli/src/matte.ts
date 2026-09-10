@@ -34,6 +34,8 @@ export interface MatteResult {
    * renders, the one thing the pair must not do.
    */
   readonly drift: number;
+  /** The first image was rescaled to the second's size before solving. */
+  readonly resized: boolean;
 }
 
 /** Measured on agy and grok JPEG pairs: backdrop noise peaks ~14/255, subject dips to ~240/255. */
@@ -57,12 +59,10 @@ interface Raw {
   readonly height: number;
 }
 
-async function decodeRgb(path: string): Promise<Raw> {
-  const { data, info } = await sharp(path)
-    .toColourspace('srgb')
-    .removeAlpha()
-    .raw()
-    .toBuffer({ resolveWithObject: true });
+async function decodeRgb(path: string, size?: { width: number; height: number }): Promise<Raw> {
+  let pipeline = sharp(path).toColourspace('srgb').removeAlpha();
+  if (size) pipeline = pipeline.resize(size.width, size.height, { fit: 'fill' });
+  const { data, info } = await pipeline.raw().toBuffer({ resolveWithObject: true });
   if (info.channels !== 3) {
     throw new Error(`expected 3-channel RGB from ${path}, got ${info.channels}`);
   }
@@ -92,6 +92,11 @@ export function borderColour(img: Raw): Rgb {
     return xs[xs.length >> 1] ?? 0;
   };
   return [median(samples[0]), median(samples[1]), median(samples[2])];
+}
+
+export async function imageAspect(path: string): Promise<{ width: number; height: number }> {
+  const meta = await sharp(path).metadata();
+  return { width: meta.width, height: meta.height };
 }
 
 export function distance(a: Rgb, b: Rgb): number {
@@ -142,12 +147,21 @@ export async function differenceMatte(
 ): Promise<MatteResult> {
   const floor = opts.floor ?? DEFAULT_FLOOR;
   const ceiling = opts.ceiling ?? DEFAULT_CEILING;
-  const a = await decodeRgb(src1);
+  let a = await decodeRgb(src1);
   const b = await decodeRgb(src2);
+  let resized = false;
   if (a.width !== b.width || a.height !== b.height) {
-    throw new Error(
-      `the two renders differ in size (${a.width}x${a.height} vs ${b.width}x${b.height}); the pair must be pixel-aligned`,
-    );
+    // An edit backend may return its own native size (grok renders every edit at
+    // 1k). Same aspect means a uniform rescale keeps the pair aligned to within
+    // resampling error; a different aspect means the subject moved, full stop.
+    const aspectGap = Math.abs(a.width / a.height - b.width / b.height);
+    if (aspectGap > 0.01) {
+      throw new Error(
+        `the two renders differ in shape (${a.width}x${a.height} vs ${b.width}x${b.height}); the pair must be pixel-aligned`,
+      );
+    }
+    a = await decodeRgb(src1, { width: b.width, height: b.height });
+    resized = true;
   }
   const background1 = borderColour(a);
   const background2 = borderColour(b);
@@ -221,5 +235,6 @@ export async function differenceMatte(
     transparentRatio: n === 0 ? 0 : transparent / n,
     softRatio: n === 0 ? 0 : soft / n,
     drift: opaque + soft === 0 ? 0 : drifted / (opaque + soft),
+    resized,
   };
 }

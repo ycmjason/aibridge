@@ -90,12 +90,29 @@ describe('differenceMatte', () => {
     await expect(differenceMatte(a, b, join(dir, 'out.png'))).rejects.toThrow(/too similar/);
   });
 
-  it('refuses a pair of different sizes', async () => {
+  it('rescales the first image when the edit came back at another size, same aspect', async () => {
+    const a = join(dir, 'a.png');
+    const b = join(dir, 'b.png');
+    const out = join(dir, 'out.png');
+    await write(a, render(WHITE));
+    await sharp(render(GREEN), { raw: { width: W, height: H, channels: 3 } })
+      .resize(32, 32, { kernel: 'nearest' })
+      .png()
+      .toFile(b);
+    const r = await differenceMatte(a, b, out);
+    expect(r.resized).toBe(true);
+    expect(r.width).toBe(32);
+    const { data } = await sharp(out).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+    expect(data[(16 * 32 + 16) * 4 + 3]).toBe(255);
+    expect(data[3]).toBe(0);
+  });
+
+  it('refuses a pair of different shapes', async () => {
     const a = join(dir, 'a.png');
     const b = join(dir, 'b.png');
     await write(a, render(WHITE));
     await sharp(render(GREEN), { raw: { width: W, height: H, channels: 3 } })
-      .resize(32, 32)
+      .resize(64, 32, { fit: 'fill' })
       .png()
       .toFile(b);
     await expect(differenceMatte(a, b, join(dir, 'out.png'))).rejects.toThrow(/pixel-aligned/);

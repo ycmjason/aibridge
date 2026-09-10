@@ -2,10 +2,11 @@ import { copyFileSync, existsSync, mkdirSync, mkdtempSync, rmSync, statSync } fr
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import type { LocalContext } from '../../context.ts';
+import type { AgentCliDriver } from '../../driver.ts';
 import { getDriver } from '../../drivers.ts';
 import { renderImage } from '../../imageRender.ts';
 import { detectInstalled, installedBackends, requireBackend } from '../../installed.ts';
-import { differenceMatte, distance, hasFlatBorder, type Rgb } from '../../matte.ts';
+import { differenceMatte, distance, hasFlatBorder, imageAspect, type Rgb } from '../../matte.ts';
 import {
   backendModelId,
   formatImageGenModelError,
@@ -38,6 +39,26 @@ const BACKDROPS: ReadonlyArray<{ readonly name: string; readonly hex: string; re
 /** Above this share of moved pixels the matte ghosts; measured 4% on agy, 7% on grok. */
 const DRIFT_WARN = 0.15;
 
+/**
+ * agy's generate_image accepts only these; grok infers the ratio from a single
+ * reference and codex takes it as a prompt hint. Without it agy re-composes a
+ * 9:16 input into a square and the pair no longer lines up.
+ */
+const ASPECTS: ReadonlyArray<readonly [string, number]> = [
+  ['1:1', 1],
+  ['2:3', 2 / 3],
+  ['3:2', 3 / 2],
+  ['3:4', 3 / 4],
+  ['4:3', 4 / 3],
+  ['9:16', 9 / 16],
+  ['16:9', 16 / 9],
+];
+
+export function nearestAspect(width: number, height: number): string {
+  const r = width / height;
+  return ASPECTS.reduce((best, a) => (Math.abs(a[1] - r) < Math.abs(best[1] - r) ? a : best))[0];
+}
+
 export function isolationPrompt(subject: string): string {
   return (
     `Keep only ${subject}, unchanged: same position, scale, colours, lighting, line work and every visible detail. ` +
@@ -57,6 +78,8 @@ export default async function imageCutout(
   flags: ImageCutoutFlags,
   image: string,
   subject?: string,
+  /** Test seam: stricli never passes this; tests inject a fake renderer. */
+  driverOverride?: AgentCliDriver,
 ): Promise<void> {
   const fail = (msg: string): void => {
     this.process.stderr.write(`aibridge image-cutout: ${msg}\n`);
@@ -108,7 +131,7 @@ export default async function imageCutout(
 
   const timeoutSec = flags.timeout ?? 600;
   const outPath = resolve(this.process.cwd(), flags.out);
-  const driver = getDriver(model.spec.backend);
+  const driver = driverOverride ?? getDriver(model.spec.backend);
   if (!driver.generateImage) return fail(formatImageGenModelError(inputSlug, model));
   if (
     model.spec.backend !== 'grok' &&
@@ -130,16 +153,20 @@ export default async function imageCutout(
 
   const work = mkdtempSync(join(tmpdir(), 'aibridge-cutout-'));
   try {
-    const render = (prompt: string, ref: string) =>
-      renderImage(driver, model, {
+    // Each paid render gets its own directory: codex writes a fixed `out.png` and
+    // would hand back the previous pass's file if the next one failed to overwrite it.
+    const render = async (prompt: string, ref: string) => {
+      const { width, height } = await imageAspect(ref);
+      return renderImage(driver, model, {
         prompt,
-        workDir: work,
+        workDir: mkdtempSync(join(work, 'render-')),
         backendModel: backendModelId(model),
         effort: model.effort,
-        aspectRatio: undefined,
+        aspectRatio: nearestAspect(width, height),
         imagePaths: [ref],
         timeoutSec,
       });
+    };
 
     let base = imagePath;
     let calls = 0;
@@ -149,11 +176,20 @@ export default async function imageCutout(
       if (isolated.kind === 'error') return fail(isolated.reason);
       base = join(work, 'isolated.bin');
       copyFileSync(isolated.path, base);
+      let flat: Awaited<ReturnType<typeof hasFlatBorder>>;
       try {
-        firstColour = (await hasFlatBorder(base)).colour;
+        flat = await hasFlatBorder(base);
       } catch (err) {
         return fail(`cannot read the isolated render: ${(err as Error).message}`);
       }
+      // Refuse here rather than after the second paid call: a non-flat first
+      // render cannot be matted no matter what the second one looks like.
+      if (!flat.flat) {
+        return fail(
+          'the model did not isolate the subject onto a flat background, so there is nothing to matte against. Re-run, or describe the subject more precisely.',
+        );
+      }
+      firstColour = flat.colour;
     }
     const first = firstColour ?? [255, 255, 255];
     const backdrop = BACKDROPS.reduce((best, b) =>
@@ -165,6 +201,15 @@ export default async function imageCutout(
     if (edited.kind === 'error') return fail(edited.reason);
     const second = join(work, 'second.bin');
     copyFileSync(edited.path, second);
+    try {
+      if (!(await hasFlatBorder(second)).flat) {
+        return fail(
+          'the model did not return a flat backdrop on the second render, so the pair cannot be solved. Re-run; the edit is not deterministic.',
+        );
+      }
+    } catch (err) {
+      return fail(`cannot read the second render: ${(err as Error).message}`);
+    }
 
     const keyed = join(work, 'cutout.png');
     let matte: Awaited<ReturnType<typeof differenceMatte>>;
@@ -205,6 +250,7 @@ export default async function imageCutout(
           transparentRatio: round3(matte.transparentRatio),
           softRatio: round3(matte.softRatio),
           drift: round3(matte.drift),
+          resized: matte.resized,
         })}\n`,
       );
     } else {

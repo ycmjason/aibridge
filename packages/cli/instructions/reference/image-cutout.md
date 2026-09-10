@@ -36,6 +36,12 @@ aibridge image-cutout --model <slug> --out <file.png> <image> ["<what to keep>"]
 - **transparent** under 2% warns: the edit kept the old backdrop. Re-run.
 - **backgroundDistance** under 50 is refused after the render: the two
   backdrops came back too alike to separate.
+- **resized** true means the edit came back at the model's own size and the
+  input was rescaled to match. The matte still solves, but resampling adds
+  drift (13% measured against 4% on a same-size pair) and shows as faint
+  ghosting in fine detail. For the cleanest cut, feed the model an image it
+  rendered itself, at its own size: `image-gen` output on the same model is
+  ideal.
 
 ## With image-gen
 
