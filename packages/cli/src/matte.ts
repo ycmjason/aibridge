@@ -70,7 +70,7 @@ async function decodeRgb(path: string, size?: { width: number; height: number })
 }
 
 /** Per-channel median of the one-pixel border ring. A subject touching one edge cannot drag it. */
-export function borderColour(img: Raw): Rgb {
+function borderColour(img: Raw): Rgb {
   const { data, width, height } = img;
   const samples: [number[], number[], number[]] = [[], [], []];
   const push = (x: number, y: number) => {
@@ -95,8 +95,9 @@ export function borderColour(img: Raw): Rgb {
 }
 
 export async function imageAspect(path: string): Promise<{ width: number; height: number }> {
-  const meta = await sharp(path).metadata();
-  return { width: meta.width, height: meta.height };
+  const { width, height } = await sharp(path).metadata();
+  if (!width || !height) throw new Error(`no pixel dimensions in ${path}`);
+  return { width, height };
 }
 
 export function distance(a: Rgb, b: Rgb): number {

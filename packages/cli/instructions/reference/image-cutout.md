@@ -21,11 +21,15 @@ aibridge image-cutout --model <slug> --out <file.png> <image> ["<what to keep>"]
   A first edit keeps only the subject and puts it on flat white; the second
   changes that white to green. Use this for a scene, or to pick one thing out
   of a flat-background image.
+- **Shape.** The two renders must line up. grok keeps a single reference's
+  shape. agy re-renders only at 1:1, 2:3, 3:2, 3:4, 4:3, 9:16 or 16:9, so a
+  no-subject cutout on agy is refused up front for any other shape: crop or pad
+  first, or give a subject (both renders are then model output).
 - `--out` must end in `.png`. Render into the asset's real home when the project
   keeps it; drafts go to `.aibridge/`.
 - The result line reports `transparent`, `soft edge` and `drift` shares. `--json`
   carries `{ out, bytes, width, height, model, backend, calls, background1,
-  background2, backgroundDistance, transparentRatio, softRatio, drift }`.
+  background2, backgroundDistance, transparentRatio, softRatio, drift, resized }`.
 
 ## Reading the numbers
 

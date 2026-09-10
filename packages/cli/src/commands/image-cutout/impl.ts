@@ -54,12 +54,21 @@ const ASPECTS: ReadonlyArray<readonly [string, number]> = [
   ['16:9', 16 / 9],
 ];
 
+/** The pair must line up to within this; a 1% stretch at 1k is ~10 px of squash, already drift. */
+const ASPECT_TOLERANCE = 0.01;
+
 export function nearestAspect(width: number, height: number): string {
   const r = width / height;
   return ASPECTS.reduce((best, a) => (Math.abs(a[1] - r) < Math.abs(best[1] - r) ? a : best))[0];
 }
 
-export function isolationPrompt(subject: string): string {
+/** The named ratio the image already has, or undefined when it is off the list. */
+export function exactAspect(width: number, height: number): string | undefined {
+  const r = width / height;
+  return ASPECTS.find(a => Math.abs(a[1] - r) <= ASPECT_TOLERANCE)?.[0];
+}
+
+function isolationPrompt(subject: string): string {
   return (
     `Keep only ${subject}, unchanged: same position, scale, colours, lighting, line work and every visible detail. ` +
     'Remove everything else and replace it with a flat solid pure white (#ffffff) background. ' +
@@ -67,7 +76,7 @@ export function isolationPrompt(subject: string): string {
   );
 }
 
-export function backdropPrompt(backdrop: { name: string; hex: string }): string {
+function backdropPrompt(backdrop: { name: string; hex: string }): string {
   // Short on purpose: the README-length "keep the subject, composition, …" prompt
   // made agy return the input untouched; this one changed the backdrop every time.
   return `Change the background to solid pure ${backdrop.name} ${backdrop.hex}. Keep everything else identical.`;
@@ -127,6 +136,24 @@ export default async function imageCutout(
       );
     }
     firstColour = flat.colour;
+    // agy re-renders every edit at one of its named ratios, so an off-list input
+    // can never come back the same shape and the pair would be refused after
+    // the render was paid for. grok keeps a single reference's shape; codex is
+    // untested here and gets no hint either way.
+    if (model.spec.backend === 'agy') {
+      let size: { width: number; height: number };
+      try {
+        size = await imageAspect(imagePath);
+      } catch (err) {
+        return fail(`cannot read ${image}: ${(err as Error).message}`);
+      }
+      if (exactAspect(size.width, size.height) === undefined) {
+        return fail(
+          `${image} is ${size.width}x${size.height}, and ${model.spec.slug} re-renders edits only at ${ASPECTS.map(a => a[0]).join(', ')}, so the pair could not line up. ` +
+            'Crop or pad it to one of those first, give a subject so both renders are model output, or use a grok model, which keeps the input shape.',
+        );
+      }
+    }
   }
 
   const timeoutSec = flags.timeout ?? 600;
@@ -155,14 +182,24 @@ export default async function imageCutout(
   try {
     // Each paid render gets its own directory: codex writes a fixed `out.png` and
     // would hand back the previous pass's file if the next one failed to overwrite it.
-    const render = async (prompt: string, ref: string) => {
-      const { width, height } = await imageAspect(ref);
+    // The isolation render may reframe (it is model output either way), so it
+    // gets the nearest named ratio. The backdrop render must keep the base's
+    // shape exactly, so it gets a ratio only when the base already has one.
+    const render = async (prompt: string, ref: string, snap: boolean) => {
+      let size: { width: number; height: number };
+      try {
+        size = await imageAspect(ref);
+      } catch (err) {
+        return { kind: 'error' as const, reason: `cannot read ${ref}: ${(err as Error).message}` };
+      }
       return renderImage(driver, model, {
         prompt,
         workDir: mkdtempSync(join(work, 'render-')),
         backendModel: backendModelId(model),
         effort: model.effort,
-        aspectRatio: nearestAspect(width, height),
+        aspectRatio: snap
+          ? nearestAspect(size.width, size.height)
+          : exactAspect(size.width, size.height),
         imagePaths: [ref],
         timeoutSec,
       });
@@ -171,7 +208,7 @@ export default async function imageCutout(
     let base = imagePath;
     let calls = 0;
     if (subject !== undefined) {
-      const isolated = await render(isolationPrompt(subject), imagePath);
+      const isolated = await render(isolationPrompt(subject), imagePath, true);
       calls++;
       if (isolated.kind === 'error') return fail(isolated.reason);
       base = join(work, 'isolated.bin');
@@ -196,7 +233,7 @@ export default async function imageCutout(
       distance(b.rgb, first) > distance(best.rgb, first) ? b : best,
     );
 
-    const edited = await render(backdropPrompt(backdrop), base);
+    const edited = await render(backdropPrompt(backdrop), base, false);
     calls++;
     if (edited.kind === 'error') return fail(edited.reason);
     const second = join(work, 'second.bin');

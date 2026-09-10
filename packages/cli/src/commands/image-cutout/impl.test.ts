@@ -5,7 +5,7 @@ import sharp from 'sharp';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { LocalContext } from '../../context.ts';
 import type { AgentCliDriver, ImageGenRequest, ImageResult } from '../../driver.ts';
-import imageCutout, { type ImageCutoutFlags, nearestAspect } from './impl.ts';
+import imageCutout, { exactAspect, type ImageCutoutFlags, nearestAspect } from './impl.ts';
 
 const W = 64;
 const H = 64;
@@ -30,9 +30,9 @@ function scene(bg: Rgb, noise = false): Buffer {
   return buf;
 }
 
-async function writeImage(path: string, buf: Buffer, size = W): Promise<void> {
+async function writeImage(path: string, buf: Buffer, size = W, height = size): Promise<void> {
   let p = sharp(buf, { raw: { width: W, height: H, channels: 3 } });
-  if (size !== W) p = p.resize(size, size, { kernel: 'nearest' });
+  if (size !== W || height !== H) p = p.resize(size, height, { kernel: 'nearest', fit: 'fill' });
   await p.png().toFile(path);
 }
 
@@ -61,7 +61,7 @@ const ctx = (): { ctx: LocalContext; stderr: () => string; stdout: () => string 
 };
 
 /** A renderer that answers each call with the next scripted image, written into the call's workDir. */
-function fakeDriver(script: ReadonlyArray<{ buf: Buffer; size?: number }>): {
+function fakeDriver(script: ReadonlyArray<{ buf: Buffer; size?: number; height?: number }>): {
   driver: AgentCliDriver;
   calls: ImageGenRequest[];
 } {
@@ -74,7 +74,7 @@ function fakeDriver(script: ReadonlyArray<{ buf: Buffer; size?: number }>): {
       calls.push(req);
       if (!step) return { kind: 'error', reason: 'script exhausted' };
       const path = join(req.workDir, 'out.png');
-      await writeImage(path, step.buf, step.size);
+      await writeImage(path, step.buf, step.size, step.height);
       return { kind: 'ok', path, bytes: 50_000 };
     },
   };
@@ -192,6 +192,60 @@ describe('image-cutout', () => {
     expect(nearestAspect(1024, 1024)).toBe('1:1');
     expect(nearestAspect(1200, 800)).toBe('3:2');
     expect(nearestAspect(1000, 1400)).toBe('3:4');
+    expect(exactAspect(720, 1280)).toBe('9:16');
+    expect(exactAspect(768, 1376)).toBe('9:16');
+    expect(exactAspect(1000, 1400)).toBeUndefined();
+  });
+
+  it('sends no ratio for an off-list shape so a shape-keeping backend is not told to reframe', async () => {
+    const input = join(dir, 'in.png');
+    await writeImage(input, scene(WHITE), 64, 60);
+    const { driver, calls } = fakeDriver([{ buf: scene(GREEN), size: 64, height: 60 }]);
+    const { ctx: c } = ctx();
+
+    await imageCutout.call(c, flags({ out: join(dir, 'out.png') }), input, undefined, driver);
+
+    expect(c.process.exitCode).toBe(0);
+    expect(calls[0]?.aspectRatio).toBeUndefined();
+  });
+
+  it('refuses an off-list shape on agy before spending, since agy cannot keep it', async () => {
+    const input = join(dir, 'in.png');
+    await writeImage(input, scene(WHITE), 64, 60);
+    const { driver, calls } = fakeDriver([{ buf: scene(GREEN) }]);
+    const { ctx: c, stderr } = ctx();
+
+    await imageCutout.call(
+      c,
+      flags({ model: 'google-antigravity/gemini-3.7-flash', out: join(dir, 'out.png') }),
+      input,
+      undefined,
+      driver,
+    );
+
+    expect(c.process.exitCode).toBe(1);
+    expect(stderr()).toContain('could not line up');
+    expect(calls).toHaveLength(0);
+  });
+
+  it('fails cleanly on a file that is not an image', async () => {
+    const input = join(dir, 'in.png');
+    await sharp(scene(WHITE), { raw: { width: W, height: H, channels: 3 } })
+      .png()
+      .toFile(input);
+    const { driver } = fakeDriver([{ buf: scene(WHITE) }, { buf: scene(GREEN) }]);
+    const { ctx: c, stderr } = ctx();
+    const bogus = join(dir, 'bogus.png');
+    await sharp({ create: { width: 8, height: 8, channels: 3, background: '#fff' } })
+      .png()
+      .toFile(bogus);
+    const { writeFileSync } = await import('node:fs');
+    writeFileSync(bogus, 'not an image');
+
+    await imageCutout.call(c, flags({ out: join(dir, 'out.png') }), bogus, 'the square', driver);
+
+    expect(c.process.exitCode).toBe(1);
+    expect(stderr()).toContain('cannot read');
   });
 
   it('refuses a non-.png --out', async () => {

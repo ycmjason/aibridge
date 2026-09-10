@@ -5,7 +5,7 @@ import type { ResolvedModel } from './models.ts';
 const MIN_REAL_BYTES_CODEX = 100_000;
 const MIN_REAL_BYTES_TOOL = 10_000;
 
-export function minRealBytes(model: ResolvedModel): number {
+function minRealBytes(model: ResolvedModel): number {
   return model.spec.backend === 'codex' ? MIN_REAL_BYTES_CODEX : MIN_REAL_BYTES_TOOL;
 }
 

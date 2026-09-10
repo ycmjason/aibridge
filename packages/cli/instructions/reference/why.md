@@ -49,6 +49,10 @@ too-small render is rejected as fake, an empty answer is an error, and an
 well, because a verdict without evidence is not a review. None of that judges
 the work itself, which is why you still re-run the real gates on a diff.
 
-**Chroma keying is a fallback, not a feature.** Only codex renders true alpha.
-On the JPEG models aibridge asks for a flat backdrop and removes it locally,
-which gives binary edges and eats any subject the same colour as the backdrop.
+**Alpha is a capability, and `image-cutout` is where it is made.** Only codex
+renders true alpha, and only for a fresh generation. Rather than a flag that
+fakes it per model, `image-cutout` asks the model to re-render an image with
+only the backdrop changed and solves the pair per pixel (difference matting).
+Two observations of every pixel recover soft alpha and the real foreground
+colour, which a chroma key cannot; the price is a second paid render and a
+subject that has to hold still between the two.

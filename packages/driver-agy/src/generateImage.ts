@@ -40,7 +40,7 @@ export async function generateImage(
     instruction =
       `Call the generate_image tool once with ImageName="aibridge-render", Prompt=${JSON.stringify(req.prompt)}, and ImagePaths=[${refs}]. ` +
       `Change only what the instruction asks, using the references for subject/identity.` +
-      `${req.aspectRatio ? ` Pass AspectRatio='${req.aspectRatio}' only if applicable.` : ''}` +
+      `${req.aspectRatio ? ` Pass AspectRatio='${req.aspectRatio}'.` : ''}` +
       ` After the tool returns, print ONLY the absolute filesystem path of the saved image on a single line. No other text.`;
   } else {
     instruction =
