@@ -39,10 +39,11 @@ export async function requireBackend(
   cmd: string,
   backend: Backend,
   opts: { readonly imageOnly?: boolean } = {},
+  deps = { probe: (b: Backend) => getDriver(b).probe(), detect: detectInstalled },
 ): Promise<boolean> {
-  const probe = await getDriver(backend).probe();
+  const probe = await deps.probe(backend);
   if (probe.ok) return true;
-  const all = await detectInstalled();
+  const all = await deps.detect();
   const installed = installedBackends(all);
   const lines = [`aibridge ${cmd}: ${probe.error.replace(/^aibridge: /, '')}`];
   if (installed.size > 0) {

@@ -43,7 +43,8 @@ args or missing plan file. Exit 3: quota preflight refusal.
 ## Gotchas
 
 - Keep the implementer a different model family from the reviewer. The seats
-  named above comply; if you override one, check the other.
+  named above differ when more than one backend is installed; with a single
+  backend they cannot, so say so and ask before reviewing.
 <!-- if:agy -->
 - agy quota is shared by model group. Two concurrent agy-heavy runs drain
   the same window. Run `aibridge quota` before pipelining.

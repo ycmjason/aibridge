@@ -36,8 +36,8 @@ backstop if one comes back 401. `grok login` is still what sets the seat up.
 
 ### Transparency
 
-- `--transparent` works on every image seat and always writes PNG. Codex gives
-  native alpha; grok and gemini are chroma-keyed with binary edges. Fine for
+- `--transparent` works on every image seat and always writes PNG. PNG seats
+  give native alpha; JPEG seats are chroma-keyed with binary edges. Fine for
   flat icons, logos and stickers; not for hair, smoke or glass.
 - **Say nothing about the background in the prompt when using it.** The CLI
   writes the backdrop instruction per seat, and a colour of your own overrides
@@ -45,7 +45,8 @@ backstop if one comes back 401. `grok login` is still what sets the seat up.
   "transparent background" into the prompt without the flag is refused on
   chroma seats.
 - **A green subject is keyed away with the backdrop** on chroma seats. Anything
-  that must be green needs a native-alpha seat (`openai-codex/*`).
+  that must be green needs a native-alpha (PNG) seat<!-- if:codex --> such as
+  `openai-codex/gpt-5.6-sol`<!-- endif -->.
 - Both surfaces report the path taken: the result line says
   `transparency: native` / `chroma-keyed`, `--json` carries
   `"native" | "chroma" | null`. Quote it when the edges matter. Keying under 2%

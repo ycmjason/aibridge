@@ -117,6 +117,11 @@ const IF_BLOCK = /<!-- if:([\w,]+) -->\n?([\s\S]*?)<!-- endif -->\n?/g;
 export function applyTemplate(text: string, installed: Installed): string {
   const present = installedBackends(installed);
   const slugFor = (role: Role): string => seatFor(role, present)?.slug ?? '<slug>';
+  // The reviewer must be cross-family from the implementer, so pick it from the
+  // other installed backends first and only fall back to the same family.
+  const implementer = seatFor('implement', present);
+  const otherBackends = new Set([...present].filter(b => b !== implementer?.backend));
+  const reviewer = seatFor('review', otherBackends) ?? seatFor('review', present);
   return text
     .replace(IF_BLOCK, (_m, backends: string, body: string) =>
       backends.split(',').some(b => present.has(b as Backend)) ? body : '',
@@ -126,7 +131,7 @@ export function applyTemplate(text: string, installed: Installed): string {
     .replaceAll('{{image-seats}}', imageSeatTable(present))
     .replaceAll('{{plan}}', slugFor('plan'))
     .replaceAll('{{implement}}', slugFor('implement'))
-    .replaceAll('{{review}}', slugFor('review'))
+    .replaceAll('{{review}}', reviewer?.slug ?? '<slug>')
     .replaceAll('{{image}}', slugFor('image-gen'));
 }
 

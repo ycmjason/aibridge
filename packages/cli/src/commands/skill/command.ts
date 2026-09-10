@@ -2,8 +2,12 @@ import { buildCommand } from '@stricli/core';
 import type { LocalContext } from '../../context.ts';
 import skillImpl from './impl.ts';
 
-function skillCommand(this: LocalContext, _flags: Record<never, never>, topic?: string): void {
-  skillImpl.call(this, topic);
+async function skillCommand(
+  this: LocalContext,
+  _flags: Record<never, never>,
+  topic?: string,
+): Promise<void> {
+  await skillImpl.call(this, topic);
 }
 
 export const skill = buildCommand({

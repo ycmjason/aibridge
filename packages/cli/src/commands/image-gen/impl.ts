@@ -98,7 +98,7 @@ export default async function imageGen(
     return fail(
       `the prompt asks for a transparent background but the ${model.spec.slug} seat cannot render alpha — ` +
         `pass --transparent (aibridge chroma-keys it locally, binary edges) or use a native-alpha seat ` +
-        `(openai-codex/*). Re-run with --transparent to proceed.`,
+        `(PNG in \`aibridge models\`). Re-run with --transparent to proceed.`,
     );
   }
 
