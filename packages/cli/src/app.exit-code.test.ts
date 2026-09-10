@@ -35,11 +35,10 @@ describe('stricli exit-code lock & routing', () => {
   it('skill waits for the probe sweep before returning (probes real CLIs)', async () => {
     const ctx = fakeCtx();
     await runCli(ctx, ['skill']);
-    // Installed → router on stdout; bare machine → exit 1 with hints on stderr.
-    // Either way runCli must not resolve before the impl has written.
-    expect(ctx._stdout.join('') + ctx._stderr.join('')).not.toBe('');
-    if (ctx.process.exitCode) expect(ctx._stderr.join('')).toContain('no backend CLI found');
-    else expect(ctx._stdout.join('')).toContain('# aibridge');
+    // runCli must not resolve before the impl has written the router.
+    expect(ctx.process.exitCode ?? 0).toBe(0);
+    expect(ctx._stdout.join('')).toContain('# aibridge');
+    expect(ctx._stdout.join('')).toContain('Backend CLIs installed on this machine:');
   });
 
   it('unknown flag → 2', async () => {

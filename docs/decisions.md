@@ -13,7 +13,9 @@
   installed recommended model, and `<!-- if:grok -->` blocks drop with their
   backend. `models` and `quota` collapse absent backends to an install hint,
   and every delegating command exits 2 with the installed model list before any
-  quota call when its `--model` names a missing CLI. `--help` stays static
+  quota call when its `--model` names a missing CLI. A machine with no CLI
+  still gets the full router plus install hints, exit 0 (CI smoke-tests this
+  on a bare runner). `--help` stays static
   (stricli builds it synchronously) and points at `aibridge models`. The grok
   image model is exempt from the guard: it renders over HTTP on `~/.grok/auth.json`.
 

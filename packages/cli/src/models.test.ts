@@ -151,7 +151,7 @@ describe('models registry', () => {
     expect(err).toContain('xai-grok/grok-4.6');
     expect(err).toContain('openai-codex/gpt-5.6-sol');
     expect(err).toContain('google-antigravity/gemini-3.7-flash');
-    const seatsSection = err.slice(err.indexOf('Image-gen models'));
-    expect(seatsSection).not.toContain('anthropic-claude/sonnet-5');
+    const modelsSection = err.slice(err.indexOf('Image-gen models'));
+    expect(modelsSection).not.toContain('anthropic-claude/sonnet-5');
   });
 });

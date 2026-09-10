@@ -62,13 +62,21 @@ function installedBlock(installed: Installed): string {
   const lines = [`Backend CLIs installed on this machine: ${present.join(', ') || 'none'}.`];
   const missing = missingLines(installed);
   if (missing.length > 0) {
-    lines.push('Not installed (their models are omitted below):', ...missing);
+    lines.push(
+      present.length === 0
+        ? 'Install and sign in to at least one of these before delegating:'
+        : 'Not installed (their models are omitted below):',
+      ...missing,
+    );
   }
   return lines.join('\n');
 }
 
 function modelTable(installed: ReadonlySet<Backend>): string {
   const models = listModels({ installed });
+  if (models.length === 0) {
+    return 'No models are available until a backend CLI above is installed and signed in.';
+  }
   const curated = models.filter(s => s.roles);
   const rows = curated.map(spec => {
     const cells = ROLES.map(role => {
@@ -116,12 +124,16 @@ const IF_BLOCK = /<!-- if:([\w,]+) -->\n?([\s\S]*?)<!-- endif -->\n?/g;
 /** Resolves placeholders and `<!-- if:backend -->` blocks against what is installed. */
 export function applyTemplate(text: string, installed: Installed): string {
   const present = installedBackends(installed);
-  const slugFor = (role: Role): string => modelFor(role, present)?.slug ?? '<slug>';
-  // The reviewer must be cross-family from the implementer, so pick it from the
-  // other installed backends first and only fall back to the same family.
-  const implementer = modelFor('implement', present);
-  const otherBackends = new Set([...present].filter(b => b !== implementer?.backend));
-  const reviewer = modelFor('review', otherBackends) ?? modelFor('review', present);
+  // Each stage prefers a backend the previous one did not use, so a full
+  // machine yields the documented grok plans / gemini implements / grok reviews
+  // pairing and the reviewer is cross-family from the implementer whenever it
+  // can be. With a single backend every role falls back to the same family.
+  const without = (b: Backend | undefined) => new Set([...present].filter(x => x !== b));
+  const planner = modelFor('plan', present);
+  const implementer =
+    modelFor('implement', without(planner?.backend)) ?? modelFor('implement', present);
+  const reviewer = modelFor('review', without(implementer?.backend)) ?? modelFor('review', present);
+  const slug = (m: { slug: string } | undefined) => m?.slug ?? '<slug>';
   return text
     .replace(IF_BLOCK, (_m, backends: string, body: string) =>
       backends.split(',').some(b => present.has(b as Backend)) ? body : '',
@@ -129,10 +141,10 @@ export function applyTemplate(text: string, installed: Installed): string {
     .replaceAll('{{installed}}', installedBlock(installed))
     .replaceAll('{{models}}', modelTable(present))
     .replaceAll('{{image-models}}', imageModelTable(present))
-    .replaceAll('{{plan}}', slugFor('plan'))
-    .replaceAll('{{implement}}', slugFor('implement'))
-    .replaceAll('{{review}}', reviewer?.slug ?? '<slug>')
-    .replaceAll('{{image}}', slugFor('image-gen'));
+    .replaceAll('{{plan}}', slug(planner))
+    .replaceAll('{{implement}}', slug(implementer))
+    .replaceAll('{{review}}', slug(reviewer))
+    .replaceAll('{{image}}', slug(modelFor('image-gen', present)));
 }
 
 export function renderSkill(topic: SkillTopic | undefined, installed: Installed): string {
@@ -161,14 +173,9 @@ export default async function skillImpl(
   }
 
   try {
+    // A bare machine still gets the router: the install hints in it are what
+    // the agent needs next, and CI smoke-tests this path with no CLI present.
     const detected = installed ?? (await detectInstalled());
-    if (installedBackends(detected).size === 0) {
-      this.process.stderr.write(
-        `aibridge skill: no backend CLI found on PATH; install and sign in to at least one:\n${missingLines(detected).join('\n')}\n`,
-      );
-      this.process.exitCode = 1;
-      return;
-    }
     this.process.stdout.write(renderSkill(topic as SkillTopic | undefined, detected));
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

@@ -88,20 +88,39 @@ describe('skill command', () => {
     expect(plan).not.toContain('One grok stage at a time');
   });
 
+  it('picks each pipeline stage on a different backend when it can', () => {
+    const roles = '{{plan}} {{implement}} {{review}}';
+    expect(applyTemplate(roles, ALL)).toBe(
+      'xai-grok/grok-4.6 google-antigravity/gemini-3.7-flash xai-grok/grok-4.6',
+    );
+    expect(applyTemplate(roles, CODEX_AGY)).toBe(
+      'openai-codex/gpt-5.6-sol google-antigravity/gemini-3.7-flash openai-codex/gpt-5.6-sol',
+    );
+    const codexOnly: Installed = new Map([['codex', { ok: true, version: '1' }]]);
+    expect(applyTemplate(roles, codexOnly)).toBe(
+      'openai-codex/gpt-5.6-sol openai-codex/gpt-5.6-sol openai-codex/gpt-5.6-sol',
+    );
+  });
+
   it('applyTemplate keeps a block when any listed backend is installed', () => {
     const text =
       'a\n<!-- if:grok,codex -->\nkeep\n<!-- endif -->\n<!-- if:grok -->\ndrop\n<!-- endif -->\nb';
     expect(applyTemplate(text, CODEX_AGY)).toBe('a\nkeep\nb');
   });
 
-  it('refuses to render instructions when no backend is installed', async () => {
+  it('renders the router with install hints when no backend is installed', async () => {
     const ctx = fakeCtx();
-    await skillImpl.call(ctx, undefined, NONE);
+    await skillImpl.call(ctx, 'plan', NONE);
+    const output = ctx.stdout.join('');
 
-    expect(ctx.process.exitCode).toBe(1);
-    expect(ctx.stdout).toEqual([]);
-    expect(ctx.stderr.join('')).toContain('no backend CLI found on PATH');
-    expect(ctx.stderr.join('')).toContain('codex: "codex" not found on PATH.');
+    expect(ctx.process.exitCode).toBeUndefined();
+    expect(output).toContain('# aibridge');
+    expect(output).toContain('Backend CLIs installed on this machine: none.');
+    expect(output).toContain('Install and sign in to at least one of these before delegating:');
+    expect(output).toContain('codex: "codex" not found on PATH.');
+    expect(output).toContain('No models are available until a backend CLI');
+    expect(output).toContain('e.g. <slug>');
+    expect(output).not.toMatch(/\{\{|<!-- (if|endif)/);
   });
 
   it('rejects an unknown topic', async () => {
