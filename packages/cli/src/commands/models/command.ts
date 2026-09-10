@@ -13,6 +13,6 @@ export const models = buildCommand({
     },
   },
   docs: {
-    brief: 'List every model seat in the registry (slug, efforts, image format)',
+    brief: 'List every model in the registry (slug, efforts, image format)',
   },
 });

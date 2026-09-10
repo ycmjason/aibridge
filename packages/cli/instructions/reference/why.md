@@ -33,7 +33,7 @@ Claude-based agent) drains the pool you are already burning, so it buys no extra
 capacity and no independent perspective. That is why it is a last resort rather
 than merely a choice.
 
-**Seats pin exact model versions.** A vendor alias like `opus` moves under you
+**Slugs pin exact model versions.** A vendor alias like `opus` moves under you
 when a release lands, silently changing what a documented pipeline does.
 
 **Some commands write files, some print.** `plan`, `review` and `image-gen`
@@ -50,5 +50,5 @@ well, because a verdict without evidence is not a review. None of that judges
 the work itself, which is why you still re-run the real gates on a diff.
 
 **Chroma keying is a fallback, not a feature.** Only codex renders true alpha.
-On the JPEG seats aibridge asks for a flat backdrop and removes it locally,
+On the JPEG models aibridge asks for a flat backdrop and removes it locally,
 which gives binary edges and eats any subject the same colour as the backdrop.

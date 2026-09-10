@@ -17,7 +17,7 @@ export const review = buildCommand({
       model: {
         kind: 'parsed',
         parse: String,
-        brief: 'Model slug (required) — see the seat list above',
+        brief: 'Model slug (required) — see the model list above',
       },
       plan: {
         kind: 'parsed',

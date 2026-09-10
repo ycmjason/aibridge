@@ -5,8 +5,8 @@ import {
   formatUnknownModelError,
   imageAlphaFor,
   listModelHelpLines,
+  modelFor,
   resolveModel,
-  seatFor,
   supportsImageGen,
 } from './models.ts';
 
@@ -88,7 +88,7 @@ describe('models registry', () => {
     expect(backendModelId(sonnet)).toBe('claude-sonnet-5');
   });
 
-  it('marks codex, grok, and gemini-3.7-flash seats as image-gen capable', () => {
+  it('marks codex, grok, and gemini-3.7-flash models as image-gen capable', () => {
     const codex = resolveModel('openai-codex/gpt-5.6-sol');
     const grok = resolveModel('xai-grok/grok-4.6');
     const gemini = resolveModel('google-antigravity/gemini-3.7-flash');
@@ -100,7 +100,7 @@ describe('models registry', () => {
     expect(supportsImageGen(claudeSonnet)).toBe(false);
   });
 
-  it('lists only image-capable seats when imageOnly and shows --transparent capability', () => {
+  it('lists only image-capable models when imageOnly and shows --transparent capability', () => {
     const lines = listModelHelpLines({ imageOnly: true }).join('\n');
     expect(lines).toContain('xai-grok/grok-4.6');
     expect(lines).toContain('openai-codex/gpt-5.6-sol');
@@ -110,7 +110,7 @@ describe('models registry', () => {
     expect(lines).toContain('--transparent: chroma-keyed (binary edges)');
   });
 
-  it('reports correct imageAlpha for seats', () => {
+  it('reports correct imageAlpha for models', () => {
     const codex = resolveModel('openai-codex/gpt-5.6-sol');
     const grok = resolveModel('xai-grok/grok-4.6');
     const gemini = resolveModel('google-antigravity/gemini-3.7-flash');
@@ -134,15 +134,15 @@ describe('models registry', () => {
     expect(listModelHelpLines().join('\n')).toContain('run `aibridge models`');
   });
 
-  it('seatFor picks the first installed recommended seat, then supported, then nothing', () => {
-    expect(seatFor('review', new Set(['grok', 'codex']))?.slug).toBe('xai-grok/grok-4.6');
-    expect(seatFor('review', new Set(['codex']))?.slug).toBe('openai-codex/gpt-5.6-sol');
-    expect(seatFor('review', new Set(['agy']))?.slug).toBe('google-antigravity/gemini-3.7-flash');
-    expect(seatFor('image-gen', new Set(['claude']))).toBeUndefined();
-    expect(seatFor('plan', new Set())).toBeUndefined();
+  it('modelFor picks the first installed recommended model, then supported, then nothing', () => {
+    expect(modelFor('review', new Set(['grok', 'codex']))?.slug).toBe('xai-grok/grok-4.6');
+    expect(modelFor('review', new Set(['codex']))?.slug).toBe('openai-codex/gpt-5.6-sol');
+    expect(modelFor('review', new Set(['agy']))?.slug).toBe('google-antigravity/gemini-3.7-flash');
+    expect(modelFor('image-gen', new Set(['claude']))).toBeUndefined();
+    expect(modelFor('plan', new Set())).toBeUndefined();
   });
 
-  it('formats image-gen model errors with capable seats only', () => {
+  it('formats image-gen model errors with capable models only', () => {
     const claudeSonnet = resolveModel('anthropic-claude/sonnet-5');
     if (!claudeSonnet) throw new Error('claudeSonnet resolution failed');
     const err = formatImageGenModelError('anthropic-claude/sonnet-5', claudeSonnet);
@@ -151,7 +151,7 @@ describe('models registry', () => {
     expect(err).toContain('xai-grok/grok-4.6');
     expect(err).toContain('openai-codex/gpt-5.6-sol');
     expect(err).toContain('google-antigravity/gemini-3.7-flash');
-    const seatsSection = err.slice(err.indexOf('Image-gen seats'));
+    const seatsSection = err.slice(err.indexOf('Image-gen models'));
     expect(seatsSection).not.toContain('anthropic-claude/sonnet-5');
   });
 });

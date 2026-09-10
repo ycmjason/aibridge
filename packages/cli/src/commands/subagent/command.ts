@@ -8,7 +8,7 @@ const fullDescription = [
   '',
   'Available models (canonical slug):',
   ...listModelHelpLines(),
-  'Recommended first choice: xai-grok/grok-4.6. Whichever seat runs on the same provider as the',
+  'Recommended first choice: xai-grok/grok-4.6. Whichever model runs on the same provider as the',
   'agent you orchestrate from is your last resort — it spends the pool you are already burning.',
 ].join('\n');
 
@@ -19,7 +19,7 @@ export const subagent = buildCommand({
       model: {
         kind: 'parsed',
         parse: String,
-        brief: 'Model slug (required) — see the seat list above',
+        brief: 'Model slug (required) — see the model list above',
       },
       timeout: {
         kind: 'parsed',

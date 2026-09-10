@@ -42,7 +42,7 @@ args or missing plan file. Exit 3: quota preflight refusal.
 
 ## Gotchas
 
-- Keep the implementer a different model family from the reviewer. The seats
+- Keep the implementer a different model family from the reviewer. The models
   named above differ when more than one backend is installed; with a single
   backend they cannot, so say so and ask before reviewing.
 <!-- if:agy -->

@@ -5,7 +5,7 @@ import type { GrokQuotaSnapshot } from '@aibridge/driver-grok';
 import { test } from 'vitest';
 import { resolveModel } from './models.ts';
 import {
-  alternativeSeats,
+  alternativeModels,
   evaluateAgyPreflight,
   evaluateCodexPreflight,
   evaluateGrokPreflight,
@@ -244,7 +244,7 @@ test('renderPreflightRefusal: auth kind uses unauthenticated wording', () => {
   );
 });
 
-test('renderPreflightRefusal: image-gen quota refusal points at other image seats', () => {
+test('renderPreflightRefusal: image-gen quota refusal points at other image models', () => {
   const msg = renderPreflightRefusal(
     'image-gen',
     {
@@ -254,7 +254,7 @@ test('renderPreflightRefusal: image-gen quota refusal points at other image seat
     },
     ['openai-codex/gpt-5.6-sol'],
   );
-  assert.ok(msg.includes('another installed seat (--model openai-codex/gpt-5.6-sol)'));
+  assert.ok(msg.includes('another installed model (--model openai-codex/gpt-5.6-sol)'));
 });
 
 test('renderPreflightRefusal: quota kind keeps override wording', () => {
@@ -273,12 +273,12 @@ test('renderPreflightRefusal: quota kind keeps override wording', () => {
   );
 });
 
-test('alternativeSeats: curated seats on other installed backends first, never the refused backend', () => {
+test('alternativeModels: curated models on other installed backends first, never the refused backend', () => {
   const grok = resolveModel('xai-grok/grok-4.6');
   if (!grok) throw new Error('resolution failed');
-  const alts = alternativeSeats(grok, new Set(['grok', 'codex']));
+  const alts = alternativeModels(grok, new Set(['grok', 'codex']));
   assert.strictEqual(alts[0], 'openai-codex/gpt-5.6-sol');
   assert.ok(alts.every(s => s.startsWith('openai-codex/')));
-  assert.deepStrictEqual(alternativeSeats(grok, new Set(['grok'])), []);
-  assert.deepStrictEqual(alternativeSeats(grok, new Set(['grok', 'claude']), true), []);
+  assert.deepStrictEqual(alternativeModels(grok, new Set(['grok'])), []);
+  assert.deepStrictEqual(alternativeModels(grok, new Set(['grok', 'claude']), true), []);
 });

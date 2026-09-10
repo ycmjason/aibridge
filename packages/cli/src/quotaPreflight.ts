@@ -2,7 +2,7 @@ import { type AgyQuotaSnapshot, fetchAgyQuota, findModelQuota } from '@aibridge/
 import { type CodexQuotaSnapshot, fetchCodexQuota } from '@aibridge/driver-codex';
 import { fetchGrokQuota, type GrokQuotaSnapshot } from '@aibridge/driver-grok';
 import { isAuthExpired } from '@aibridge/proc';
-import { type Backend, backendModelId, listSeats, type ResolvedModel } from './models.ts';
+import { type Backend, backendModelId, listModels, type ResolvedModel } from './models.ts';
 
 export type PreflightVerdict =
   | { readonly ok: true; readonly warning?: string }
@@ -136,14 +136,14 @@ function formatReset(resetTime: string | undefined): string {
   return `${new Date(resetTime).toLocaleTimeString()} (in ${rel})`;
 }
 
-/** Seats on other installed backends to name when refusing `model`. */
-export function alternativeSeats(
+/** Models on other installed backends to name when refusing `model`. */
+export function alternativeModels(
   model: ResolvedModel,
   installed: ReadonlySet<Backend>,
   imageOnly = false,
 ): string[] {
-  const others = listSeats({ installed, imageOnly }).filter(s => s.backend !== model.spec.backend);
-  // Curated seats first so the suggestion is a sensible one, then anything else.
+  const others = listModels({ installed, imageOnly }).filter(s => s.backend !== model.spec.backend);
+  // Curated models first so the suggestion is a sensible one, then anything else.
   return [...others.filter(s => s.roles), ...others.filter(s => !s.roles)]
     .map(s => s.slug)
     .slice(0, 3);
@@ -156,14 +156,14 @@ export function renderPreflightRefusal(
 ): string {
   if (verdict.kind === 'auth') {
     // "the delegate" was wrong for image-gen, which has no delegate — the grok
-    // seat is a direct API call. Verified: --no-preflight there just fails at
+    // model is a direct API call. Verified: --no-preflight there just fails at
     // the render with exit 1.
     return `aibridge ${cmd}: refusing — ${verdict.message}. Running with --no-preflight would only fail unauthenticated later. Or use a different --model.`;
   }
   const resetClause = verdict.resetAt ? ` Resets ${formatReset(verdict.resetAt)}.` : '';
   const fallback =
     alternatives.length > 0
-      ? `Use --no-preflight to override, or another installed seat (--model ${alternatives.join(' | ')}).`
+      ? `Use --no-preflight to override, or another installed model (--model ${alternatives.join(' | ')}).`
       : 'Use --no-preflight to override; no other backend CLI is installed to fall back to.';
   return `aibridge ${cmd}: refusing — ${verdict.message}.${resetClause} ${fallback}`;
 }

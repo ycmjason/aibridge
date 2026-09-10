@@ -3,7 +3,7 @@ name: aibridge
 description: >-
   Use authenticated AI CLIs on this machine as delegates. Supports one-shot
   tasks, cross-model review, a plan → implement → review workflow, and raster
-  image generation through Grok, Gemini, Codex, or Claude seats. Use it for
+  image generation through Grok, Gemini, Codex, or Claude models. Use it for
   well-defined delegation, sizeable or risky implementation, second opinions,
   red-team review, long-context analysis, and image generation or editing.
   Delegate with canonical model slugs such as `xai-grok/grok-4.6` and pass plan

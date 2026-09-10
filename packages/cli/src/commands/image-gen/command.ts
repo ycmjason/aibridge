@@ -4,12 +4,12 @@ import { nonEmptyPrompt, positiveIntSeconds } from '../../parsers.ts';
 import imageGenImpl from './impl.ts';
 
 const fullDescription = [
-  "Renders an image by driving the seat's own CLI, then verifies the result is",
+  "Renders an image by driving the model's own CLI, then verifies the result is",
   'a real render before returning it.',
   '',
-  'Image-gen seats (canonical slug):',
+  'Image-gen models (canonical slug):',
   ...listModelHelpLines({ imageOnly: true }),
-  'Recommended seat: openai-codex/gpt-5.6-sol.',
+  'Recommended model: openai-codex/gpt-5.6-sol.',
 ].join('\n');
 
 export const imageGen = buildCommand({
@@ -19,19 +19,19 @@ export const imageGen = buildCommand({
       model: {
         kind: 'parsed',
         parse: String,
-        brief: 'Model slug (required) — see the seat list above',
+        brief: 'Model slug (required) — see the model list above',
       },
       out: {
         kind: 'parsed',
         parse: String,
         brief:
-          'Path to write the image — extension must match the seat format (.png for codex or any --transparent run, .jpg for agy/grok otherwise)',
+          'Path to write the image — extension must match the model format (.png for codex or any --transparent run, .jpg for agy/grok otherwise)',
       },
       transparent: {
         kind: 'boolean',
         withNegated: false,
         brief:
-          'Transparent background: native alpha where the seat has it, chroma-keyed otherwise — always writes PNG',
+          'Transparent background: native alpha where the model has it, chroma-keyed otherwise — always writes PNG',
       },
       aspectRatio: {
         kind: 'parsed',
@@ -74,7 +74,7 @@ export const imageGen = buildCommand({
     },
   },
   docs: {
-    brief: 'Generate a raster image via a model seat',
+    brief: 'Generate a raster image via a model',
     fullDescription,
   },
 });

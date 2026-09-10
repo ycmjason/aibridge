@@ -29,7 +29,7 @@ const GREEN_MIN = 90;
  * How far green must lead both red and blue for a pixel to count as backdrop.
  * Position, not geometry, decides: a saturated green *subject* is keyed away too.
  * That is inherent to chroma keying — CHROMA_CLAUSE tells the model not to put
- * green on the subject, and a native-alpha seat is the answer when it must be.
+ * green on the subject, and a native-alpha model is the answer when it must be.
  */
 const DOMINANCE = 40;
 

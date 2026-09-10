@@ -2,7 +2,7 @@ import type { LocalContext } from '../../context.ts';
 import { delegate } from '../../delegate.ts';
 import { detectInstalled, installedBackends, requireBackend } from '../../installed.ts';
 import { backendModelId, formatUnknownModelError, resolveModel } from '../../models.ts';
-import { alternativeSeats, preflightModel, renderPreflightRefusal } from '../../quotaPreflight.ts';
+import { alternativeModels, preflightModel, renderPreflightRefusal } from '../../quotaPreflight.ts';
 import { startRun } from '../../runlog.ts';
 
 export interface SubagentFlags {
@@ -44,7 +44,7 @@ export default async function subagent(
         );
       } else {
         this.process.stderr.write(
-          `${renderPreflightRefusal('subagent', verdict, alternativeSeats(model, installedBackends(await detectInstalled())))}\n`,
+          `${renderPreflightRefusal('subagent', verdict, alternativeModels(model, installedBackends(await detectInstalled())))}\n`,
         );
       }
       this.process.exitCode = 3;

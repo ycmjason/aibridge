@@ -81,7 +81,7 @@ describe('skill command', () => {
       expect(output, topic).not.toMatch(/\{\{|<!-- (if|endif)/);
     }
     const plan = renderSkill('plan', CODEX_AGY);
-    expect(plan).toContain('Not installed (their seats are omitted below):');
+    expect(plan).toContain('Not installed (their models are omitted below):');
     expect(plan).toContain('grok: "grok" not found on PATH. Install the Grok CLI.');
     expect(plan).toContain('e.g. openai-codex/gpt-5.6-sol');
     expect(plan).toContain('implement --model google-antigravity/gemini-3.7-flash <file>');

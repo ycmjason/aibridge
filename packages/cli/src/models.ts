@@ -5,7 +5,7 @@
  * `<vendor>-<cli>/<model>[-<effort>]`, e.g. `openai-codex/gpt-5.6-sol-high`.
  * Canonical slugs only — no short aliases, by design. That holds on both sides:
  * `backendModel` is a pinned model id (`claude-sonnet-5`), never a moving vendor
- * alias (`opus`), so a seat never silently changes model under you.
+ * alias (`opus`), so a slug never silently changes model under you.
  */
 
 export type Backend = 'agy' | 'claude' | 'codex' | 'grok';
@@ -21,7 +21,7 @@ export const BACKEND_NAMES: Record<Backend, string> = {
   claude: 'claude (Claude Code CLI)',
 };
 
-/** The verbs a seat can be recommended for. `subagent` takes any seat. */
+/** The verbs a model can be recommended for. `subagent` takes any model. */
 export type Role = 'plan' | 'implement' | 'review' | 'image-gen';
 export type RoleLevel = 'recommended' | 'supported';
 export type Roles = Partial<Record<Role, { readonly level: RoleLevel; readonly note?: string }>>;
@@ -34,8 +34,8 @@ export interface ModelSpec {
   readonly defaultEffort?: Effort; // only when backend REQUIRES one (agy gemini)
   readonly brief: string;
   /**
-   * Curated starting points, not benchmarks. Seats without roles are still
-   * usable everywhere; they just do not appear in the instructions' seat table.
+   * Curated starting points, not benchmarks. Models without roles are still
+   * usable everywhere; they just do not appear in the instructions' model table.
    */
   readonly roles?: Roles;
 }
@@ -60,7 +60,7 @@ export const MODELS: Record<string, ModelSpec> = {
     brief: 'xAI Grok 4.6 via grok CLI — own xAI login; ~30 req/min, ~1k msgs/day, single-flight',
   },
   // Both grok tiers stay registered: 4.6 and 4.5 differ in character, not just
-  // recency, so this is two seats of one class rather than a superseded pin.
+  // recency, so this is two models of one class rather than a superseded pin.
   'xai-grok/grok-4.5': {
     slug: 'xai-grok/grok-4.5',
     roles: {
@@ -237,7 +237,7 @@ export const MODELS: Record<string, ModelSpec> = {
 
 export type ImageFormat = 'jpg' | 'png';
 
-/** Whether a seat's image tool can emit a real alpha channel, or needs local chroma keying. */
+/** Whether a model's image tool can emit a real alpha channel, or needs local chroma keying. */
 export type ImageAlpha = 'native' | 'chroma';
 
 const IMAGE_GEN_FORMATS: ReadonlyMap<Backend, ImageFormat> = new Map([
@@ -304,12 +304,12 @@ export function backendModelId(resolved: ResolvedModel): string {
 
 export interface ListOptions {
   readonly imageOnly?: boolean;
-  /** When given, only seats on these backends are listed. */
+  /** When given, only models on these backends are listed. */
   readonly installed?: ReadonlySet<Backend>;
 }
 
-/** Registry entries, optionally narrowed to installed backends and image seats. */
-export function listSeats(opts: ListOptions = {}): ModelSpec[] {
+/** Registry entries, optionally narrowed to installed backends and image models. */
+export function listModels(opts: ListOptions = {}): ModelSpec[] {
   return Object.values(MODELS).filter(
     spec =>
       (!opts.imageOnly || IMAGE_GEN_FORMATS.has(spec.backend)) &&
@@ -318,20 +318,20 @@ export function listSeats(opts: ListOptions = {}): ModelSpec[] {
 }
 
 /**
- * The seat to name in instructions for a role: first installed `recommended`,
+ * The model to name in instructions for a role: first installed `recommended`,
  * else first installed `supported`, else undefined.
  */
-export function seatFor(role: Role, installed: ReadonlySet<Backend>): ModelSpec | undefined {
-  const seats = listSeats({ installed, imageOnly: role === 'image-gen' });
+export function modelFor(role: Role, installed: ReadonlySet<Backend>): ModelSpec | undefined {
+  const models = listModels({ installed, imageOnly: role === 'image-gen' });
   return (
-    seats.find(s => s.roles?.[role]?.level === 'recommended') ??
-    seats.find(s => s.roles?.[role]?.level === 'supported')
+    models.find(s => s.roles?.[role]?.level === 'recommended') ??
+    models.find(s => s.roles?.[role]?.level === 'supported')
   );
 }
 
 export function listModelHelpLines(opts: ListOptions = {}): string[] {
   const lines: string[] = [];
-  for (const spec of listSeats(opts)) {
+  for (const spec of listModels(opts)) {
     lines.push(`  ${spec.slug}`);
     lines.push(`    ${spec.brief}`);
     if (opts.imageOnly) {
@@ -347,7 +347,7 @@ export function listModelHelpLines(opts: ListOptions = {}): string[] {
     lines.push(`  (installed backends: ${formatBackends(opts.installed)})`);
   } else {
     lines.push(
-      '  (every registered seat; run `aibridge models` to see which backends are installed here)',
+      '  (every registered model; run `aibridge models` to see which backends are installed here)',
     );
   }
   return lines;
@@ -374,7 +374,7 @@ export function formatImageGenModelError(
 ): string {
   return [
     `Model "${input}" (${resolved.spec.slug}) cannot generate images — backend "${resolved.spec.backend}" has no image path.`,
-    'Image-gen seats (canonical slug):',
+    'Image-gen models (canonical slug):',
     ...listModelHelpLines({ imageOnly: true, installed }),
   ].join('\n');
 }

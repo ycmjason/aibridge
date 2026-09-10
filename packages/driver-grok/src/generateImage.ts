@@ -5,7 +5,7 @@ import { refreshGrokAuth } from './grok.ts';
 
 /**
  * Pinned Imagine model for xAI image generation and editing.
- * Note: req.backendModel is the seat model (e.g. grok-4.6) and is deliberately
+ * Note: req.backendModel is the chat model id (e.g. grok-4.6) and is deliberately
  * NOT the render model. req.effort and req.forceful are unused by this backend.
  */
 const IMAGINE_MODEL = 'grok-imagine-image-2.0';

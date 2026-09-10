@@ -59,7 +59,7 @@ Use `plan`, `implement`, and `review` as one controlled workflow:
 aibridge plan --model xai-grok/grok-4.6 --out plan.md "add rate limiting to the API"   # delegate writes plan.md
 # → your agent reads, edits, approves the plan
 aibridge implement --model google-antigravity/gemini-3.7-flash plan.md                 # another model executes it, runs your gates
-aibridge review --model xai-grok/grok-4.6 --out review.md --plan plan.md               # a third seat cross-checks the diff
+aibridge review --model xai-grok/grok-4.6 --out review.md --plan plan.md               # a third model cross-checks the diff
 ```
 
 Only the plan path passes between stages, which keeps the plan out of the

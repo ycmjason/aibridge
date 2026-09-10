@@ -5,7 +5,7 @@ import type { LocalContext } from '../../context.ts';
 import { delegate } from '../../delegate.ts';
 import { detectInstalled, installedBackends, requireBackend } from '../../installed.ts';
 import { formatUnknownModelError, resolveModel } from '../../models.ts';
-import { alternativeSeats, preflightModel, renderPreflightRefusal } from '../../quotaPreflight.ts';
+import { alternativeModels, preflightModel, renderPreflightRefusal } from '../../quotaPreflight.ts';
 import { startRun } from '../../runlog.ts';
 
 export interface ImplementFlags {
@@ -43,7 +43,7 @@ export default async function implement(
     const verdict = await preflightModel(model);
     if (!verdict.ok) {
       this.process.stderr.write(
-        `${renderPreflightRefusal('implement', verdict, alternativeSeats(model, installedBackends(await detectInstalled())))}\n`,
+        `${renderPreflightRefusal('implement', verdict, alternativeModels(model, installedBackends(await detectInstalled())))}\n`,
       );
       this.process.exitCode = 3;
       return;

@@ -17,7 +17,7 @@ export const implement = buildCommand({
       model: {
         kind: 'parsed',
         parse: String,
-        brief: 'Model slug (required) — see the seat list above',
+        brief: 'Model slug (required) — see the model list above',
       },
       timeout: {
         kind: 'parsed',

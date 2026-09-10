@@ -10,9 +10,9 @@ import {
   BACKENDS,
   type Backend,
   imageFormatFor,
-  listSeats,
+  listModels,
+  modelFor,
   type Role,
-  seatFor,
 } from '../../models.ts';
 import { PACKAGE_VERSION } from '../../package.ts';
 
@@ -62,14 +62,14 @@ function installedBlock(installed: Installed): string {
   const lines = [`Backend CLIs installed on this machine: ${present.join(', ') || 'none'}.`];
   const missing = missingLines(installed);
   if (missing.length > 0) {
-    lines.push('Not installed (their seats are omitted below):', ...missing);
+    lines.push('Not installed (their models are omitted below):', ...missing);
   }
   return lines.join('\n');
 }
 
-function seatTable(installed: ReadonlySet<Backend>): string {
-  const seats = listSeats({ installed });
-  const curated = seats.filter(s => s.roles);
+function modelTable(installed: ReadonlySet<Backend>): string {
+  const models = listModels({ installed });
+  const curated = models.filter(s => s.roles);
   const rows = curated.map(spec => {
     const cells = ROLES.map(role => {
       const r = spec.roles?.[role];
@@ -88,18 +88,18 @@ function seatTable(installed: ReadonlySet<Backend>): string {
     '|---|---|---|---|---|',
     ...rows,
   ];
-  const others = seats.filter(s => !s.roles).map(s => `\`${s.slug}\``);
+  const others = models.filter(s => !s.roles).map(s => `\`${s.slug}\``);
   const out = [table.join('\n')];
   if (others.length > 0) {
     out.push(
-      `Also registered: ${others.join(', ')}. Run \`aibridge models [--json]\` for exact per-seat facts.`,
+      `Also registered: ${others.join(', ')}. Run \`aibridge models [--json]\` for exact per-model facts.`,
     );
   }
   return out.join('\n\n');
 }
 
-function imageSeatTable(installed: ReadonlySet<Backend>): string {
-  const rows = listSeats({ installed, imageOnly: true })
+function imageModelTable(installed: ReadonlySet<Backend>): string {
+  const rows = listModels({ installed, imageOnly: true })
     .filter(s => s.roles?.['image-gen'])
     .map(s => {
       const rec = s.roles?.['image-gen']?.level === 'recommended' ? ' (recommended)' : '';
@@ -116,19 +116,19 @@ const IF_BLOCK = /<!-- if:([\w,]+) -->\n?([\s\S]*?)<!-- endif -->\n?/g;
 /** Resolves placeholders and `<!-- if:backend -->` blocks against what is installed. */
 export function applyTemplate(text: string, installed: Installed): string {
   const present = installedBackends(installed);
-  const slugFor = (role: Role): string => seatFor(role, present)?.slug ?? '<slug>';
+  const slugFor = (role: Role): string => modelFor(role, present)?.slug ?? '<slug>';
   // The reviewer must be cross-family from the implementer, so pick it from the
   // other installed backends first and only fall back to the same family.
-  const implementer = seatFor('implement', present);
+  const implementer = modelFor('implement', present);
   const otherBackends = new Set([...present].filter(b => b !== implementer?.backend));
-  const reviewer = seatFor('review', otherBackends) ?? seatFor('review', present);
+  const reviewer = modelFor('review', otherBackends) ?? modelFor('review', present);
   return text
     .replace(IF_BLOCK, (_m, backends: string, body: string) =>
       backends.split(',').some(b => present.has(b as Backend)) ? body : '',
     )
     .replaceAll('{{installed}}', installedBlock(installed))
-    .replaceAll('{{seats}}', seatTable(present))
-    .replaceAll('{{image-seats}}', imageSeatTable(present))
+    .replaceAll('{{models}}', modelTable(present))
+    .replaceAll('{{image-models}}', imageModelTable(present))
     .replaceAll('{{plan}}', slugFor('plan'))
     .replaceAll('{{implement}}', slugFor('implement'))
     .replaceAll('{{review}}', reviewer?.slug ?? '<slug>')

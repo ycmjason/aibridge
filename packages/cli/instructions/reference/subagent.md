@@ -17,8 +17,8 @@ aibridge subagent --model <slug> "<self-contained prompt>" [options]
 
 The answer prints to stdout. There is no `--out`; redirect if you want a file.
 
-Effort suffixes work on seats that support them (`{{review}}-low`; `aibridge
-models` lists each seat's efforts). The seat table is in [SKILL.md](../SKILL.md);
+Effort suffixes work on models that support them (`{{review}}-low`; `aibridge
+models` lists each model's efforts). The model table is in [SKILL.md](../SKILL.md);
 `aibridge subagent --help` prints the live list.
 
 **Tools are ON by default** — the delegate reads/writes files and runs shell.

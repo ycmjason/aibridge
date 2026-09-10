@@ -63,7 +63,7 @@ debt, state it and propose the cleanup.
 | Implement | `pnpm aibridge implement --model google-antigravity/gemini-3.7-flash .aibridge/plan.md` |
 | Review | `pnpm aibridge review --model xai-grok/grok-4.6 --out .aibridge/review.md [--plan .aibridge/plan.md] [--base <ref>]` |
 | Subagent | `pnpm aibridge subagent --model xai-grok/grok-4.6 "<prompt>"` |
-| Models | `pnpm aibridge models [--json]` — list every model seat in the registry (efforts, image format, pinned backend model id) |
+| Models | `pnpm aibridge models [--json]` — list every model in the registry (efforts, image format, pinned backend model id) |
 | Monitor runs | `pnpm aibridge runs [--watch]` (logs in `~/.aibridge/runs`) |
 | Quota (all backends) | `pnpm aibridge quota [--json]` — inspect quota before a multi-stage pipeline; individual commands preflight automatically |
 | Skill instructions | `pnpm aibridge skill [plan|implement|review|subagent|image-gen|why]` |
@@ -89,12 +89,12 @@ Command orchestration uses **`@stricli/core`** (`buildCommand` / `buildRouteMap`
 - `packages/cli/src/driver.ts` — structural `AgentCliDriver` interface.
 - `packages/cli/src/drivers.ts` — map `Backend` → `AgentCliDriver` implementations.
 - `packages/cli/src/delegate.ts` — thin delegation engine calling `driver.run(task)`.
-- `packages/cli/src/transparency.ts` — the `--transparent` mechanism: the per-strategy prompt clauses plus `chromaKeyToPng` (sharp). Pure mechanism — no backend switches, no stdout; the impl decides which strategy a seat gets from `imageAlphaFor`.
+- `packages/cli/src/transparency.ts` — the `--transparent` mechanism: the per-strategy prompt clauses plus `chromaKeyToPng` (sharp). Pure mechanism — no backend switches, no stdout; the impl decides which strategy a model gets from `imageAlphaFor`.
 - `packages/proc` + `packages/driver-{agy,grok,codex,claude}` — workspace packages driving each backend independently (zero external runtime dependencies). Usually that means spawning its CLI. `driver-grok` also talks to `api.x.ai` over HTTP directly for images and quota, because those are single requests and the CLI's agent loop only added failure modes (see docs/decisions.md). Keeping these packages dependency-free is a real constraint: it is why `generateImage.ts` sends reference images uncompressed instead of pulling in `sharp`.
 
 ### Adding a subagent model
 
-Edit `packages/cli/src/models.ts`: add an entry to `MODELS` mapping a canonical slug → `{ backend, backendModel, efforts, defaultEffort?, brief, roles? }`. Every command surface (`--model <slug>`) picks it up automatically. `roles` (recommended/supported per verb, with an optional qualifier) is what the skill's seat table and the `{{plan}}`/`{{implement}}`/`{{review}}`/`{{image}}` placeholders in `packages/cli/instructions/` are generated from; seats without `roles` are listed as "also registered". Instructions and every listing are filtered to backends whose CLI is on `PATH` (`packages/cli/src/installed.ts`); wrap backend-specific prose in `<!-- if:grok -->…<!-- endif -->`.
+Edit `packages/cli/src/models.ts`: add an entry to `MODELS` mapping a canonical slug → `{ backend, backendModel, efforts, defaultEffort?, brief, roles? }`. Every command surface (`--model <slug>`) picks it up automatically. `roles` (recommended/supported per verb, with an optional qualifier) is what the skill's model table and the `{{plan}}`/`{{implement}}`/`{{review}}`/`{{image}}` placeholders in `packages/cli/instructions/` are generated from; models without `roles` are listed as "also registered". Instructions and every listing are filtered to backends whose CLI is on `PATH` (`packages/cli/src/installed.ts`); wrap backend-specific prose in `<!-- if:grok -->…<!-- endif -->`.
 
 ## Further reading — research & implementation notes
 

@@ -17,7 +17,7 @@ export const plan = buildCommand({
       model: {
         kind: 'parsed',
         parse: String,
-        brief: 'Model slug (required) — see the seat list above',
+        brief: 'Model slug (required) — see the model list above',
       },
       out: {
         kind: 'parsed',

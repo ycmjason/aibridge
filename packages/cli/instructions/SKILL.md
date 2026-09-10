@@ -17,7 +17,7 @@ Requires Node 24.11 or later. If Node is older, ask the user to upgrade with
 
 {{installed}}
 
-Every seat below runs on an installed CLI. A `--model` on a missing backend
+Every model below runs on an installed CLI. A `--model` on a missing backend
 exits 2 with an install hint before anything runs.
 
 ## Where `--out` goes
@@ -40,10 +40,10 @@ exits 2 with an install hint before anything runs.
 | `implement` | Implement a plan file in place and run the real checks |
 | `review` | Review a diff, commit range, or plan contract |
 | `subagent` | Delegate a self-contained task to another model |
-| `image-gen` | Generate a raster image with an image-capable seat |
+| `image-gen` | Generate a raster image with an image-capable model |
 | `runs` | Monitor and inspect execution runs |
 | `quota` | Show backend quota and reset times |
-| `models` | List registered model seats and capabilities |
+| `models` | List registered models and capabilities |
 
 `plan`, `review` and `image-gen` require `--out` and print only a verdict/path
 line. `subagent` and `implement` have no `--out`; they print the delegate's
@@ -66,14 +66,14 @@ answer to stdout, and `subagent --out foo.md` exits 2 with
    If genuinely ambiguous, show the table above and ask.
 3. **Unsure of the current flags?** Run `aibridge <command> --help`.
 
-## Model seats
+## Models
 
 `--model` is required on every command that spends a delegate (`plan`,
 `implement`, `review`, `subagent`, `image-gen`); nothing is chosen for you.
 `quota`, `models` and `runs` take no `--model`. Starting points, not
 benchmarks:
 
-{{seats}}
+{{models}}
 
 ✅ recommended · ○ supported · ✗ unsupported. For `plan`, the qualifier describes
 how much ambiguity the model can resolve. For `implement`, it describes how
@@ -85,7 +85,7 @@ rather than guess.**
 - **One grok stage at a time.** ~30 req/min, ~1k msgs/day, and both tiers share
   that budget.
 - **`grok-4.6` plans and reviews, `grok-4.5` implements.** They are different
-  seats, not old and new.
+  models, not old and new.
 <!-- endif -->
 - **The reviewer must be a different model family from whoever implemented**,
   including when that was you.

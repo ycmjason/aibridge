@@ -13,7 +13,7 @@ import { normalizeExitCode } from './exitCode.ts';
 import { PACKAGE_VERSION } from './package.ts';
 
 const BRIEF =
-  'Bridge tasks to the other AI CLIs on this machine — a plan → implement → review workflow, task delegation, and image generation (codex / agy / grok seats).';
+  'Bridge tasks to the other AI CLIs on this machine — a plan → implement → review workflow, task delegation, and image generation (codex / agy / grok models).';
 
 const routes = buildRouteMap({
   routes: {

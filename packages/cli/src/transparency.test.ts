@@ -120,7 +120,7 @@ describe('chromaKeyToPng', () => {
     // (40, 200, 60) block deep inside the subject. Dominance is 160/140, far past
     // DOMINANCE — so it keys, wherever it sits. A chroma key cannot tell a green
     // subject from a green backdrop; CHROMA_CLAUSE tells the model not to make one,
-    // and codex is the seat for subjects that must be green.
+    // and codex is the model for subjects that must be green.
     for (let i = 0; i < width * height; i++) {
       const offset = i * 3;
       buf[offset] = 17;

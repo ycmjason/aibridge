@@ -1,4 +1,4 @@
-# image-gen — generate an image via a model seat
+# image-gen — generate an image via a model
 
 Part A covers the command. Part B covers prompt design, which applies even when
 you only need to return a prompt.
@@ -11,16 +11,16 @@ aibridge image-gen --model <slug> --out <file.png> "<full prompt — see part B>
   [--timeout 600] [--no-preflight] [--json]
 ```
 
-{{image-seats}}
+{{image-models}}
 
-Other seats fail fast with a list of capable models.
+Other models fail fast and list the capable ones.
 <!-- if:grok -->
-The grok seat renders without `grok` on `PATH`; the CLI is spawned only to
+The grok model renders without `grok` on `PATH`; the CLI is spawned only to
 refresh the token, before a request when `expires_at` is close and again as a
-backstop if one comes back 401. `grok login` is still what sets the seat up.
+backstop if one comes back 401. `grok login` is still what sets the model up.
 <!-- endif -->
 
-- `--out` is required and its extension must match the seat's format above
+- `--out` is required and its extension must match the model's format above
   (`.png` for any `--transparent` run). A mismatch is rejected before anything
   runs. The file holds the model's own bytes verbatim, except on a
   chroma-keyed `--transparent` run, which writes the locally keyed PNG.
@@ -28,24 +28,24 @@ backstop if one comes back 401. `grok login` is still what sets the seat up.
   project keeps it. Drafts go to `.aibridge/`; see [SKILL.md](../SKILL.md).
 - `--aspect-ratio N:M` sets geometry. Exact pixels are whatever the model
   renders; resize downstream.
-- `--image a.png,b.png` attaches references and routes to the seat's edit path.
+- `--image a.png,b.png` attaches references and routes to the model's edit path.
 - `--json` prints `{ out, bytes, width, height, aspectRatio, model, backend, transparency, real }`.
-- Preflight is on by default: an exhausted seat exits 3 and names the
+- Preflight is on by default: an exhausted model exits 3 and names the
   alternatives instead of spending a paid render. Argument checks run first, so
   bad flags still cost no network call.
 
 ### Transparency
 
-- `--transparent` works on every image seat and always writes PNG. PNG seats
-  give native alpha; JPEG seats are chroma-keyed with binary edges. Fine for
+- `--transparent` works on every image model and always writes PNG. PNG models
+  give native alpha; JPEG models are chroma-keyed with binary edges. Fine for
   flat icons, logos and stickers; not for hair, smoke or glass.
 - **Say nothing about the background in the prompt when using it.** The CLI
-  writes the backdrop instruction per seat, and a colour of your own overrides
+  writes the backdrop instruction per model, and a colour of your own overrides
   it: the key then finds nothing and the paid render comes back opaque. Writing
   "transparent background" into the prompt without the flag is refused on
-  chroma seats.
-- **A green subject is keyed away with the backdrop** on chroma seats. Anything
-  that must be green needs a native-alpha (PNG) seat<!-- if:codex --> such as
+  chroma models.
+- **A green subject is keyed away with the backdrop** on chroma models. Anything
+  that must be green needs a native-alpha (PNG) model<!-- if:codex --> such as
   `openai-codex/gpt-5.6-sol`<!-- endif -->.
 - Both surfaces report the path taken: the result line says
   `transparency: native` / `chroma-keyed`, `--json` carries

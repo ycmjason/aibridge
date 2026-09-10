@@ -28,7 +28,7 @@ export function missingLines(installed: Installed): string[] {
 }
 
 /**
- * Fails fast (exit 2) when the seat's backend CLI is missing, before any quota
+ * Fails fast (exit 2) when the model's backend CLI is missing, before any quota
  * call. Only the target backend is probed on the happy path; the full sweep runs
  * on the error path to list what the caller can use instead.
  */
@@ -48,7 +48,7 @@ export async function requireBackend(
   const lines = [`aibridge ${cmd}: ${probe.error.replace(/^aibridge: /, '')}`];
   if (installed.size > 0) {
     lines.push(
-      `Installed backends: ${formatBackends(installed)}. Pick a seat on one of them:`,
+      `Installed backends: ${formatBackends(installed)}. Pick a model on one of them:`,
       ...listModelHelpLines({ installed, imageOnly: opts.imageOnly }),
     );
   } else {

@@ -26,7 +26,7 @@ import {
   resolveModel,
   supportsImageGen,
 } from '../../models.ts';
-import { alternativeSeats, preflightModel, renderPreflightRefusal } from '../../quotaPreflight.ts';
+import { alternativeModels, preflightModel, renderPreflightRefusal } from '../../quotaPreflight.ts';
 import {
   CHROMA_CLAUSE,
   chromaKeyToPng,
@@ -71,7 +71,7 @@ export default async function imageGen(
 
   if (model.spec.backend === 'codex' && model.effort) {
     return fail(
-      `effort "-${model.effort}" has no effect on image-gen (the image tool renders, not the seat model); pass the un-suffixed slug "${model.spec.slug}" instead.`,
+      `effort "-${model.effort}" has no effect on image-gen (the image tool renders, not the chat model); pass the un-suffixed slug "${model.spec.slug}" instead.`,
     );
   }
 
@@ -88,7 +88,7 @@ export default async function imageGen(
     const reason =
       flags.transparent && expected === 'jpg'
         ? '--transparent always writes PNG'
-        : `the ${model.spec.slug} seat renders ${label} and aibridge does not convert`;
+        : `the ${model.spec.slug} model renders ${label} and aibridge does not convert`;
     return fail(
       `--out "${flags.out}" must end in ${outFormat === 'png' ? '.png' : '.jpg or .jpeg'} — ${reason}.`,
     );
@@ -96,8 +96,8 @@ export default async function imageGen(
 
   if (!flags.transparent && alpha === 'chroma' && mentionsTransparentBackground(prompt)) {
     return fail(
-      `the prompt asks for a transparent background but the ${model.spec.slug} seat cannot render alpha — ` +
-        `pass --transparent (aibridge chroma-keys it locally, binary edges) or use a native-alpha seat ` +
+      `the prompt asks for a transparent background but the ${model.spec.slug} model cannot render alpha — ` +
+        `pass --transparent (aibridge chroma-keys it locally, binary edges) or use a native-alpha model ` +
         `(PNG in \`aibridge models\`). Re-run with --transparent to proceed.`,
     );
   }
@@ -130,7 +130,7 @@ export default async function imageGen(
   if (!driver.generateImage) {
     return fail(formatImageGenModelError(inputSlug, model));
   }
-  // The grok seat renders over HTTP on ~/.grok/auth.json and only spawns the CLI
+  // The grok model renders over HTTP on ~/.grok/auth.json and only spawns the CLI
   // to refresh a token, so a missing `grok` binary is not a reason to refuse.
   if (
     model.spec.backend !== 'grok' &&
@@ -144,7 +144,7 @@ export default async function imageGen(
     const verdict = await preflightModel(model);
     if (!verdict.ok) {
       this.process.stderr.write(
-        `${renderPreflightRefusal('image-gen', verdict, alternativeSeats(model, installedBackends(await detectInstalled()), true))}\n`,
+        `${renderPreflightRefusal('image-gen', verdict, alternativeModels(model, installedBackends(await detectInstalled()), true))}\n`,
       );
       this.process.exitCode = 3;
       return;
@@ -223,7 +223,7 @@ export default async function imageGen(
         if (transparentRatio < 0.02) {
           this.process.stderr.write(
             `aibridge image-gen: --transparent keyed only ${(transparentRatio * 100).toFixed(1)}% of the image — ` +
-              `the model likely ignored the chroma-key instruction; wrote it anyway. Re-run, or use a native-alpha seat.\n`,
+              `the model likely ignored the chroma-key instruction; wrote it anyway. Re-run, or use a native-alpha model.\n`,
           );
         }
         artefact = keyed;
@@ -236,7 +236,7 @@ export default async function imageGen(
     // ponytail: guard for a backend changing formats in the future without throwing away a paid render
     if (actual !== null && actual !== outFormat) {
       this.process.stderr.write(
-        `aibridge image-gen: expected a ${label} render from this seat but got ${actual === 'png' ? 'PNG' : 'JPEG'}; wrote the raw bytes to ${outPath} anyway — the extension does not match the contents.\n`,
+        `aibridge image-gen: expected a ${label} render from this model but got ${actual === 'png' ? 'PNG' : 'JPEG'}; wrote the raw bytes to ${outPath} anyway — the extension does not match the contents.\n`,
       );
     }
 

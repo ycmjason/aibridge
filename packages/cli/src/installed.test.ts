@@ -57,7 +57,7 @@ describe('installed', () => {
     expect(c.process.exitCode).toBeUndefined();
   });
 
-  it('requireBackend exits 2 with the installed seat list when the backend is missing', async () => {
+  it('requireBackend exits 2 with the installed model list when the backend is missing', async () => {
     const c = ctx();
     const ok = await requireBackend(
       c,

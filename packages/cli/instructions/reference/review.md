@@ -63,9 +63,9 @@ run: <run id>
 - `PASS` → proceed (commit, or report done).
 - Findings → read the report, then judge. Over-reach findings can be scope you
   added deliberately: the reviewer flags, you decide. Fix what is real, re-run.
-- Never let a model review its own diff. The seats these pages name differ when
+- Never let a model review its own diff. The models these pages name differ when
   more than one backend is installed; with a single backend they cannot, so say
-  so and ask. If you override one seat, check the other.
+  so and ask. If you override one model, check the other.
 
 ## Gotchas
 

@@ -43,7 +43,7 @@ describe('image-gen validation', () => {
     expect(c.process.exitCode).toBe(1);
   });
 
-  it('refuses a transparent-background prompt on a chroma seat without the flag', async () => {
+  it('refuses a transparent-background prompt on a chroma model without the flag', async () => {
     const { ctx: c, stderr } = ctx();
     await imageGen.call(c, flags({}), 'a fox on a transparent background');
     expect(stderr()).toContain('cannot render alpha');
