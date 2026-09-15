@@ -34,6 +34,7 @@ export async function delegate(
     onStdout: c => opts.run.stdout(c),
     onStderr: c => opts.run.stderr(c),
     onSpawn: pid => opts.run.setPid(pid),
+    onActivity: () => opts.run.touch(),
   });
 
   if (result.ok) {

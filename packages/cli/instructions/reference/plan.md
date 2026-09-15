@@ -47,6 +47,8 @@ open questions: 2
 run: <run id>
 ```
 
+The run id is also printed immediately on stderr as `aibridge: run <id>` so `aibridge runs <id>` works before the command finishes.
+
 Exit 0 even with open questions. Exit 1: plan missing, empty, no open-questions
 section, tree dirtied, delegate failure or timeout. Exit 2: bad arguments.
 Exit 3: quota preflight refusal.

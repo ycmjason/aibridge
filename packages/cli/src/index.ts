@@ -26,9 +26,15 @@ export {
   renderPreflightRefusal,
 } from './quotaPreflight.ts';
 export {
+  beginDelegatedRun,
+  defaultRunsDir,
   listRuns,
+  type PidProbe,
+  RUN_KEEP_COUNT,
   type RunLog,
   type RunMeta,
+  type RunStatus,
+  type RunStoreOptions,
   readRunLogs,
   startRun,
 } from './runlog.ts';

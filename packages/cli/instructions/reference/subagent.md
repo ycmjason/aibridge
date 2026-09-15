@@ -16,6 +16,7 @@ aibridge subagent --model <slug> "<self-contained prompt>" [options]
 ```
 
 The answer prints to stdout. There is no `--out`; redirect if you want a file.
+The run id is also printed immediately on stderr as `aibridge: run <id>` so `aibridge runs <id>` works before the command finishes.
 
 Effort suffixes work on models that support them (`{{review}}-low`; `aibridge
 models` lists each model's efforts). The model table is in [SKILL.md](../SKILL.md);

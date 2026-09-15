@@ -31,6 +31,8 @@ untracked files: <count>
 run: <run id>
 ```
 
+The run id is also printed immediately on stderr as `aibridge: run <id>` so `aibridge runs <id>` works before the command finishes.
+
 Exit 0: completed with tree changes. Exit 1: delegate failed, timed out, gave no
 usable answer, or changed nothing (a no-op implement is a failure). Exit 2: bad
 args or missing plan file. Exit 3: quota preflight refusal.

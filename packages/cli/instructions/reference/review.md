@@ -52,6 +52,8 @@ review: /abs/path/to/review.md
 run: <run id>
 ```
 
+The run id is also printed immediately on stderr as `aibridge: run <id>` so `aibridge runs <id>` works before the command finishes.
+
 - `0`: PASS, or minor-only findings.
 - `1`: critical or major findings; unparseable verdict (raw answer + paths still
   print); missing or empty report file; delegate failure or timeout.

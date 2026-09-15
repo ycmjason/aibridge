@@ -41,6 +41,7 @@ describe('grok driver run()', () => {
       'bypassPermissions',
       '--output-format',
       'streaming-messages-json',
+      '--include-partial-messages',
     ]);
     expect(res).toEqual({ ok: true, response: 'Grok response', exitCode: 0 });
   });
@@ -75,6 +76,7 @@ describe('grok driver run()', () => {
       'grok-4.6',
       '--output-format',
       'streaming-messages-json',
+      '--include-partial-messages',
     ]);
     expect(capturedArgs).not.toContain('--permission-mode');
     expect(res).toEqual({ ok: true, response: 'Read-only answer', exitCode: 0 });
@@ -365,5 +367,58 @@ describe('grok streaming-messages-json parsing', () => {
 
     expect(log.join('')).toBe('You are not authenticated.\n');
     expect(res).toMatchObject({ kind: 'no-answer', message: /not signed in/ });
+  });
+
+  it('stream_event with thinking_delta / text_delta calls onActivity, leaves log clean, keeps answer', async () => {
+    let activityCount = 0;
+    const log: string[] = [];
+    const stdout = [
+      JSON.stringify({
+        type: 'stream_event',
+        event: { type: 'thinking_delta', thinking: 'secret thoughts' },
+      }),
+      JSON.stringify({ type: 'text_delta', text: 'partial' }),
+      text('PASS'),
+      '',
+    ].join('\n');
+
+    const res = await run(
+      {
+        ...task,
+        onStdout: c => log.push(c),
+        onActivity: () => {
+          activityCount++;
+        },
+      },
+      async (_cmd, _args, opts = {}) => {
+        // Deliberately split mid-frame into small chunks
+        for (let i = 0; i < stdout.length; i += 10) {
+          opts.onStdout?.(stdout.slice(i, i + 10));
+        }
+        return { code: 0, signal: null, stdout, stderr: '', timedOut: false };
+      },
+    );
+
+    expect(res).toEqual({ ok: true, response: 'PASS', exitCode: 0 });
+    expect(log.join('')).toBe('PASS\n');
+    expect(log.join('')).not.toContain('secret thoughts');
+    expect(activityCount).toBeGreaterThan(0);
+  });
+
+  it('assistant frame that is only thinking does not log the thinking string', async () => {
+    const log: string[] = [];
+    const stdout = [
+      assistant({ type: 'thinking', thinking: 'Internal reasoning only.' }),
+      text('Done.'),
+      '',
+    ].join('\n');
+
+    await run({ ...task, onStdout: c => log.push(c) }, async (_cmd, _args, opts = {}) => {
+      opts.onStdout?.(stdout);
+      return { code: 0, signal: null, stdout, stderr: '', timedOut: false };
+    });
+
+    expect(log.join('')).toBe('Done.\n');
+    expect(log.join('')).not.toContain('Internal reasoning only.');
   });
 });

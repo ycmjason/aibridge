@@ -1,14 +1,19 @@
 import type { LocalContext } from '../../context.ts';
-import { listRuns, type RunMeta, readRunLogs } from '../../runlog.ts';
+import { listRuns, type RunStoreOptions, readRunLogs } from '../../runlog.ts';
 
 export interface RunsFlags {
   readonly watch: boolean;
   readonly json: boolean;
 }
 
-function formatElapsed(startedAtStr: string, endedAtStr: string | null): string {
+export function formatElapsed(
+  startedAtStr: string,
+  endedAtStr: string | null,
+  nowMs?: number,
+): string {
   const start = new Date(startedAtStr).getTime();
-  const end = endedAtStr ? new Date(endedAtStr).getTime() : Date.now();
+  const end = endedAtStr ? new Date(endedAtStr).getTime() : (nowMs ?? Date.now());
+  if (Number.isNaN(start) || Number.isNaN(end)) return '-';
   const diffSec = Math.max(0, Math.floor((end - start) / 1000));
   if (diffSec < 60) {
     return `${diffSec}s`;
@@ -18,24 +23,31 @@ function formatElapsed(startedAtStr: string, endedAtStr: string | null): string 
   return `${min}m${sec}s`;
 }
 
-function getStatus(run: RunMeta): string {
-  if (run.status === 'running' && run.pid !== null) {
-    try {
-      process.kill(run.pid, 0);
-    } catch {
-      return 'stale';
-    }
+export function formatIdle(lastActivityAtStr: string, nowMs?: number): string {
+  const last = new Date(lastActivityAtStr).getTime();
+  const now = nowMs ?? Date.now();
+  if (Number.isNaN(last) || Number.isNaN(now)) return '-';
+  const diffSec = Math.max(0, Math.floor((now - last) / 1000));
+  if (diffSec < 60) {
+    return `${diffSec}s`;
   }
-  return run.status;
+  const min = Math.floor(diffSec / 60);
+  const sec = diffSec % 60;
+  return `${min}m${sec}s`;
+}
+
+export function statusLabel(status: string): string {
+  return status.toUpperCase();
 }
 
 export default async function runs(
   this: LocalContext,
   flags: RunsFlags,
   idPrefix?: string,
+  storeOpts?: RunStoreOptions,
 ): Promise<void> {
   if (idPrefix !== undefined) {
-    const all = listRuns();
+    const all = listRuns(storeOpts);
     const matches = all.filter(r => r.id.startsWith(idPrefix));
     if (matches.length === 0) {
       this.process.stderr.write(`aibridge runs: no run matches prefix "${idPrefix}"\n`);
@@ -51,20 +63,22 @@ export default async function runs(
     }
     const target = matches[0];
     if (target === undefined) return;
-    const logs = readRunLogs(target.id);
+    const logs = readRunLogs(target.id, storeOpts);
     if (!logs) {
       this.process.stderr.write(`aibridge runs: failed to read logs for run "${target.id}"\n`);
       this.process.exitCode = 1;
       return;
     }
 
-    const status = getStatus(logs.meta).toUpperCase();
+    const status = statusLabel(logs.meta.status);
     const elapsed = formatElapsed(logs.meta.startedAt, logs.meta.endedAt);
+    const idle = logs.meta.status === 'running' ? formatIdle(logs.meta.lastActivityAt) : '-';
     const summaryLines = [
       `ID:      ${logs.meta.id}`,
       `COMMAND: ${logs.meta.command}`,
       `STATUS:  ${status}`,
       `ELAPSED: ${elapsed}`,
+      `LAST:    ${logs.meta.lastActivityAt} (${idle})`,
       `DETAIL:  ${logs.meta.detail}`,
     ];
     if (logs.meta.pid !== null) {
@@ -99,7 +113,7 @@ export default async function runs(
       const timeStr = new Date().toLocaleTimeString();
       this.process.stdout.write(`aibridge runs — ${timeStr} (ctrl-c to quit)\n\n`);
 
-      const runs = listRuns();
+      const runs = listRuns(storeOpts);
       if (runs.length === 0) {
         this.process.stdout.write('no runs yet\n');
         return;
@@ -107,21 +121,22 @@ export default async function runs(
 
       const limit = runs.slice(0, 10);
       this.process.stdout.write(
-        `${'STATUS'.padEnd(10)} ${'ID'.padEnd(35)} ${'ELAPSED'.padEnd(10)} DETAIL\n`,
+        `${'STATUS'.padEnd(10)} ${'ID'.padEnd(35)} ${'ELAPSED'.padEnd(10)} ${'IDLE'.padEnd(8)} DETAIL\n`,
       );
       for (const r of limit) {
-        const status = getStatus(r).toUpperCase();
+        const status = statusLabel(r.status);
         const elapsed = formatElapsed(r.startedAt, r.endedAt);
+        const idle = r.status === 'running' ? formatIdle(r.lastActivityAt) : '-';
         const detail = r.detail.replace(/\r?\n/g, ' ');
         const truncatedDetail = detail.length > 60 ? `${detail.slice(0, 57)}...` : detail;
         this.process.stdout.write(
-          `${status.padEnd(10)} ${r.id.padEnd(35)} ${elapsed.padEnd(10)} ${truncatedDetail}\n`,
+          `${status.padEnd(10)} ${r.id.padEnd(35)} ${elapsed.padEnd(10)} ${idle.padEnd(8)} ${truncatedDetail}\n`,
         );
       }
 
-      const runningRuns = runs.filter(r => getStatus(r) === 'running');
+      const runningRuns = runs.filter(r => r.status === 'running');
       for (const r of runningRuns) {
-        const logs = readRunLogs(r.id);
+        const logs = readRunLogs(r.id, storeOpts);
         if (logs) {
           this.process.stdout.write(`\n--- stdout: ${r.id} ---\n`);
           const lines = logs.stdout.split('\n');
@@ -139,7 +154,7 @@ export default async function runs(
     return new Promise<void>(() => {});
   }
 
-  const runs = listRuns();
+  const runs = listRuns(storeOpts);
   if (runs.length === 0) {
     this.process.stdout.write('no runs yet\n');
     return;
@@ -148,24 +163,23 @@ export default async function runs(
   if (flags.json) {
     const limit = runs.slice(0, 20);
     for (const r of limit) {
-      const status = getStatus(r);
-      const withStatus = { ...r, status };
-      this.process.stdout.write(`${JSON.stringify(withStatus)}\n`);
+      this.process.stdout.write(`${JSON.stringify(r)}\n`);
     }
     return;
   }
 
   const limit = runs.slice(0, 20);
   this.process.stdout.write(
-    `${'STATUS'.padEnd(10)} ${'ID'.padEnd(35)} ${'ELAPSED'.padEnd(10)} DETAIL\n`,
+    `${'STATUS'.padEnd(10)} ${'ID'.padEnd(35)} ${'ELAPSED'.padEnd(10)} ${'IDLE'.padEnd(8)} DETAIL\n`,
   );
   for (const r of limit) {
-    const status = getStatus(r).toUpperCase();
+    const status = statusLabel(r.status);
     const elapsed = formatElapsed(r.startedAt, r.endedAt);
+    const idle = r.status === 'running' ? formatIdle(r.lastActivityAt) : '-';
     const detail = r.detail.replace(/\r?\n/g, ' ');
     const truncatedDetail = detail.length > 60 ? `${detail.slice(0, 57)}...` : detail;
     this.process.stdout.write(
-      `${status.padEnd(10)} ${r.id.padEnd(35)} ${elapsed.padEnd(10)} ${truncatedDetail}\n`,
+      `${status.padEnd(10)} ${r.id.padEnd(35)} ${elapsed.padEnd(10)} ${idle.padEnd(8)} ${truncatedDetail}\n`,
     );
   }
 }

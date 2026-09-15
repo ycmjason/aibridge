@@ -12,11 +12,16 @@ const PREAMBLE_PIN =
 class StubDriver implements AgentCliDriver {
   lastTask?: DelegationTask;
   private readonly result: DelegationResult;
-  private readonly callbacks?: { stdout?: string; stderr?: string; pid?: number };
+  private readonly callbacks?: {
+    stdout?: string;
+    stderr?: string;
+    pid?: number;
+    activity?: boolean;
+  };
 
   constructor(
     result: DelegationResult,
-    callbacks?: { stdout?: string; stderr?: string; pid?: number },
+    callbacks?: { stdout?: string; stderr?: string; pid?: number; activity?: boolean },
   ) {
     this.result = result;
     this.callbacks = callbacks;
@@ -32,6 +37,7 @@ class StubDriver implements AgentCliDriver {
       if (this.callbacks.pid !== undefined) task.onSpawn?.(this.callbacks.pid);
       if (this.callbacks.stdout !== undefined) task.onStdout?.(this.callbacks.stdout);
       if (this.callbacks.stderr !== undefined) task.onStderr?.(this.callbacks.stderr);
+      if (this.callbacks.activity) task.onActivity?.();
     }
     return this.result;
   }
@@ -42,6 +48,7 @@ function createRecordingRunLog() {
     pid: null as number | null,
     stdout: [] as string[],
     stderr: [] as string[],
+    touchCount: 0,
     finish: null as { status: string; exitCode: number | null } | null,
   };
   const runLog: RunLog = {
@@ -55,6 +62,9 @@ function createRecordingRunLog() {
     },
     stderr(chunk) {
       calls.stderr.push(chunk);
+    },
+    touch() {
+      calls.touchCount++;
     },
     finish(status, exitCode) {
       calls.finish = { status, exitCode };
@@ -121,6 +131,25 @@ describe('delegate stub-driver tests', () => {
     expect(calls.pid).toBe(999);
     expect(calls.stdout).toEqual(['out chunk']);
     expect(calls.stderr).toEqual(['err chunk']);
+  });
+
+  it('forwards onActivity callback to RunLog touch()', async () => {
+    const stub = new StubDriver({ ok: true, response: 'ok', exitCode: 0 }, { activity: true });
+    const { runLog, calls } = createRecordingRunLog();
+
+    await delegate(
+      {
+        model,
+        prompt: 'test activity',
+        tools: true,
+        timeoutSec: 60,
+        cwd: '/test',
+        run: runLog,
+      },
+      stub,
+    );
+
+    expect(calls.touchCount).toBe(1);
   });
 
   it('maps finish status and exitCode correctly for all outcome kinds', async () => {

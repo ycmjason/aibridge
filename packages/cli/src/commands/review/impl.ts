@@ -6,7 +6,7 @@ import { delegate } from '../../delegate.ts';
 import { detectInstalled, installedBackends, requireBackend } from '../../installed.ts';
 import { formatUnknownModelError, resolveModel } from '../../models.ts';
 import { alternativeModels, preflightModel, renderPreflightRefusal } from '../../quotaPreflight.ts';
-import { startRun } from '../../runlog.ts';
+import { beginDelegatedRun } from '../../runlog.ts';
 
 export interface ReviewFlags {
   readonly model: string;
@@ -145,7 +145,7 @@ export default async function review(this: LocalContext, flags: ReviewFlags): Pr
       : `diff (${baseRef})`
     : `plan-only (${absPlanPath})`;
 
-  const run = startRun('review', `${model.spec.slug}: ${modeDetail}`);
+  const run = beginDelegatedRun('review', `${model.spec.slug}: ${modeDetail}`, this.process.stderr);
 
   const absOutPath = isAbsolute(flags.out) ? flags.out : resolve(cwd, flags.out);
 

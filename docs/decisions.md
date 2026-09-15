@@ -5,6 +5,9 @@
 
 ## Active decisions
 
+- **Prune by `startedAt` exempting live runs, announce run id on stderr, track liveness, and parse stream protocols** (2026-09-15).
+  Lexicographic directory sorting previously deleted live timestamp runs in a mixed UUID/timestamp store, and failed persistence returned an empty-id dummy that erased evidence. Pruning now inspects `startedAt` from `meta.json` (mtime fallback), retains all live runs regardless of keep count, and reconciles dead runs to `stale`. Delegating verbs announce `aibridge: run <id>` on stderr immediately upon start so in-flight runs can be inspected with `aibridge runs <id>`. `lastActivityAt` on `RunMeta` tracks liveness via `onActivity` / `touch()`. Claude driver uses `--output-format stream-json --verbose --include-partial-messages` to parse turns and stream prose to logs without thinking pollution, while Grok adds `--include-partial-messages` to refresh liveness without leaking deltas into logs.
+
 - **Instructions and listings are filtered to installed backends; recommendations
   live in the registry** (2026-09-10). `aibridge skill` probes every backend CLI
   once (the drivers' `probe()`), then renders `packages/cli/instructions/` as a

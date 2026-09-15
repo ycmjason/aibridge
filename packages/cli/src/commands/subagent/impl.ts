@@ -3,7 +3,7 @@ import { delegate } from '../../delegate.ts';
 import { detectInstalled, installedBackends, requireBackend } from '../../installed.ts';
 import { backendModelId, formatUnknownModelError, resolveModel } from '../../models.ts';
 import { alternativeModels, preflightModel, renderPreflightRefusal } from '../../quotaPreflight.ts';
-import { startRun } from '../../runlog.ts';
+import { beginDelegatedRun } from '../../runlog.ts';
 
 export interface SubagentFlags {
   readonly model: string;
@@ -56,7 +56,11 @@ export default async function subagent(
   const timeoutSec = flags.timeout ?? 600;
   const workDir = this.process.cwd();
   const promptSnippet = prompt.replace(/\r?\n/g, ' ').slice(0, 80);
-  const run = startRun('subagent', `${model.spec.slug}: ${promptSnippet}`);
+  const run = beginDelegatedRun(
+    'subagent',
+    `${model.spec.slug}: ${promptSnippet}`,
+    this.process.stderr,
+  );
 
   const outcome = await delegate({
     model,

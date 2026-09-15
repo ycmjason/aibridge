@@ -18,6 +18,7 @@ export interface DelegationTask {
   readonly onStdout?: (chunk: string) => void;
   readonly onStderr?: (chunk: string) => void;
   readonly onSpawn?: (pid: number) => void;
+  readonly onActivity?: () => void;
 }
 
 export type DelegationResult =

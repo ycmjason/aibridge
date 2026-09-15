@@ -12,6 +12,7 @@ export interface DelegationTask {
   readonly onStdout?: (chunk: string) => void;
   readonly onStderr?: (chunk: string) => void;
   readonly onSpawn?: (pid: number) => void;
+  readonly onActivity?: () => void;
 }
 
 export type DelegationResult =
@@ -37,7 +38,11 @@ const NOISE_RE = /^Shell cwd was reset[^\n]*$/gm;
  * assistant message text), the last non-empty assistant `text` as the backstop,
  * and raw stdout only when grok never spoke the protocol at all.
  */
-const MESSAGE_STREAM_ARGS = ['--output-format', 'streaming-messages-json'];
+const MESSAGE_STREAM_ARGS = [
+  '--output-format',
+  'streaming-messages-json',
+  '--include-partial-messages',
+];
 
 function clean(s: string): string {
   return stripAnsi(s).replace(NOISE_RE, '').trim();
@@ -48,6 +53,8 @@ type StreamLine =
   | { readonly kind: 'result'; readonly text: string }
   /** An assistant turn — only its `text` blocks are answer material. */
   | { readonly kind: 'assistant'; readonly text: string }
+  /** A partial message event or delta. */
+  | { readonly kind: 'stream_event' }
   /** A well-formed frame carrying no answer text (system/init, user). */
   | { readonly kind: 'frame' }
   /** Anything grok printed outside the protocol, e.g. a sign-in refusal. */
@@ -64,6 +71,13 @@ function classifyLine(line: string): StreamLine {
     frame = JSON.parse(trimmed) as typeof frame;
   } catch {
     return { kind: 'raw' };
+  }
+
+  if (
+    frame.type === 'stream_event' ||
+    (typeof frame.type === 'string' && frame.type.endsWith('_delta'))
+  ) {
+    return { kind: 'stream_event' };
   }
 
   if (frame.type === 'result') {
@@ -115,7 +129,7 @@ function readAnswer(stdout: string): StreamAnswer {
 }
 
 interface LogForwarder {
-  readonly onChunk: ((chunk: string) => void) | undefined;
+  readonly onChunk: (chunk: string) => void;
   /** Emit a trailing line the child left unterminated, so the log loses nothing. */
   readonly flush: () => void;
 }
@@ -125,9 +139,10 @@ interface LogForwarder {
  * protocol frames, and pass anything unrecognised through so a failure grok
  * prints outside the protocol still reaches the log.
  */
-function logForwarder(onStdout: ((chunk: string) => void) | undefined): LogForwarder {
-  if (!onStdout) return { onChunk: undefined, flush: () => {} };
-
+function logForwarder(
+  onStdout: ((chunk: string) => void) | undefined,
+  onActivity: (() => void) | undefined,
+): LogForwarder {
   let pending = '';
   let lastForwarded = '';
   const emit = (line: string): void => {
@@ -135,7 +150,7 @@ function logForwarder(onStdout: ((chunk: string) => void) | undefined): LogForwa
     if (classified.kind === 'assistant') {
       if (classified.text.trim().length > 0) {
         lastForwarded = classified.text;
-        onStdout(`${classified.text}\n`);
+        onStdout?.(`${classified.text}\n`);
       }
     } else if (classified.kind === 'result') {
       // The log has to mirror the answer policy, or a contentless response —
@@ -143,15 +158,16 @@ function logForwarder(onStdout: ((chunk: string) => void) | undefined): LogForwa
       // everything except the answer. Skip the usual case where the terminal
       // frame just repeats the assistant turn already written.
       if (classified.text.trim().length > 0 && classified.text !== lastForwarded) {
-        onStdout(`${classified.text}\n`);
+        onStdout?.(`${classified.text}\n`);
       }
     } else if (classified.kind === 'raw') {
-      onStdout(`${line}\n`);
+      onStdout?.(`${line}\n`);
     }
   };
 
   return {
     onChunk: (chunk: string): void => {
+      onActivity?.();
       pending += chunk;
       for (let nl = pending.indexOf('\n'); nl !== -1; nl = pending.indexOf('\n')) {
         emit(pending.slice(0, nl));
@@ -180,7 +196,7 @@ export async function run(
     ...MESSAGE_STREAM_ARGS,
   ];
 
-  const forwarder = logForwarder(task.onStdout);
+  const forwarder = logForwarder(task.onStdout, task.onActivity);
 
   try {
     let result: RunResult;

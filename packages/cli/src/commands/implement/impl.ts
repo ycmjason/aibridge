@@ -6,7 +6,7 @@ import { delegate } from '../../delegate.ts';
 import { detectInstalled, installedBackends, requireBackend } from '../../installed.ts';
 import { formatUnknownModelError, resolveModel } from '../../models.ts';
 import { alternativeModels, preflightModel, renderPreflightRefusal } from '../../quotaPreflight.ts';
-import { startRun } from '../../runlog.ts';
+import { beginDelegatedRun } from '../../runlog.ts';
 
 export interface ImplementFlags {
   readonly model: string;
@@ -52,7 +52,11 @@ export default async function implement(
   }
 
   const timeoutSec = flags.timeout ?? 1800;
-  const run = startRun('implement', `${model.spec.slug}: ${planFile}`);
+  const run = beginDelegatedRun(
+    'implement',
+    `${model.spec.slug}: ${planFile}`,
+    this.process.stderr,
+  );
 
   const implementPrompt =
     `Read the implementation plan file at ${absPlanPath} and implement it EXACTLY.\n` +
