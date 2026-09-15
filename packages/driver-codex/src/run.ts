@@ -56,6 +56,9 @@ export async function run(
       config.push(`model_reasoning_effort=${task.effort}`);
     }
 
+    // Keep human stderr for liveness + --output-last-message for the answer.
+    // Do not add `codex exec --json` without a live capture of an authoritative
+    // final-answer field and CoT-free liveness.
     const args = buildCodexExecArgs(task.prompt, {
       cwd: task.cwd,
       approval: task.tools ? 'bypass' : 'read-only',

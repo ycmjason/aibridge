@@ -1,4 +1,9 @@
-export { type AgyPrintArgs, buildAgyPrintArgs } from './agy.ts';
+export {
+  type AgyPrintArgs,
+  agySupportsStreamJson,
+  buildAgyPrintArgs,
+  MIN_AGY_STREAM_JSON,
+} from './agy.ts';
 export {
   type AgyModelQuota,
   type AgyQuotaBucket,

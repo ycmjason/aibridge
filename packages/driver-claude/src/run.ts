@@ -26,6 +26,8 @@ export type DelegationResult =
 
 const NOISE_RE = /^Shell cwd was reset[^\n]*$/gm;
 
+const RAW_FALLBACK_MAX_CHARS = 8192;
+
 const MESSAGE_STREAM_ARGS = [
   '--output-format',
   'stream-json',
@@ -87,35 +89,18 @@ function classifyLine(line: string): StreamLine {
   return { kind: 'assistant', text };
 }
 
-interface StreamAnswer {
-  /** The answer, or null when the stream carried no answer text at all. */
-  readonly text: string | null;
-  /** True once any protocol frame was seen, so raw stdout is NOT the answer. */
+interface StreamSnapshot {
   readonly sawProtocol: boolean;
-}
-
-function readAnswer(stdout: string): StreamAnswer {
-  let terminal: string | null = null;
-  let lastAssistant: string | null = null;
-  let sawProtocol = false;
-
-  for (const line of stripAnsi(stdout).split('\n')) {
-    const classified = classifyLine(line);
-    if (classified.kind === 'raw' || classified.kind === 'blank') continue;
-    sawProtocol = true;
-    if (classified.kind === 'result' && classified.text.trim().length > 0) {
-      terminal = classified.text;
-    } else if (classified.kind === 'assistant' && classified.text.trim().length > 0) {
-      lastAssistant = classified.text;
-    }
-  }
-  return { text: terminal ?? lastAssistant, sawProtocol };
+  readonly text: string | null;
+  readonly rawFallback: string;
+  readonly rawTruncated: boolean;
 }
 
 interface LogForwarder {
   readonly onChunk: (chunk: string) => void;
   /** Emit a trailing line the child left unterminated, so the log loses nothing. */
   readonly flush: () => void;
+  readonly snapshot: () => StreamSnapshot;
 }
 
 function logForwarder(
@@ -124,19 +109,48 @@ function logForwarder(
 ): LogForwarder {
   let pending = '';
   let lastForwarded = '';
-  const emit = (line: string): void => {
+  let sawProtocol = false;
+  let terminal: string | null = null;
+  let lastAssistant: string | null = null;
+  let rawFallback = '';
+  let rawTruncated = false;
+
+  const emit = (rawLine: string): void => {
+    const line = stripAnsi(rawLine);
     const classified = classifyLine(line);
+    if (classified.kind === 'blank') {
+      return;
+    }
     if (classified.kind === 'assistant') {
+      sawProtocol = true;
       if (classified.text.trim().length > 0) {
+        lastAssistant = classified.text;
         lastForwarded = classified.text;
         onStdout?.(`${classified.text}\n`);
       }
     } else if (classified.kind === 'result') {
-      if (classified.text.trim().length > 0 && classified.text !== lastForwarded) {
-        onStdout?.(`${classified.text}\n`);
+      sawProtocol = true;
+      if (classified.text.trim().length > 0) {
+        terminal = classified.text;
+        if (classified.text !== lastForwarded) {
+          lastForwarded = classified.text;
+          onStdout?.(`${classified.text}\n`);
+        }
       }
+    } else if (classified.kind === 'stream_event' || classified.kind === 'frame') {
+      sawProtocol = true;
     } else if (classified.kind === 'raw') {
-      onStdout?.(`${line}\n`);
+      onStdout?.(`${rawLine}\n`);
+      if (!sawProtocol) {
+        if (!rawTruncated) {
+          const candidate = `${rawLine}\n`;
+          if (rawFallback.length + candidate.length > RAW_FALLBACK_MAX_CHARS) {
+            rawTruncated = true;
+          } else {
+            rawFallback += candidate;
+          }
+        }
+      }
     }
   };
 
@@ -155,6 +169,12 @@ function logForwarder(
       pending = '';
       emit(line);
     },
+    snapshot: (): StreamSnapshot => ({
+      sawProtocol,
+      text: terminal ?? lastAssistant,
+      rawFallback,
+      rawTruncated,
+    }),
   };
 }
 
@@ -179,6 +199,7 @@ export async function run(
       result = await exec('claude', args, {
         cwd: task.cwd,
         timeoutMs: (task.timeoutSec + 20) * 1000,
+        captureStdout: false,
         onStdout: forwarder.onChunk,
         onStderr: task.onStderr,
         onSpawn: task.onSpawn,
@@ -202,6 +223,8 @@ export async function run(
 
     forwarder.flush();
 
+    const snap = forwarder.snapshot();
+
     if (result.timedOut) {
       return {
         ok: false,
@@ -211,8 +234,18 @@ export async function run(
       };
     }
 
-    const answer = readAnswer(result.stdout);
-    const response = clean(answer.text ?? (answer.sawProtocol ? '' : result.stdout));
+    if (!snap.sawProtocol && snap.rawTruncated) {
+      return {
+        ok: false,
+        kind: 'no-answer',
+        message: `aibridge: claude returned more than ${RAW_FALLBACK_MAX_CHARS} characters without a recognized stream protocol; see the run log.`,
+        exitCode: result.code,
+      };
+    }
+
+    const response = clean(
+      snap.text ?? (snap.sawProtocol || snap.rawTruncated ? '' : snap.rawFallback),
+    );
 
     if (result.code !== 0 || response.length === 0) {
       const detail = clean(result.stderr) || `exit code ${result.code}`;

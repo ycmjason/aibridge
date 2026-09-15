@@ -3,18 +3,21 @@ import { describe, expect, it } from 'vitest';
 import { run } from './run.ts';
 
 describe('grok driver run()', () => {
-  it('passes argv for tools=true with effort and captures stdout on success', async () => {
+  it('passes argv for tools=true with effort, sets captureStdout: false, and captures stdout on success', async () => {
     let capturedCmd = '';
     let capturedArgs: readonly string[] = [];
+    let capturedOpts: RunOptions = {};
 
     const fakeExec = async (
       cmd: string,
       args: readonly string[],
-      _opts: RunOptions = {},
+      opts: RunOptions = {},
     ): Promise<RunResult> => {
       capturedCmd = cmd;
       capturedArgs = args;
-      return { code: 0, signal: null, stdout: 'Grok response', stderr: '', timedOut: false };
+      capturedOpts = opts;
+      opts.onStdout?.('Grok response\n');
+      return { code: 0, signal: null, stdout: '', stderr: '', timedOut: false };
     };
 
     const res = await run(
@@ -43,19 +46,23 @@ describe('grok driver run()', () => {
       'streaming-messages-json',
       '--include-partial-messages',
     ]);
+    expect(capturedOpts.captureStdout).toBe(false);
     expect(res).toEqual({ ok: true, response: 'Grok response', exitCode: 0 });
   });
 
-  it('passes argv for tools=false without bypassPermissions flag', async () => {
+  it('passes argv for tools=false without bypassPermissions flag and sets captureStdout: false', async () => {
     let capturedArgs: readonly string[] = [];
+    let capturedOpts: RunOptions = {};
 
     const fakeExec = async (
       _cmd: string,
       args: readonly string[],
-      _opts: RunOptions = {},
+      opts: RunOptions = {},
     ): Promise<RunResult> => {
       capturedArgs = args;
-      return { code: 0, signal: null, stdout: 'Read-only answer', stderr: '', timedOut: false };
+      capturedOpts = opts;
+      opts.onStdout?.('Read-only answer\n');
+      return { code: 0, signal: null, stdout: '', stderr: '', timedOut: false };
     };
 
     const res = await run(
@@ -79,6 +86,7 @@ describe('grok driver run()', () => {
       '--include-partial-messages',
     ]);
     expect(capturedArgs).not.toContain('--permission-mode');
+    expect(capturedOpts.captureStdout).toBe(false);
     expect(res).toEqual({ ok: true, response: 'Read-only answer', exitCode: 0 });
   });
 
@@ -162,22 +170,27 @@ describe('grok driver run() sign-in detection', () => {
     cwd: '/work',
     backendModel: 'grok-4.6',
   };
-  const exec = (stdout: string) => async (): Promise<RunResult> => ({
-    code: 0,
-    signal: null,
-    stdout,
-    stderr: '',
-    timedOut: false,
-  });
+  const exec =
+    (stdout: string) =>
+    async (_cmd: string, _args: readonly string[], opts: RunOptions = {}): Promise<RunResult> => {
+      opts.onStdout?.(stdout);
+      return {
+        code: 0,
+        signal: null,
+        stdout: '',
+        stderr: '',
+        timedOut: false,
+      };
+    };
 
   it('treats the CLI sign-in notice as no-answer', async () => {
-    const res = await run(task, exec('You are not authenticated.'));
+    const res = await run(task, exec('You are not authenticated.\n'));
     expect(res.ok).toBe(false);
     expect(res).toMatchObject({ kind: 'no-answer', message: /not signed in/ });
   });
 
   it('keeps a real answer that merely mentions the phrase', async () => {
-    const answer = `${'Your endpoint returns "not authenticated" because the bearer token is stale. '.repeat(6)}`;
+    const answer = `${'Your endpoint returns "not authenticated" because the bearer token is stale. '.repeat(6)}\n`;
     const res = await run(task, exec(answer));
     expect(res.ok).toBe(true);
   });
@@ -191,6 +204,23 @@ describe('grok streaming-messages-json parsing', () => {
     cwd: '/work',
     backendModel: 'grok-4.6',
   };
+
+  const execStream =
+    (
+      stream: string,
+      extra: Partial<RunResult> = {},
+    ): ((cmd: string, args: readonly string[], opts?: RunOptions) => Promise<RunResult>) =>
+    async (_cmd, _args, opts = {}): Promise<RunResult> => {
+      opts.onStdout?.(stream);
+      return {
+        code: 0,
+        signal: null,
+        stdout: '',
+        stderr: '',
+        timedOut: false,
+        ...extra,
+      };
+    };
 
   const assistant = (...blocks: Array<Record<string, unknown>>) =>
     JSON.stringify({
@@ -213,13 +243,7 @@ describe('grok streaming-messages-json parsing', () => {
       '',
     ].join('\n');
 
-    const res = await run(task, async () => ({
-      code: 0,
-      signal: null,
-      stdout,
-      stderr: '',
-      timedOut: false,
-    }));
+    const res = await run(task, execStream(stdout));
 
     expect(res).toEqual({ ok: true, response: 'PASS', exitCode: 0 });
   });
@@ -230,13 +254,7 @@ describe('grok streaming-messages-json parsing', () => {
       { type: 'text', text: 'PASS' },
     )}\n`;
 
-    const res = await run(task, async () => ({
-      code: 0,
-      signal: null,
-      stdout,
-      stderr: '',
-      timedOut: false,
-    }));
+    const res = await run(task, execStream(stdout));
 
     expect(res).toMatchObject({ ok: true, response: 'PASS' });
   });
@@ -248,7 +266,7 @@ describe('grok streaming-messages-json parsing', () => {
     await run({ ...task, onStdout: c => log.push(c) }, async (_cmd, _args, opts = {}) => {
       // Deliberately split mid-frame: the forwarder buffers by line, not by chunk.
       for (let i = 0; i < stdout.length; i += 7) opts.onStdout?.(stdout.slice(i, i + 7));
-      return { code: 0, signal: null, stdout, stderr: '', timedOut: false };
+      return { code: 0, signal: null, stdout: '', stderr: '', timedOut: false };
     });
 
     expect(log.join('')).toBe('Working on it.\nPASS\n');
@@ -268,13 +286,7 @@ describe('grok streaming-messages-json parsing', () => {
       '',
     ].join('\n');
 
-    const res = await run(task, async () => ({
-      code: 0,
-      signal: null,
-      stdout,
-      stderr: '',
-      timedOut: false,
-    }));
+    const res = await run(task, execStream(stdout));
 
     expect(res).toEqual({ ok: true, response: 'PASS', exitCode: 0 });
   });
@@ -296,13 +308,7 @@ describe('grok streaming-messages-json parsing', () => {
       '',
     ].join('\n');
 
-    const res = await run(task, async () => ({
-      code: 0,
-      signal: null,
-      stdout,
-      stderr: '',
-      timedOut: false,
-    }));
+    const res = await run(task, execStream(stdout));
 
     expect(res.ok).toBe(false);
     expect(res).toMatchObject({ kind: 'no-answer' });
@@ -320,10 +326,7 @@ describe('grok streaming-messages-json parsing', () => {
       '',
     ].join('\n');
 
-    await run({ ...task, onStdout: c => log.push(c) }, async (_cmd, _args, opts = {}) => {
-      opts.onStdout?.(stdout);
-      return { code: 0, signal: null, stdout, stderr: '', timedOut: false };
-    });
+    await run({ ...task, onStdout: c => log.push(c) }, execStream(stdout));
 
     expect(log.join('')).toBe('Thinking out loud before answering.\nPASS\n');
   });
@@ -336,10 +339,7 @@ describe('grok streaming-messages-json parsing', () => {
       '',
     ].join('\n');
 
-    await run({ ...task, onStdout: c => log.push(c) }, async (_cmd, _args, opts = {}) => {
-      opts.onStdout?.(stdout);
-      return { code: 0, signal: null, stdout, stderr: '', timedOut: false };
-    });
+    await run({ ...task, onStdout: c => log.push(c) }, execStream(stdout));
 
     expect(log.join('')).toBe('PASS\n');
   });
@@ -348,10 +348,7 @@ describe('grok streaming-messages-json parsing', () => {
     const log: string[] = [];
     const stdout = `${text('Done.')}`; // deliberately no trailing newline
 
-    await run({ ...task, onStdout: c => log.push(c) }, async (_cmd, _args, opts = {}) => {
-      opts.onStdout?.(stdout);
-      return { code: 0, signal: null, stdout, stderr: '', timedOut: false };
-    });
+    await run({ ...task, onStdout: c => log.push(c) }, execStream(stdout));
 
     expect(log.join('')).toBe('Done.\n');
   });
@@ -360,10 +357,7 @@ describe('grok streaming-messages-json parsing', () => {
     const log: string[] = [];
     const stdout = 'You are not authenticated.\n';
 
-    const res = await run({ ...task, onStdout: c => log.push(c) }, async (_c, _a, opts = {}) => {
-      opts.onStdout?.(stdout);
-      return { code: 0, signal: null, stdout, stderr: '', timedOut: false };
-    });
+    const res = await run({ ...task, onStdout: c => log.push(c) }, execStream(stdout, { code: 0 }));
 
     expect(log.join('')).toBe('You are not authenticated.\n');
     expect(res).toMatchObject({ kind: 'no-answer', message: /not signed in/ });
@@ -395,7 +389,7 @@ describe('grok streaming-messages-json parsing', () => {
         for (let i = 0; i < stdout.length; i += 10) {
           opts.onStdout?.(stdout.slice(i, i + 10));
         }
-        return { code: 0, signal: null, stdout, stderr: '', timedOut: false };
+        return { code: 0, signal: null, stdout: '', stderr: '', timedOut: false };
       },
     );
 
@@ -413,12 +407,48 @@ describe('grok streaming-messages-json parsing', () => {
       '',
     ].join('\n');
 
-    await run({ ...task, onStdout: c => log.push(c) }, async (_cmd, _args, opts = {}) => {
-      opts.onStdout?.(stdout);
-      return { code: 0, signal: null, stdout, stderr: '', timedOut: false };
-    });
+    await run({ ...task, onStdout: c => log.push(c) }, execStream(stdout));
 
     expect(log.join('')).toBe('Done.\n');
     expect(log.join('')).not.toContain('Internal reasoning only.');
+  });
+
+  it('returns explicit no-answer when pre-protocol raw output exceeds 8192 chars', async () => {
+    const longRaw = `${'A'.repeat(5000)}\n${'B'.repeat(4000)}\n`;
+    const log: string[] = [];
+    const res = await run({ ...task, onStdout: c => log.push(c) }, execStream(longRaw));
+    expect(res.ok).toBe(false);
+    if (!res.ok) {
+      expect(res.kind).toBe('no-answer');
+      expect(res.message).toContain(
+        'returned more than 8192 characters without a recognized stream protocol',
+      );
+    }
+    expect(log.join('')).toBe(longRaw);
+  });
+
+  it('does not treat a post-protocol raw line as the answer', async () => {
+    const stdout = [text('PASS'), 'some unexpected raw line from child CLI', ''].join('\n');
+    const log: string[] = [];
+    const res = await run({ ...task, onStdout: c => log.push(c) }, execStream(stdout));
+    expect(res).toEqual({ ok: true, response: 'PASS', exitCode: 0 });
+    expect(log.join('')).toContain('some unexpected raw line from child CLI\n');
+  });
+
+  it('strips ANSI prefixes before classifying terminal frame and supplies the answer', async () => {
+    const ansiResult = `\x1b[32m${JSON.stringify({ type: 'result', subtype: 'success', result: 'ANSI_PASS' })}\x1b[0m\n`;
+    const res = await run(task, execStream(ansiResult));
+    expect(res).toEqual({ ok: true, response: 'ANSI_PASS', exitCode: 0 });
+  });
+
+  it('valid result wins even after a long raw preamble > 8192 chars', async () => {
+    const longRawWithResult = [
+      'A'.repeat(5000),
+      'B'.repeat(4000),
+      JSON.stringify({ type: 'result', subtype: 'success', result: 'VALID_RESULT' }),
+      '',
+    ].join('\n');
+    const res = await run(task, execStream(longRawWithResult));
+    expect(res).toEqual({ ok: true, response: 'VALID_RESULT', exitCode: 0 });
   });
 });

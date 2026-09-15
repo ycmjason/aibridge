@@ -26,7 +26,7 @@ describe('generateImage', () => {
         return {
           code: 0,
           signal: null,
-          stdout: 'agy version 1.0.0\n',
+          stdout: 'agy 1.2.3\n',
           stderr: '',
           timedOut: false,
         };
@@ -47,6 +47,8 @@ describe('generateImage', () => {
     expect(capturedArgs).toContain('--model');
     expect(capturedArgs).toContain('gemini-3.7-flash-high');
     expect(capturedArgs).toContain('--dangerously-skip-permissions');
+    expect(capturedArgs).not.toContain('--output-format');
+    expect(capturedArgs).not.toContain('stream-json');
 
     const promptIdx = capturedArgs.indexOf('-p');
     expect(promptIdx).toBeGreaterThan(-1);

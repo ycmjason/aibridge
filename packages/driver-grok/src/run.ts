@@ -38,6 +38,8 @@ const NOISE_RE = /^Shell cwd was reset[^\n]*$/gm;
  * assistant message text), the last non-empty assistant `text` as the backstop,
  * and raw stdout only when grok never spoke the protocol at all.
  */
+const RAW_FALLBACK_MAX_CHARS = 8192;
+
 const MESSAGE_STREAM_ARGS = [
   '--output-format',
   'streaming-messages-json',
@@ -49,7 +51,7 @@ function clean(s: string): string {
 }
 
 type StreamLine =
-  /** The terminal frame. Grok's docs call its `result` the final answer text. */
+  /** The terminal frame. Grok's docs call its `result` the final assistant message text. */
   | { readonly kind: 'result'; readonly text: string }
   /** An assistant turn — only its `text` blocks are answer material. */
   | { readonly kind: 'assistant'; readonly text: string }
@@ -98,40 +100,18 @@ function classifyLine(line: string): StreamLine {
   return { kind: 'assistant', text };
 }
 
-interface StreamAnswer {
-  /** The answer, or null when the stream carried no answer text at all. */
-  readonly text: string | null;
-  /** True once any protocol frame was seen, so raw stdout is NOT the answer. */
+interface StreamSnapshot {
   readonly sawProtocol: boolean;
-}
-
-/**
- * Prefer the terminal `result` frame — grok documents its `result` field as the
- * final assistant message text. The last assistant turn is the backstop for a
- * stream that ends without one.
- */
-function readAnswer(stdout: string): StreamAnswer {
-  let terminal: string | null = null;
-  let lastAssistant: string | null = null;
-  let sawProtocol = false;
-
-  for (const line of stripAnsi(stdout).split('\n')) {
-    const classified = classifyLine(line);
-    if (classified.kind === 'raw' || classified.kind === 'blank') continue;
-    sawProtocol = true;
-    if (classified.kind === 'result' && classified.text.trim().length > 0) {
-      terminal = classified.text;
-    } else if (classified.kind === 'assistant' && classified.text.trim().length > 0) {
-      lastAssistant = classified.text;
-    }
-  }
-  return { text: terminal ?? lastAssistant, sawProtocol };
+  readonly text: string | null;
+  readonly rawFallback: string;
+  readonly rawTruncated: boolean;
 }
 
 interface LogForwarder {
   readonly onChunk: (chunk: string) => void;
   /** Emit a trailing line the child left unterminated, so the log loses nothing. */
   readonly flush: () => void;
+  readonly snapshot: () => StreamSnapshot;
 }
 
 /**
@@ -145,23 +125,52 @@ function logForwarder(
 ): LogForwarder {
   let pending = '';
   let lastForwarded = '';
-  const emit = (line: string): void => {
+  let sawProtocol = false;
+  let terminal: string | null = null;
+  let lastAssistant: string | null = null;
+  let rawFallback = '';
+  let rawTruncated = false;
+
+  const emit = (rawLine: string): void => {
+    const line = stripAnsi(rawLine);
     const classified = classifyLine(line);
+    if (classified.kind === 'blank') {
+      return;
+    }
     if (classified.kind === 'assistant') {
+      sawProtocol = true;
       if (classified.text.trim().length > 0) {
+        lastAssistant = classified.text;
         lastForwarded = classified.text;
         onStdout?.(`${classified.text}\n`);
       }
     } else if (classified.kind === 'result') {
+      sawProtocol = true;
       // The log has to mirror the answer policy, or a contentless response —
       // no assistant frame at all, answer only in `result.result` — logs
       // everything except the answer. Skip the usual case where the terminal
       // frame just repeats the assistant turn already written.
-      if (classified.text.trim().length > 0 && classified.text !== lastForwarded) {
-        onStdout?.(`${classified.text}\n`);
+      if (classified.text.trim().length > 0) {
+        terminal = classified.text;
+        if (classified.text !== lastForwarded) {
+          lastForwarded = classified.text;
+          onStdout?.(`${classified.text}\n`);
+        }
       }
+    } else if (classified.kind === 'stream_event' || classified.kind === 'frame') {
+      sawProtocol = true;
     } else if (classified.kind === 'raw') {
-      onStdout?.(`${line}\n`);
+      onStdout?.(`${rawLine}\n`);
+      if (!sawProtocol) {
+        if (!rawTruncated) {
+          const candidate = `${rawLine}\n`;
+          if (rawFallback.length + candidate.length > RAW_FALLBACK_MAX_CHARS) {
+            rawTruncated = true;
+          } else {
+            rawFallback += candidate;
+          }
+        }
+      }
     }
   };
 
@@ -180,6 +189,12 @@ function logForwarder(
       pending = '';
       emit(line);
     },
+    snapshot: (): StreamSnapshot => ({
+      sawProtocol,
+      text: terminal ?? lastAssistant,
+      rawFallback,
+      rawTruncated,
+    }),
   };
 }
 
@@ -205,6 +220,7 @@ export async function run(
         cwd: task.cwd,
         timeoutMs: (task.timeoutSec + 20) * 1000,
         env: grokEnv(),
+        captureStdout: false,
         onStdout: forwarder.onChunk,
         onStderr: task.onStderr,
         onSpawn: task.onSpawn,
@@ -228,6 +244,8 @@ export async function run(
 
     forwarder.flush();
 
+    const snap = forwarder.snapshot();
+
     if (result.timedOut) {
       return {
         ok: false,
@@ -237,13 +255,23 @@ export async function run(
       };
     }
 
+    if (!snap.sawProtocol && snap.rawTruncated) {
+      return {
+        ok: false,
+        kind: 'no-answer',
+        message: `aibridge: grok returned more than ${RAW_FALLBACK_MAX_CHARS} characters without a recognized stream protocol; see the run log.`,
+        exitCode: result.code,
+      };
+    }
+
     // Raw stdout is the answer ONLY when grok never spoke the protocol — a
     // refusal before the stream opens (not signed in, bad flag) still has to
     // reach the sign-in check below. Once any frame is seen, a stream carrying
     // no answer text is an EMPTY answer, never the NDJSON dump: handing callers
     // the protocol itself is the exact failure this format switch exists to stop.
-    const answer = readAnswer(result.stdout);
-    const response = clean(answer.text ?? (answer.sawProtocol ? '' : result.stdout));
+    const response = clean(
+      snap.text ?? (snap.sawProtocol || snap.rawTruncated ? '' : snap.rawFallback),
+    );
 
     // Only a terse one-liner is the CLI's own sign-in notice; a long answer that
     // merely mentions the phrase is a real answer about auth.

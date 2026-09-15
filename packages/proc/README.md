@@ -1,7 +1,7 @@
 # @aibridge/proc
 
 Process utilities for [aibridge](https://github.com/ycmjason/aibridge) drivers:
-spawn a CLI and capture output with a timeout (`runCaptured`), inspect an
+spawn a CLI and capture output with a timeout (`runCaptured`, where `captureStdout: false` forwards chunks without retaining stdout), inspect an
 executable and its version (`probeVersion`), compare semantic versions, and
 strip ANSI escapes.
 

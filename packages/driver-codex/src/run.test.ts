@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { run } from './run.ts';
 
 describe('codex driver run()', () => {
-  it('passes bypass approval flag and config when tools=true with effort', async () => {
+  it('passes bypass approval flag, output-last-message, and config when tools=true with effort', async () => {
     let callCount = 0;
     let execArgs: readonly string[] = [];
 
@@ -36,10 +36,13 @@ describe('codex driver run()', () => {
     expect(execArgs).toContain('--dangerously-bypass-approvals-and-sandbox');
     expect(execArgs).toContain('-c');
     expect(execArgs).toContain('model_reasoning_effort=high');
+    expect(execArgs).toContain('--output-last-message');
+    expect(execArgs).not.toContain('--json');
+    expect(execArgs).not.toContain('--output-format');
     expect(res).toEqual({ ok: true, response: 'Codex answer', exitCode: 0 });
   });
 
-  it('passes read-only approval mode when tools=false', async () => {
+  it('passes read-only approval mode and output-last-message when tools=false', async () => {
     let execArgs: readonly string[] = [];
 
     const fakeExec = async (
@@ -67,8 +70,47 @@ describe('codex driver run()', () => {
 
     expect(execArgs).toContain('-s');
     expect(execArgs).toContain('read-only');
+    expect(execArgs).toContain('--output-last-message');
+    expect(execArgs).not.toContain('--json');
+    expect(execArgs).not.toContain('--output-format');
     expect(execArgs).not.toContain('--dangerously-bypass-approvals-and-sandbox');
     expect(res).toEqual({ ok: true, response: 'Read-only answer', exitCode: 0 });
+  });
+
+  it('forwards stderr chunks to onStderr for liveness tracking', async () => {
+    const stderrLog: string[] = [];
+    let execArgs: readonly string[] = [];
+
+    const fakeExec = async (
+      _cmd: string,
+      args: readonly string[],
+      opts: RunOptions = {},
+    ): Promise<RunResult> => {
+      if (args[0] === '--version') {
+        return { code: 0, signal: null, stdout: 'codex 0.145.0', stderr: '', timedOut: false };
+      }
+      execArgs = args;
+      opts.onStderr?.('working...\n');
+      return { code: 0, signal: null, stdout: 'done', stderr: 'working...\n', timedOut: false };
+    };
+
+    const res = await run(
+      {
+        prompt: 'task',
+        tools: false,
+        timeoutSec: 30,
+        cwd: '/work',
+        backendModel: 'gpt-5.6-sol',
+        onStderr: chunk => stderrLog.push(chunk),
+      },
+      fakeExec,
+    );
+
+    expect(execArgs).toContain('--output-last-message');
+    expect(execArgs).not.toContain('--json');
+    expect(execArgs).not.toContain('--output-format');
+    expect(stderrLog.join('')).toBe('working...\n');
+    expect(res).toEqual({ ok: true, response: 'done', exitCode: 0 });
   });
 
   it('maps nonzero exit code to no-answer with real exitCode', async () => {

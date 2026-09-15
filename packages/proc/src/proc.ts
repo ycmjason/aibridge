@@ -14,6 +14,7 @@ export interface RunResult {
   readonly code: number | null;
   /** Signal that killed the process, if any. */
   readonly signal: NodeJS.Signals | null;
+  /** Retained captured stdout, or '' when retention is disabled. */
   readonly stdout: string;
   readonly stderr: string;
   /** True if our timeout fired and we killed the child. */
@@ -28,6 +29,11 @@ export interface RunOptions {
   readonly onStdout?: (chunk: string) => void;
   readonly onStderr?: (chunk: string) => void;
   readonly onSpawn?: (pid: number) => void;
+  /**
+   * When false, still forward stdout chunks to onStdout but do not retain
+   * them on RunResult.stdout (always ''). Default true.
+   */
+  readonly captureStdout?: boolean;
 }
 
 /**
@@ -58,7 +64,9 @@ export function runCaptured(
     child.stdout.setEncoding('utf8');
     child.stderr.setEncoding('utf8');
     child.stdout.on('data', (d: string) => {
-      stdout += d;
+      if (opts.captureStdout !== false) {
+        stdout += d;
+      }
       opts.onStdout?.(d);
     });
     child.stderr.on('data', (d: string) => {

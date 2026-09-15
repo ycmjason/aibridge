@@ -1,3 +1,5 @@
+import { semverGte } from '@aibridge/proc';
+
 /**
  * Helper for building Antigravity CLI (`agy`) print arguments.
  *
@@ -31,4 +33,18 @@ export function buildAgyPrintArgs(prompt: string, opts: AgyPrintArgs): string[] 
   }
 
   return args;
+}
+
+export const MIN_AGY_STREAM_JSON: readonly [number, number, number] = [1, 2, 3];
+
+const STRICT_AGY_VERSION_RE = /^(?:agy(?: version)?\s+)?(\d+)\.(\d+)\.(\d+)(?:\s.*)?$/i;
+
+export function agySupportsStreamJson(versionLine: string | null): boolean {
+  if (!versionLine) return false;
+  const m = versionLine.trim().match(STRICT_AGY_VERSION_RE);
+  if (!m) return false;
+  const major = Number(m[1]);
+  const minor = Number(m[2]);
+  const patch = Number(m[3]);
+  return semverGte([major, minor, patch], MIN_AGY_STREAM_JSON);
 }

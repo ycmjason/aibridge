@@ -3,18 +3,21 @@ import { describe, expect, it } from 'vitest';
 import { run } from './run.ts';
 
 describe('claude driver run() argv and basics', () => {
-  it('passes arguments for tools=true with effort and returns stdout response', async () => {
+  it('passes arguments for tools=true with effort, sets captureStdout: false, and returns stdout response', async () => {
     let capturedCmd = '';
     let capturedArgs: readonly string[] = [];
+    let capturedOpts: RunOptions = {};
 
     const fakeExec = async (
       cmd: string,
       args: readonly string[],
-      _opts: RunOptions = {},
+      opts: RunOptions = {},
     ): Promise<RunResult> => {
       capturedCmd = cmd;
       capturedArgs = args;
-      return { code: 0, signal: null, stdout: 'Claude output', stderr: '', timedOut: false };
+      capturedOpts = opts;
+      opts.onStdout?.('Claude output\n');
+      return { code: 0, signal: null, stdout: '', stderr: '', timedOut: false };
     };
 
     const res = await run(
@@ -44,22 +47,26 @@ describe('claude driver run() argv and basics', () => {
       '--include-partial-messages',
     ]);
     expect(capturedArgs).not.toContain('--forward-subagent-text');
+    expect(capturedOpts.captureStdout).toBe(false);
     expect(res).toEqual({ ok: true, response: 'Claude output', exitCode: 0 });
   });
 
-  it('passes arguments for tools=false without dangerously-skip-permissions', async () => {
+  it('passes arguments for tools=false without dangerously-skip-permissions and sets captureStdout: false', async () => {
     let capturedArgs: readonly string[] = [];
+    let capturedOpts: RunOptions = {};
 
     const fakeExec = async (
       _cmd: string,
       args: readonly string[],
-      _opts: RunOptions = {},
+      opts: RunOptions = {},
     ): Promise<RunResult> => {
       capturedArgs = args;
+      capturedOpts = opts;
+      opts.onStdout?.('Claude read-only output\n');
       return {
         code: 0,
         signal: null,
-        stdout: 'Claude read-only output',
+        stdout: '',
         stderr: '',
         timedOut: false,
       };
@@ -88,6 +95,7 @@ describe('claude driver run() argv and basics', () => {
     ]);
     expect(capturedArgs).not.toContain('--dangerously-skip-permissions');
     expect(capturedArgs).not.toContain('--forward-subagent-text');
+    expect(capturedOpts.captureStdout).toBe(false);
     expect(res).toEqual({ ok: true, response: 'Claude read-only output', exitCode: 0 });
   });
 
@@ -172,6 +180,23 @@ describe('claude stream-json parsing and log forwarding', () => {
     backendModel: 'claude-sonnet-4-6',
   };
 
+  const execStream =
+    (
+      stream: string,
+      extra: Partial<RunResult> = {},
+    ): ((cmd: string, args: readonly string[], opts?: RunOptions) => Promise<RunResult>) =>
+    async (_cmd, _args, opts = {}): Promise<RunResult> => {
+      opts.onStdout?.(stream);
+      return {
+        code: 0,
+        signal: null,
+        stdout: '',
+        stderr: '',
+        timedOut: false,
+        ...extra,
+      };
+    };
+
   const assistant = (...blocks: Array<Record<string, unknown>>) =>
     JSON.stringify({
       type: 'assistant',
@@ -189,13 +214,7 @@ describe('claude stream-json parsing and log forwarding', () => {
       '',
     ].join('\n');
 
-    const res = await run(task, async () => ({
-      code: 0,
-      signal: null,
-      stdout,
-      stderr: '',
-      timedOut: false,
-    }));
+    const res = await run(task, execStream(stdout));
 
     expect(res).toEqual({ ok: true, response: 'PASS', exitCode: 0 });
   });
@@ -207,13 +226,7 @@ describe('claude stream-json parsing and log forwarding', () => {
     )}\n`;
     const log: string[] = [];
 
-    const res = await run(
-      { ...task, onStdout: c => log.push(c) },
-      async (_cmd, _args, opts = {}) => {
-        opts.onStdout?.(stdout);
-        return { code: 0, signal: null, stdout, stderr: '', timedOut: false };
-      },
-    );
+    const res = await run({ ...task, onStdout: c => log.push(c) }, execStream(stdout));
 
     expect(res).toMatchObject({ ok: true, response: 'PASS' });
     expect(log.join('')).toBe('PASS\n');
@@ -232,13 +245,7 @@ describe('claude stream-json parsing and log forwarding', () => {
       '',
     ].join('\n');
 
-    const res = await run(task, async () => ({
-      code: 0,
-      signal: null,
-      stdout,
-      stderr: '',
-      timedOut: false,
-    }));
+    const res = await run(task, execStream(stdout));
 
     expect(res).toEqual({ ok: true, response: 'PASS', exitCode: 0 });
   });
@@ -257,13 +264,7 @@ describe('claude stream-json parsing and log forwarding', () => {
       '',
     ].join('\n');
 
-    const res = await run(task, async () => ({
-      code: 0,
-      signal: null,
-      stdout,
-      stderr: '',
-      timedOut: false,
-    }));
+    const res = await run(task, execStream(stdout));
 
     expect(res.ok).toBe(false);
     expect(res).toMatchObject({ kind: 'no-answer' });
@@ -276,7 +277,7 @@ describe('claude stream-json parsing and log forwarding', () => {
 
     await run({ ...task, onStdout: c => log.push(c) }, async (_cmd, _args, opts = {}) => {
       for (let i = 0; i < stdout.length; i += 7) opts.onStdout?.(stdout.slice(i, i + 7));
-      return { code: 0, signal: null, stdout, stderr: '', timedOut: false };
+      return { code: 0, signal: null, stdout: '', stderr: '', timedOut: false };
     });
 
     expect(log.join('')).toBe('Working on it.\nPASS\n');
@@ -290,10 +291,7 @@ describe('claude stream-json parsing and log forwarding', () => {
       '',
     ].join('\n');
 
-    await run({ ...task, onStdout: c => log.push(c) }, async (_cmd, _args, opts = {}) => {
-      opts.onStdout?.(stdout);
-      return { code: 0, signal: null, stdout, stderr: '', timedOut: false };
-    });
+    await run({ ...task, onStdout: c => log.push(c) }, execStream(stdout));
 
     expect(log.join('')).toBe('Thinking out loud before answering.\nPASS\n');
   });
@@ -306,10 +304,7 @@ describe('claude stream-json parsing and log forwarding', () => {
       '',
     ].join('\n');
 
-    await run({ ...task, onStdout: c => log.push(c) }, async (_cmd, _args, opts = {}) => {
-      opts.onStdout?.(stdout);
-      return { code: 0, signal: null, stdout, stderr: '', timedOut: false };
-    });
+    await run({ ...task, onStdout: c => log.push(c) }, execStream(stdout));
 
     expect(log.join('')).toBe('PASS\n');
   });
@@ -318,10 +313,7 @@ describe('claude stream-json parsing and log forwarding', () => {
     const log: string[] = [];
     const stdout = `${text('Done.')}`;
 
-    await run({ ...task, onStdout: c => log.push(c) }, async (_cmd, _args, opts = {}) => {
-      opts.onStdout?.(stdout);
-      return { code: 0, signal: null, stdout, stderr: '', timedOut: false };
-    });
+    await run({ ...task, onStdout: c => log.push(c) }, execStream(stdout));
 
     expect(log.join('')).toBe('Done.\n');
   });
@@ -330,10 +322,10 @@ describe('claude stream-json parsing and log forwarding', () => {
     const log: string[] = [];
     const stdout = 'You are not authenticated.\n';
 
-    const res = await run({ ...task, onStdout: c => log.push(c) }, async (_c, _a, opts = {}) => {
-      opts.onStdout?.(stdout);
-      return { code: 1, signal: null, stdout, stderr: 'Auth error', timedOut: false };
-    });
+    const res = await run(
+      { ...task, onStdout: c => log.push(c) },
+      execStream(stdout, { code: 1, stderr: 'Auth error' }),
+    );
 
     expect(log.join('')).toBe('You are not authenticated.\n');
     expect(res.ok).toBe(false);
@@ -364,7 +356,7 @@ describe('claude stream-json parsing and log forwarding', () => {
         for (let i = 0; i < stdout.length; i += 10) {
           opts.onStdout?.(stdout.slice(i, i + 10));
         }
-        return { code: 0, signal: null, stdout, stderr: '', timedOut: false };
+        return { code: 0, signal: null, stdout: '', stderr: '', timedOut: false };
       },
     );
 
@@ -372,5 +364,33 @@ describe('claude stream-json parsing and log forwarding', () => {
     expect(log.join('')).toBe('PASS\n');
     expect(log.join('')).not.toContain('internal CoT');
     expect(activityCount).toBeGreaterThan(0);
+  });
+
+  it('returns explicit no-answer when pre-protocol raw output exceeds 8192 chars', async () => {
+    const longRaw = `${'A'.repeat(5000)}\n${'B'.repeat(4000)}\n`;
+    const log: string[] = [];
+    const res = await run({ ...task, onStdout: c => log.push(c) }, execStream(longRaw));
+    expect(res.ok).toBe(false);
+    if (!res.ok) {
+      expect(res.kind).toBe('no-answer');
+      expect(res.message).toContain(
+        'returned more than 8192 characters without a recognized stream protocol',
+      );
+    }
+    expect(log.join('')).toBe(longRaw);
+  });
+
+  it('does not treat a post-protocol raw line as the answer', async () => {
+    const stdout = [text('PASS'), 'some unexpected raw line from child CLI', ''].join('\n');
+    const log: string[] = [];
+    const res = await run({ ...task, onStdout: c => log.push(c) }, execStream(stdout));
+    expect(res).toEqual({ ok: true, response: 'PASS', exitCode: 0 });
+    expect(log.join('')).toContain('some unexpected raw line from child CLI\n');
+  });
+
+  it('strips ANSI prefixes before classifying terminal frame and supplies the answer', async () => {
+    const ansiResult = `\x1b[32m${JSON.stringify({ type: 'result', subtype: 'success', result: 'ANSI_PASS' })}\x1b[0m\n`;
+    const res = await run(task, execStream(ansiResult));
+    expect(res).toEqual({ ok: true, response: 'ANSI_PASS', exitCode: 0 });
   });
 });
