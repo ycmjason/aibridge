@@ -46,6 +46,22 @@ export interface ResolvedModel {
 }
 
 export const MODELS: Record<string, ModelSpec> = {
+  'xai-grok/grok-4.7': {
+    slug: 'xai-grok/grok-4.7',
+    backend: 'grok',
+    backendModel: 'grok-4.7',
+    efforts: ['low', 'medium', 'high', 'xhigh'],
+    brief:
+      'xAI Grok 4.7 via grok CLI — grok CLI default; own xAI login; ~30 req/min, ~1k msgs/day, single-flight',
+  },
+  'xai-grok/grok-4.7-build-fast': {
+    slug: 'xai-grok/grok-4.7-build-fast',
+    backend: 'grok',
+    backendModel: 'grok-4.7-build-fast',
+    efforts: ['low', 'medium', 'high', 'xhigh'],
+    brief:
+      'xAI Grok 4.7 Build Fast via grok CLI — fast coding tier; own xAI login; ~30 req/min, ~1k msgs/day, single-flight',
+  },
   'xai-grok/grok-4.6': {
     slug: 'xai-grok/grok-4.6',
     roles: {
@@ -140,7 +156,7 @@ export const MODELS: Record<string, ModelSpec> = {
     efforts: null,
     brief: 'GPT-OSS 120B (medium) via agy — own Antigravity login',
   },
-  // Codex serves `ultra` on astra/sol/terra too; it is not in `Effort` yet.
+  // Codex serves `ultra` on gpt-6-astra/sol and gpt-5.6-sol/terra too; it is not in `Effort` yet.
   // ponytail: add 'ultra' to Effort when a run actually needs it.
   'openai-codex/gpt-6-astra': {
     slug: 'openai-codex/gpt-6-astra',
@@ -148,6 +164,20 @@ export const MODELS: Record<string, ModelSpec> = {
     backendModel: 'gpt-6-astra',
     efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
     brief: 'OpenAI gpt-6-astra via codex CLI — newest frontier tier; own ChatGPT login',
+  },
+  'openai-codex/gpt-6-sol': {
+    slug: 'openai-codex/gpt-6-sol',
+    backend: 'codex',
+    backendModel: 'gpt-6-sol',
+    efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
+    brief: 'OpenAI gpt-6-sol via codex CLI — gpt-6 agentic coding; own ChatGPT login',
+  },
+  'openai-codex/gpt-6-luna': {
+    slug: 'openai-codex/gpt-6-luna',
+    backend: 'codex',
+    backendModel: 'gpt-6-luna',
+    efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
+    brief: 'OpenAI gpt-6-luna via codex CLI — gpt-6 fast and affordable; own ChatGPT login',
   },
   'openai-codex/gpt-5.6-sol': {
     slug: 'openai-codex/gpt-5.6-sol',
@@ -184,13 +214,6 @@ export const MODELS: Record<string, ModelSpec> = {
     efforts: ['low', 'medium', 'high', 'xhigh'],
     brief: 'OpenAI gpt-5.5 via codex CLI — previous-generation general model; own ChatGPT login',
   },
-  'openai-codex/gpt-5.4-mini': {
-    slug: 'openai-codex/gpt-5.4-mini',
-    backend: 'codex',
-    backendModel: 'gpt-5.4-mini',
-    efforts: ['low', 'medium', 'high', 'xhigh'],
-    brief: 'OpenAI gpt-5.4-mini via codex CLI — small, cheap; own ChatGPT login',
-  },
   'anthropic-claude/fable-5.1': {
     slug: 'anthropic-claude/fable-5.1',
     backend: 'claude',
@@ -199,6 +222,15 @@ export const MODELS: Record<string, ModelSpec> = {
     defaultEffort: 'high',
     brief:
       'Claude Fable 5.1 via claude CLI — hardest, longest-running work; bills the claude CLI subscription',
+  },
+  'anthropic-claude/opus-5.5': {
+    slug: 'anthropic-claude/opus-5.5',
+    backend: 'claude',
+    backendModel: 'claude-opus-5-5[1m]',
+    efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
+    defaultEffort: 'high',
+    brief:
+      'Claude Opus 5.5, 1M context via claude CLI — claude CLI default; bills the claude CLI subscription',
   },
   'anthropic-claude/opus-5': {
     slug: 'anthropic-claude/opus-5',
