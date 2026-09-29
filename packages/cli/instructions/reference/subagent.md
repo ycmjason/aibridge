@@ -24,6 +24,10 @@ models` lists each model's efforts). The model list is in [SKILL.md](../SKILL.md
 
 **Tools are ON by default** — the delegate reads/writes files and runs shell.
 
+**Your prompt reaches the CLI verbatim.** aibridge adds no instructions of its
+own; it only maps `--model`, effort, `--tools` and `--timeout` onto the
+backend's flags, and returns the CLI's final answer.
+
 ## Writing the prompt
 
 Write for a capable model with no conversation context:
