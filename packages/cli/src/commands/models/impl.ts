@@ -26,7 +26,6 @@ export default async function modelsImpl(
         image: imageFormatFor({ spec, effort: undefined }) ?? null,
         imageAlpha: imageAlphaFor({ spec, effort: undefined }) ?? null,
         brief: spec.brief,
-        roles: spec.roles ?? null,
         installed: probe?.ok === true,
         version: probe?.ok ? probe.version : null,
       };

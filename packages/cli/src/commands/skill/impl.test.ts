@@ -57,56 +57,41 @@ describe('skill command', () => {
 
     expect(output).toContain(`npx -y @aibridge/cli@${PACKAGE_VERSION}`);
     expect(output).toContain('# aibridge');
-    expect(output).toContain('| `xai-grok/grok-4.6` |');
-    expect(output).not.toContain('# plan —');
+    expect(output).toContain('- `xai-grok/grok-4.6` — ');
+    expect(output).not.toContain('# subagent —');
     expect(output).not.toMatch(/\{\{|<!-- (if|endif)/);
     expect(ctx.process.exitCode).toBeUndefined();
   });
 
   it('appends command-specific instructions', async () => {
     const ctx = fakeCtx();
-    await skillImpl.call(ctx, 'plan', ALL);
+    await skillImpl.call(ctx, 'subagent', ALL);
     const output = ctx.stdout.join('');
 
     expect(output).toContain('# aibridge');
-    expect(output).toContain('# plan — write a detailed implementation plan file');
-    expect(output).toContain('e.g. xai-grok/grok-4.6');
+    expect(output).toContain('# subagent — delegate a task to another model');
   });
 
   it('omits absent backends from every instruction topic', () => {
-    for (const topic of [
-      'plan',
-      'implement',
-      'review',
-      'subagent',
-      'image-gen',
-      'image-cutout',
-    ] as const) {
+    for (const topic of ['subagent', 'image-gen', 'image-cutout'] as const) {
       const output = renderSkill(topic, CODEX_AGY);
       expect(output, topic).not.toContain('xai-grok');
       expect(output, topic).not.toContain('anthropic-claude/');
       expect(output, topic).not.toMatch(/\{\{|<!-- (if|endif)/);
     }
-    const plan = renderSkill('plan', CODEX_AGY);
-    expect(plan).toContain('Not installed (their models are omitted below):');
-    expect(plan).toContain('grok: "grok" not found on PATH. Install the Grok CLI.');
-    expect(plan).toContain('e.g. openai-codex/gpt-5.6-sol');
-    expect(plan).toContain('implement --model google-antigravity/gemini-3.7-flash <file>');
-    expect(plan).not.toContain('One grok stage at a time');
+    const router = renderSkill(undefined, CODEX_AGY);
+    expect(router).toContain('Not installed (their models are omitted below):');
+    expect(router).toContain('grok: "grok" not found on PATH. Install the Grok CLI.');
+    expect(router).toContain('- `openai-codex/gpt-5.6-sol` — ');
+    expect(router).not.toContain('One grok run at a time');
   });
 
-  it('picks each pipeline stage on a different backend when it can', () => {
-    const roles = '{{plan}} {{implement}} {{review}}';
-    expect(applyTemplate(roles, ALL)).toBe(
-      'xai-grok/grok-4.6 google-antigravity/gemini-3.7-flash xai-grok/grok-4.6',
-    );
-    expect(applyTemplate(roles, CODEX_AGY)).toBe(
-      'openai-codex/gpt-5.6-sol google-antigravity/gemini-3.7-flash openai-codex/gpt-5.6-sol',
-    );
-    const codexOnly: Installed = new Map([['codex', { ok: true, version: '1' }]]);
-    expect(applyTemplate(roles, codexOnly)).toBe(
-      'openai-codex/gpt-5.6-sol openai-codex/gpt-5.6-sol openai-codex/gpt-5.6-sol',
-    );
+  it('lists image models one row per installed image backend', () => {
+    const table = applyTemplate('{{image-models}}', CODEX_AGY);
+    expect(table.split('\n')).toHaveLength(4);
+    expect(table).toContain('`google-antigravity/gemini-3.7-flash`');
+    expect(table).toContain('| Codex CLI | PNG |');
+    expect(applyTemplate('{{image}}', CODEX_AGY)).toMatch(/^google-antigravity\//);
   });
 
   it('applyTemplate keeps a block when any listed backend is installed', () => {
@@ -117,7 +102,7 @@ describe('skill command', () => {
 
   it('renders the router with install hints when no backend is installed', async () => {
     const ctx = fakeCtx();
-    await skillImpl.call(ctx, 'plan', NONE);
+    await skillImpl.call(ctx, 'image-gen', NONE);
     const output = ctx.stdout.join('');
 
     expect(ctx.process.exitCode).toBeUndefined();
@@ -126,7 +111,7 @@ describe('skill command', () => {
     expect(output).toContain('Install and sign in to at least one of these before delegating:');
     expect(output).toContain('codex: "codex" not found on PATH.');
     expect(output).toContain('No models are available until a backend CLI');
-    expect(output).toContain('e.g. <slug>');
+    expect(output).toContain('--model <slug> \\');
     expect(output).not.toMatch(/\{\{|<!-- (if|endif)/);
   });
 
