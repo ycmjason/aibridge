@@ -110,11 +110,14 @@ Backend-specific behavior belongs in [`docs/backends.md`](docs/backends.md) and
 must be enforced by drivers or tests where possible. Read that document before
 changing a driver, quota handling, output capture, or image generation.
 
-## Git — commit & push anytime
+## Git — changes land through pull requests
 
 This repo's remote is **`git@github.com:ycmjason/aibridge.git`** (branch `main`).
 
-Commit completed, meaningful changes without asking. Push only after the
-relevant checks pass. Keep commits small and messages clear.
+Never push to `main` directly. Work on a branch, commit completed, meaningful
+changes without asking, and open a PR with `gh pr create` once the relevant
+checks pass. Merge only when Jason approves it. A version bump on `main` is
+the publish trigger, so it ships when the PR merges. Keep commits small and
+messages clear.
 
 - **The global skill install auto-refreshes on commit.** A `post-commit` hook re-runs `pnpm skill:install` (backgrounded, logged to `/tmp/aibridge-skill-install.log`) whenever a commit touches `skills/aibridge/`; run it manually to sync uncommitted edits. Hooks are wired on `pnpm install` via the `prepare` script: a `pre-commit` hook runs `biome check` on staged files, and a `pre-push` hook runs `pnpm typecheck`.
