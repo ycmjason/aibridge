@@ -52,9 +52,9 @@ aibridge image-cutout --model <slug> --out <file.png> <image> ["<what to keep>"]
 For a generated image with a transparent background on a JPEG model:
 
 ```bash
-aibridge image-gen --model {{image}} --out .aibridge/draft.jpg \
+aibridge image-gen --model {{image-jpg}} --out .aibridge/draft.jpg \
   "<prompt>. Flat solid pure white (#ffffff) background, no shadow."
-aibridge image-cutout --model {{image}} --out public/icons/thing.png .aibridge/draft.jpg
+aibridge image-cutout --model {{image-jpg}} --out public/icons/thing.png .aibridge/draft.jpg
 ```
 
 Ask for no cast or contact shadow in the first prompt: a shadow is part of the

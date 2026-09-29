@@ -85,7 +85,7 @@ describe('installed', () => {
     const c = ctx();
     await requireBackend(
       c,
-      'plan',
+      'subagent',
       'grok',
       {},
       {

@@ -19,7 +19,7 @@
   skill` probes every backend CLI once (the drivers' `probe()`), then renders
   `packages/cli/instructions/` as a template: `{{models}}` lists the installed
   models with their `brief`s, `{{image-models}}` has one row per installed image
-  backend, `{{image}}` resolves to the first installed image model, and
+  backend, `{{image-jpg}}` resolves to the first installed JPEG image model (the examples write `.jpg`), and
   `<!-- if:grok -->` blocks drop with their backend. `models` and `quota` collapse absent backends to an install hint,
   and every delegating command exits 2 with the installed model list before any
   quota call when its `--model` names a missing CLI. A machine with no CLI

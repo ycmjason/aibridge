@@ -91,7 +91,9 @@ describe('skill command', () => {
     expect(table.split('\n')).toHaveLength(4);
     expect(table).toContain('`google-antigravity/gemini-3.7-flash`');
     expect(table).toContain('| Codex CLI | PNG |');
-    expect(applyTemplate('{{image}}', CODEX_AGY)).toMatch(/^google-antigravity\//);
+    expect(applyTemplate('{{image-jpg}}', CODEX_AGY)).toMatch(/^google-antigravity\//);
+    const codexOnly: Installed = new Map([['codex', { ok: true, version: '1' }]]);
+    expect(applyTemplate('{{image-jpg}}', codexOnly)).toBe('<slug>');
   });
 
   it('applyTemplate keeps a block when any listed backend is installed', () => {

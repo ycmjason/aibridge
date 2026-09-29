@@ -70,8 +70,9 @@ if you want that answer in a file.
 
 {{models}}
 
-If the user has said which models to use, follow that. Otherwise pick from the
-descriptions above; `aibridge models` lists each model's efforts.
+If the user has said which models to use, follow that. Otherwise choose from
+the descriptions above, and ask if none fits; `aibridge models` lists each
+model's efforts.
 
 <!-- if:grok -->
 - **One grok run at a time.** ~30 req/min, ~1k msgs/day, and every grok model

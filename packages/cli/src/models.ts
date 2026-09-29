@@ -68,7 +68,7 @@ export const MODELS: Record<string, ModelSpec> = {
     backendModel: 'grok-4.5',
     efforts: ['low', 'medium', 'high'],
     brief:
-      'xAI Grok 4.5 via grok CLI — strongest at executing detailed instructions; own xAI login; ~30 req/min, ~1k msgs/day, single-flight',
+      'xAI Grok 4.5 via grok CLI — follows detailed instructions literally; own xAI login; ~30 req/min, ~1k msgs/day, single-flight',
   },
   'google-antigravity/gemini-3.8-flash': {
     slug: 'google-antigravity/gemini-3.8-flash',

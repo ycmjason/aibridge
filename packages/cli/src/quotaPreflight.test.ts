@@ -230,7 +230,7 @@ test('evaluateGrokPreflight: healthy (17% used) returns ok:true', () => {
 
 test('renderPreflightRefusal: auth kind uses unauthenticated wording', () => {
   const msg = renderPreflightRefusal(
-    'plan',
+    'subagent',
     {
       kind: 'auth',
       message: 'grok session expired (401) — run `grok login`, then retry',
@@ -240,7 +240,7 @@ test('renderPreflightRefusal: auth kind uses unauthenticated wording', () => {
   );
   assert.strictEqual(
     msg,
-    'aibridge plan: refusing — grok session expired (401) — run `grok login`, then retry. Running with --no-preflight would only fail unauthenticated later. Or use a different --model.',
+    'aibridge subagent: refusing — grok session expired (401) — run `grok login`, then retry. Running with --no-preflight would only fail unauthenticated later. Or use a different --model.',
   );
 });
 

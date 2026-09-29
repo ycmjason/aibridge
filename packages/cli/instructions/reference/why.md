@@ -10,7 +10,7 @@ capacity and no independent perspective. That is why it is a last resort rather
 than merely a choice.
 
 **Slugs pin exact model versions.** A vendor alias like `opus` moves under you
-when a release lands, silently changing what a documented pipeline does.
+when a release lands, silently changing what a documented command does.
 
 **Some commands write files, some print.** `image-gen` and `image-cutout`
 produce artifacts worth keeping, so they take `--out` and keep stdout to a

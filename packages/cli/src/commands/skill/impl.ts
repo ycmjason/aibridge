@@ -89,7 +89,10 @@ const IF_BLOCK = /<!-- if:([\w,]+) -->\n?([\s\S]*?)<!-- endif -->\n?/g;
 /** Resolves placeholders and `<!-- if:backend -->` blocks against what is installed. */
 export function applyTemplate(text: string, installed: Installed): string {
   const present = installedBackends(installed);
-  const image = listModels({ installed: present, imageOnly: true })[0]?.slug ?? '<slug>';
+  // Examples write `.jpg`, so they must name a model that renders JPEG.
+  const jpgModel = listModels({ installed: present, imageOnly: true }).find(
+    spec => imageFormatFor({ spec, effort: undefined }) === 'jpg',
+  );
   return text
     .replace(IF_BLOCK, (_m, backends: string, body: string) =>
       backends.split(',').some(b => present.has(b as Backend)) ? body : '',
@@ -97,7 +100,7 @@ export function applyTemplate(text: string, installed: Installed): string {
     .replaceAll('{{installed}}', installedBlock(installed))
     .replaceAll('{{models}}', modelList(present))
     .replaceAll('{{image-models}}', imageModelTable(present))
-    .replaceAll('{{image}}', image);
+    .replaceAll('{{image-jpg}}', jpgModel?.slug ?? '<slug>');
 }
 
 export function renderSkill(topic: SkillTopic | undefined, installed: Installed): string {
