@@ -21,11 +21,6 @@ export const BACKEND_NAMES: Record<Backend, string> = {
   claude: 'claude (Claude Code CLI)',
 };
 
-/** The verbs a model can be recommended for. `subagent` takes any model. */
-export type Role = 'plan' | 'implement' | 'review' | 'image-gen';
-export type RoleLevel = 'recommended' | 'supported';
-export type Roles = Partial<Record<Role, { readonly level: RoleLevel; readonly note?: string }>>;
-
 export interface ModelSpec {
   readonly slug: string; // canonical, effort-less
   readonly backend: Backend;
@@ -33,11 +28,6 @@ export interface ModelSpec {
   readonly efforts: readonly Effort[] | null;
   readonly defaultEffort?: Effort; // only when backend REQUIRES one (agy gemini)
   readonly brief: string;
-  /**
-   * Curated starting points, not benchmarks. Models without roles are still
-   * usable everywhere; they just do not appear in the instructions' model table.
-   */
-  readonly roles?: Roles;
 }
 
 export interface ResolvedModel {
@@ -64,31 +54,21 @@ export const MODELS: Record<string, ModelSpec> = {
   },
   'xai-grok/grok-4.6': {
     slug: 'xai-grok/grok-4.6',
-    roles: {
-      plan: { level: 'recommended', note: 'small–mid, well-scoped' },
-      implement: { level: 'supported' },
-      review: { level: 'recommended' },
-      'image-gen': { level: 'supported' },
-    },
     backend: 'grok',
     backendModel: 'grok-4.6',
     efforts: ['low', 'medium', 'high'],
-    brief: 'xAI Grok 4.6 via grok CLI — own xAI login; ~30 req/min, ~1k msgs/day, single-flight',
+    brief:
+      'xAI Grok 4.6 via grok CLI — reasoning tier; own xAI login; ~30 req/min, ~1k msgs/day, single-flight',
   },
   // Both grok tiers stay registered: 4.6 and 4.5 differ in character, not just
   // recency, so this is two models of one class rather than a superseded pin.
   'xai-grok/grok-4.5': {
     slug: 'xai-grok/grok-4.5',
-    roles: {
-      plan: { level: 'supported' },
-      implement: { level: 'recommended', note: 'any fidelity' },
-      review: { level: 'supported' },
-      'image-gen': { level: 'supported' },
-    },
     backend: 'grok',
     backendModel: 'grok-4.5',
     efforts: ['low', 'medium', 'high'],
-    brief: 'xAI Grok 4.5 via grok CLI — own xAI login; ~30 req/min, ~1k msgs/day, single-flight',
+    brief:
+      'xAI Grok 4.5 via grok CLI — follows detailed instructions literally; own xAI login; ~30 req/min, ~1k msgs/day, single-flight',
   },
   'google-antigravity/gemini-3.8-flash': {
     slug: 'google-antigravity/gemini-3.8-flash',
@@ -101,12 +81,6 @@ export const MODELS: Record<string, ModelSpec> = {
   },
   'google-antigravity/gemini-3.7-flash': {
     slug: 'google-antigravity/gemini-3.7-flash',
-    roles: {
-      plan: { level: 'supported' },
-      implement: { level: 'recommended', note: 'needs high–xhigh detail' },
-      review: { level: 'supported' },
-      'image-gen': { level: 'supported' },
-    },
     backend: 'agy',
     backendModel: 'gemini-3.7-flash',
     efforts: ['low', 'medium', 'high'],
@@ -181,12 +155,6 @@ export const MODELS: Record<string, ModelSpec> = {
   },
   'openai-codex/gpt-5.6-sol': {
     slug: 'openai-codex/gpt-5.6-sol',
-    roles: {
-      plan: { level: 'recommended', note: 'mid–big, ambiguous' },
-      implement: { level: 'supported' },
-      review: { level: 'recommended' },
-      'image-gen': { level: 'recommended' },
-    },
     backend: 'codex',
     backendModel: 'gpt-5.6-sol',
     efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
@@ -234,11 +202,6 @@ export const MODELS: Record<string, ModelSpec> = {
   },
   'anthropic-claude/opus-5': {
     slug: 'anthropic-claude/opus-5',
-    roles: {
-      plan: { level: 'recommended', note: 'mid–big, ambiguous' },
-      implement: { level: 'supported' },
-      review: { level: 'recommended' },
-    },
     backend: 'claude',
     backendModel: 'claude-opus-5[1m]',
     efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
@@ -248,11 +211,6 @@ export const MODELS: Record<string, ModelSpec> = {
   },
   'anthropic-claude/sonnet-5': {
     slug: 'anthropic-claude/sonnet-5',
-    roles: {
-      plan: { level: 'supported' },
-      implement: { level: 'recommended', note: 'needs high detail' },
-      review: { level: 'supported' },
-    },
     backend: 'claude',
     backendModel: 'claude-sonnet-5',
     efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
@@ -351,18 +309,6 @@ export function listModels(opts: ListOptions = {}): ModelSpec[] {
     spec =>
       (!opts.imageOnly || IMAGE_GEN_FORMATS.has(spec.backend)) &&
       (!opts.installed || opts.installed.has(spec.backend)),
-  );
-}
-
-/**
- * The model to name in instructions for a role: first installed `recommended`,
- * else first installed `supported`, else undefined.
- */
-export function modelFor(role: Role, installed: ReadonlySet<Backend>): ModelSpec | undefined {
-  const models = listModels({ installed, imageOnly: role === 'image-gen' });
-  return (
-    models.find(s => s.roles?.[role]?.level === 'recommended') ??
-    models.find(s => s.roles?.[role]?.level === 'supported')
   );
 }
 

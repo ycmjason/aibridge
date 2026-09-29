@@ -5,7 +5,6 @@ import {
   formatUnknownModelError,
   imageAlphaFor,
   listModelHelpLines,
-  modelFor,
   resolveModel,
   supportsImageGen,
 } from './models.ts';
@@ -132,14 +131,6 @@ describe('models registry', () => {
     expect(lines).toContain('installed backends: agy, codex');
     expect(formatUnknownModelError('nope', installed)).not.toContain('xai-grok');
     expect(listModelHelpLines().join('\n')).toContain('run `aibridge models`');
-  });
-
-  it('modelFor picks the first installed recommended model, then supported, then nothing', () => {
-    expect(modelFor('review', new Set(['grok', 'codex']))?.slug).toBe('xai-grok/grok-4.6');
-    expect(modelFor('review', new Set(['codex']))?.slug).toBe('openai-codex/gpt-5.6-sol');
-    expect(modelFor('review', new Set(['agy']))?.slug).toBe('google-antigravity/gemini-3.7-flash');
-    expect(modelFor('image-gen', new Set(['claude']))).toBeUndefined();
-    expect(modelFor('plan', new Set())).toBeUndefined();
   });
 
   it('formats image-gen model errors with capable models only', () => {

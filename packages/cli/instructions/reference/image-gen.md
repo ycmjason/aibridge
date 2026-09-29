@@ -46,9 +46,9 @@ background is refused before the render is paid for.
 ### Reference images
 
 ```bash
-aibridge image-gen --model {{image}} \
+aibridge image-gen --model {{image-jpg}} \
   "the same woman, now in a denim shirt in a bright kitchen, waist-up" \
-  --out avatar2.png --image avatar.png --aspect-ratio 9:16
+  --out avatar2.jpg --image avatar.png --aspect-ratio 9:16
 ```
 
 With a reference, write the prompt as a **diff**: say only what changes. The

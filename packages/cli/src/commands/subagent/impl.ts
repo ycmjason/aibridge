@@ -53,7 +53,7 @@ export default async function subagent(
     if (verdict.warning) this.process.stderr.write(`aibridge subagent: ${verdict.warning}\n`);
   }
 
-  const timeoutSec = flags.timeout ?? 600;
+  const timeoutSec = flags.timeout ?? 1800;
   const workDir = this.process.cwd();
   const promptSnippet = prompt.replace(/\r?\n/g, ' ').slice(0, 80);
   const run = beginDelegatedRun(

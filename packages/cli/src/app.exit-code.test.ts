@@ -43,25 +43,25 @@ describe('stricli exit-code lock & routing', () => {
 
   it('unknown flag → 2', async () => {
     const ctx = fakeCtx();
-    await runCli(ctx, ['plan', '--not-a-flag', 'x']);
+    await runCli(ctx, ['subagent', '--not-a-flag', 'x']);
     expect(ctx.process.exitCode).toBe(2);
   });
 
   it('missing required arg → 2', async () => {
     const ctx = fakeCtx();
-    await runCli(ctx, ['plan']);
+    await runCli(ctx, ['subagent']);
     expect(ctx.process.exitCode).toBe(2);
   });
 
   it('empty prompt → 2', async () => {
     const ctx = fakeCtx();
-    await runCli(ctx, ['plan', '']);
+    await runCli(ctx, ['subagent', '--model', 'xai-grok/grok-4.6', '']);
     expect(ctx.process.exitCode).toBe(2);
   });
 
-  it('review with stray positional → 2', async () => {
+  it('quota with stray positional → 2', async () => {
     const ctx = fakeCtx();
-    await runCli(ctx, ['review', 'stray']);
+    await runCli(ctx, ['quota', 'stray']);
     expect(ctx.process.exitCode).toBe(2);
   });
 
@@ -94,13 +94,12 @@ describe('stricli exit-code lock & routing', () => {
     await runCli(ctx, ['--help']);
     const output = ctx._stdout.join('');
     for (const cmd of [
-      'plan',
-      'implement',
-      'review',
       'subagent',
       'image-gen',
+      'image-cutout',
       'runs',
       'quota',
+      'models',
       'skill',
     ]) {
       expect(output).toContain(cmd);

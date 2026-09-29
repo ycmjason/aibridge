@@ -3,7 +3,7 @@
 
   # aibridge
 
-  **Let your coding agent use the other AI CLIs on your machine.** Plan, implement, review, red-team, and generate images with Grok, Gemini, Codex, and Claude. No API keys.
+  **Let your coding agent use the other AI CLIs on your machine.** Hand off tasks, get second opinions, and generate images with Grok, Gemini, Codex, and Claude. No API keys.
 
   [![skills.sh](https://skills.sh/b/ycmjason/aibridge)](https://skills.sh/ycmjason/aibridge)
   [![npm](https://img.shields.io/npm/v/%40aibridge%2Fcli)](https://www.npmjs.com/package/@aibridge/cli)
@@ -17,8 +17,8 @@
 
 Your coding agent uses one model. Your machine may already have others available
 through `grok`, `agy` (Antigravity), `codex`, or `claude`. **aibridge** lets your
-agent use those models as planners, implementers, reviewers, one-shot delegates,
-and image generators. Each model runs through its existing CLI login.
+agent hand tasks to those models and generate images with them. Each model runs
+through its existing CLI login.
 
 ## Install
 
@@ -30,7 +30,7 @@ npx skills add ycmjason/aibridge
 
 The installed skill is a small evergreen loader. It asks the latest CLI package
 for canonical instructions, then pins that exact version for the rest of the
-session. Routing guidance and executable behavior therefore update together.
+session. Instructions and executable behavior therefore update together.
 Ask your agent to "use aibridge", or run a command directly:
 
 ```bash
@@ -43,9 +43,6 @@ npx -y @aibridge/cli subagent --model xai-grok/grok-4.6 "summarize the architect
 
 | Command | Use when |
 |---|---|
-| `aibridge plan --model xai-grok/grok-4.6 --out plan.md "<task>"` | Study the repo and write a detailed plan file |
-| `aibridge implement --model google-antigravity/gemini-3.7-flash <plan.md>` | Execute an approved plan and run the project's checks |
-| `aibridge review --model xai-grok/grok-4.6 --out review.md [--plan <plan.md>] [--base <ref>]` | Review a diff or, on a clean tree, a plan |
 | `aibridge subagent --model xai-grok/grok-4.6 "<task>"` | Delegate a self-contained task or request a second opinion |
 | `aibridge image-gen --model openai-codex/gpt-5.6-sol --out out.png "<prompt>"` | Generate and verify a raster image |
 | `aibridge image-cutout --model google-antigravity/gemini-3.7-flash --out out.png in.jpg ["<what to keep>"]` | Cut the background out into a PNG with real alpha |
@@ -54,25 +51,11 @@ npx -y @aibridge/cli subagent --model xai-grok/grok-4.6 "summarize the architect
 | `aibridge runs` | Inspect or watch run logs in `~/.aibridge/runs` |
 | `aibridge skill [topic]` | Print the canonical agent instructions bundled with this CLI version |
 
-Use `plan`, `implement`, and `review` as one controlled workflow:
-
-```
-aibridge plan --model xai-grok/grok-4.6 --out plan.md "add rate limiting to the API"   # delegate writes plan.md
-# → your agent reads, edits, approves the plan
-aibridge implement --model google-antigravity/gemini-3.7-flash plan.md                 # another model executes it, runs your gates
-aibridge review --model xai-grok/grok-4.6 --out review.md --plan plan.md               # a third model cross-checks the diff
-```
-
-Only the plan path passes between stages, which keeps the plan out of the
-orchestrator's conversation context.
-
 ## How it works
 
 - **One package owns instructions and execution.** The installed skill only
-  bootstraps the latest package. That package supplies routing guidance, starts
+  bootstraps the latest package. That package supplies the instructions, starts
   the backend, validates known failure modes, and logs the run.
-- **Review stays cross-model.** The recommended workflow uses Grok to plan and
-  review, and Gemini to implement.
 - **Existing logins, no API keys.** Each backend uses its CLI login and quota.
 - **Every model has a canonical slug:**
   `<vendor>-<cli>/<model>[-<effort>]`, such as `xai-grok/grok-4.6` or
@@ -81,31 +64,10 @@ orchestrator's conversation context.
 
 ## Tell your agent when to reach for it
 
-aibridge does not decide when to delegate. Put a routing rule in the instructions
-file your agent reads (`AGENTS.md`, `CLAUDE.md`, `.cursorrules`, and so on):
-
-```markdown
-## Delegation gate — decide before you implement
-
-The moment a task becomes implementation you could fully specify, say the call out
-loud — **solo** or **aibridge** — plus one line of why. Delegating is the default.
-Stay solo only when the edit is smaller than the spec would be, or the work needs
-live judgment, your own session's tools, or tight back-and-forth. Never default to
-solo silently.
-
-Route by size and risk:
-
-- tiny → solo
-- clearly specified and self-contained → `aibridge subagent`
-- large or risky → `aibridge plan` → read and approve the plan file →
-  `aibridge implement` → `aibridge review`
-
-Delegated work is yours to verify: re-run the real gates before trusting a diff.
-Prefer a reviewer from a different model family than whoever implemented.
-```
-
-Adjust the models and thresholds for your quotas. Make the routing decision before
-implementation starts.
+aibridge does not decide when to delegate, which model to use, or how your work
+is staged. If you want your agent to reach for it on its own, say when and with
+which models in the instructions file your agent reads (`AGENTS.md`,
+`CLAUDE.md`, `.cursorrules`, and so on).
 
 ## Requirements
 

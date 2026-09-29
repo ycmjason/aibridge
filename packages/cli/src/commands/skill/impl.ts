@@ -6,20 +6,10 @@ import {
   installedBackends,
   missingLines,
 } from '../../installed.ts';
-import {
-  BACKENDS,
-  type Backend,
-  imageFormatFor,
-  listModels,
-  modelFor,
-  type Role,
-} from '../../models.ts';
+import { BACKENDS, type Backend, imageFormatFor, listModels } from '../../models.ts';
 import { PACKAGE_VERSION } from '../../package.ts';
 
 const TOPICS = {
-  plan: 'reference/plan.md',
-  implement: 'reference/implement.md',
-  review: 'reference/review.md',
   subagent: 'reference/subagent.md',
   'image-gen': 'reference/image-gen.md',
   'image-cutout': 'reference/image-cutout.md',
@@ -27,8 +17,6 @@ const TOPICS = {
 } as const;
 
 export type SkillTopic = keyof typeof TOPICS;
-
-const ROLES: readonly Role[] = ['plan', 'implement', 'review', 'image-gen'];
 
 const RENDERS_VIA: Record<Backend, string> = {
   codex: 'Codex CLI',
@@ -73,49 +61,25 @@ function installedBlock(installed: Installed): string {
   return lines.join('\n');
 }
 
-function modelTable(installed: ReadonlySet<Backend>): string {
+function modelList(installed: ReadonlySet<Backend>): string {
   const models = listModels({ installed });
   if (models.length === 0) {
     return 'No models are available until a backend CLI above is installed and signed in.';
   }
-  const curated = models.filter(s => s.roles);
-  const rows = curated.map(spec => {
-    const cells = ROLES.map(role => {
-      const r = spec.roles?.[role];
-      if (role === 'image-gen') {
-        const fmt = imageFormatFor({ spec, effort: undefined });
-        if (!fmt) return '✗';
-        return `${r?.level === 'recommended' ? '✅' : '○'} ${FORMAT_LABEL[fmt]}`;
-      }
-      if (!r) return '✗';
-      return r.level === 'recommended' ? `✅${r.note ? ` ${r.note}` : ''}` : '○';
-    });
-    return `| \`${spec.slug}\` | ${cells.join(' | ')} |`;
-  });
-  const table = [
-    '| slug | plan | implement | review | image-gen |',
-    '|---|---|---|---|---|',
-    ...rows,
-  ];
-  const others = models.filter(s => !s.roles).map(s => `\`${s.slug}\``);
-  const out = [table.join('\n')];
-  if (others.length > 0) {
-    out.push(
-      `Also registered: ${others.join(', ')}. Run \`aibridge models [--json]\` for exact per-model facts.`,
-    );
-  }
-  return out.join('\n\n');
+  return models.map(s => `- \`${s.slug}\` — ${s.brief}`).join('\n');
 }
 
+/** One row per installed image backend: format and render path are per backend, not per model. */
 function imageModelTable(installed: ReadonlySet<Backend>): string {
-  const rows = listModels({ installed, imageOnly: true })
-    .filter(s => s.roles?.['image-gen'])
-    .map(s => {
-      const rec = s.roles?.['image-gen']?.level === 'recommended' ? ' (recommended)' : '';
-      const fmt = imageFormatFor({ spec: s, effort: undefined });
-      return `| \`${s.slug}\`${rec} | ${RENDERS_VIA[s.backend]} | ${fmt ? FORMAT_LABEL[fmt] : '—'} |`;
-    });
-  return ['| slug | renders via | format |', '|---|---|---|', ...rows].join('\n');
+  const rows = BACKENDS.filter(b => installed.has(b)).flatMap(backend => {
+    const models = listModels({ installed: new Set([backend]), imageOnly: true });
+    const first = models[0];
+    if (!first) return [];
+    const fmt = imageFormatFor({ spec: first, effort: undefined });
+    const slugs = models.map(s => `\`${s.slug}\``).join(', ');
+    return [`| ${slugs} | ${RENDERS_VIA[backend]} | ${fmt ? FORMAT_LABEL[fmt] : '—'} |`];
+  });
+  return ['| models | renders via | format |', '|---|---|---|', ...rows].join('\n');
 }
 
 const FORMAT_LABEL = { jpg: 'JPEG', png: 'PNG' } as const;
@@ -125,27 +89,18 @@ const IF_BLOCK = /<!-- if:([\w,]+) -->\n?([\s\S]*?)<!-- endif -->\n?/g;
 /** Resolves placeholders and `<!-- if:backend -->` blocks against what is installed. */
 export function applyTemplate(text: string, installed: Installed): string {
   const present = installedBackends(installed);
-  // Each stage prefers a backend the previous one did not use, so a full
-  // machine yields the documented grok plans / gemini implements / grok reviews
-  // pairing and the reviewer is cross-family from the implementer whenever it
-  // can be. With a single backend every role falls back to the same family.
-  const without = (b: Backend | undefined) => new Set([...present].filter(x => x !== b));
-  const planner = modelFor('plan', present);
-  const implementer =
-    modelFor('implement', without(planner?.backend)) ?? modelFor('implement', present);
-  const reviewer = modelFor('review', without(implementer?.backend)) ?? modelFor('review', present);
-  const slug = (m: { slug: string } | undefined) => m?.slug ?? '<slug>';
+  // Examples write `.jpg`, so they must name a model that renders JPEG.
+  const jpgModel = listModels({ installed: present, imageOnly: true }).find(
+    spec => imageFormatFor({ spec, effort: undefined }) === 'jpg',
+  );
   return text
     .replace(IF_BLOCK, (_m, backends: string, body: string) =>
       backends.split(',').some(b => present.has(b as Backend)) ? body : '',
     )
     .replaceAll('{{installed}}', installedBlock(installed))
-    .replaceAll('{{models}}', modelTable(present))
+    .replaceAll('{{models}}', modelList(present))
     .replaceAll('{{image-models}}', imageModelTable(present))
-    .replaceAll('{{plan}}', slug(planner))
-    .replaceAll('{{implement}}', slug(implementer))
-    .replaceAll('{{review}}', slug(reviewer))
-    .replaceAll('{{image}}', slug(modelFor('image-gen', present)));
+    .replaceAll('{{image-jpg}}', jpgModel?.slug ?? '<slug>');
 }
 
 export function renderSkill(topic: SkillTopic | undefined, installed: Installed): string {

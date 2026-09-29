@@ -4,35 +4,23 @@
 the same machine. It is a pnpm monorepo under `packages/*`. The CLI, process
 utilities, and backend drivers are published under `@aibridge/*`.
 
-## Delegation workflow
+## Delegation
 
 - Small edits may stay with the orchestrator.
 - Use `subagent` for a well-defined, self-contained task.
-- Use `plan` → read and approve → `implement` → `review` for sizeable or risky
-  implementation.
-- Keep the reviewer in a different model family from the implementer.
 
 The evergreen loader at [`skills/aibridge/SKILL.md`](skills/aibridge/SKILL.md)
-loads canonical routing and prompt guidance from the current CLI package. Do not
-duplicate model recommendations here. During repository development, run the
+loads canonical instructions from the current CLI package. Do not duplicate
+them here. During repository development, run the
 source CLI directly with `node packages/cli/src/cli.ts`; do not test through the
 published package.
 
 ## Working style: act as Jason's CTO
 
-The orchestrating agent owns architecture. For sizeable or risky implementation,
-it drives `plan` → read and approve → `implement` → `review`.
-
-- **Orchestrator:** define module boundaries, interfaces, data flow, and naming
-  before delegation. The plan is the contract. Resolve every structural
-  question before `implement`; use `review --plan` for large or risky designs.
-  Do not leave unresolved product or structural decisions to the implementer.
-- **Planner and reviewer:** expand the design against the repository and test
-  the resulting diff. Grok is recommended. The reviewer must use a different
-  model family from the implementer.
-- **Implementer:** execute a complete, self-contained plan. It may choose local
-  names, helper boundaries, and equivalent implementation mechanics. If it
-  needs product or structural direction, the plan is incomplete.
+The orchestrating agent owns architecture. Define module boundaries,
+interfaces, data flow, and naming before delegating, and never leave an
+unresolved product or structural decision to a delegate. If a delegate needs
+that direction, the brief was incomplete.
 
 Architecture debt belongs to the orchestrator. If a change ships with known
 debt, state it and propose the cleanup.
@@ -48,7 +36,7 @@ debt, state it and propose the cleanup.
 - **Root stays `private: true`. Version bump = release trigger** for the OIDC publish workflow on `main`.
 - **The installed skill is an evergreen prose-only loader.** Canonical skill
   instructions ship in `@aibridge/cli`; executable logic remains in the CLI.
-- **`--out` goes to the asset's real home if the project keeps it** (e.g. an icon straight into `public/icons/`); otherwise `<repo root>/.aibridge/` — the sketchpad for plans, reviews, and draft images, in the repo the user is already in. Keep it gitignored (this repo does) and never commit its contents.
+- **`--out` goes to the asset's real home if the project keeps it** (e.g. an icon straight into `public/icons/`); otherwise `<repo root>/.aibridge/` — the sketchpad for working files and draft images, in the repo the user is already in. Keep it gitignored (this repo does) and never commit its contents.
 
 ## Commands
 
@@ -59,14 +47,11 @@ debt, state it and propose the cleanup.
 | Run CLI (published) | `aibridge <args>` or `npx -y @aibridge/cli <args>` |
 | Help | `node packages/cli/src/cli.ts --help` |
 | Build all dists | `pnpm build` |
-| Plan | `pnpm aibridge plan --model xai-grok/grok-4.6 --out .aibridge/plan.md "<task prompt>"` |
-| Implement | `pnpm aibridge implement --model google-antigravity/gemini-3.7-flash .aibridge/plan.md` |
-| Review | `pnpm aibridge review --model xai-grok/grok-4.6 --out .aibridge/review.md [--plan .aibridge/plan.md] [--base <ref>]` |
 | Subagent | `pnpm aibridge subagent --model xai-grok/grok-4.6 "<prompt>"` |
 | Models | `pnpm aibridge models [--json]` — list every model in the registry (efforts, image format, pinned backend model id) |
 | Monitor runs | `pnpm aibridge runs [--watch]` (logs in `~/.aibridge/runs`) |
-| Quota (all backends) | `pnpm aibridge quota [--json]` — inspect quota before a multi-stage pipeline; individual commands preflight automatically |
-| Skill instructions | `pnpm aibridge skill [plan|implement|review|subagent|image-gen|image-cutout|why]` |
+| Quota (all backends) | `pnpm aibridge quota [--json]` — inspect quota before several runs; individual commands preflight automatically |
+| Skill instructions | `pnpm aibridge skill [subagent|image-gen|image-cutout|why]` |
 | Check / Type-check / Repo / Test | `pnpm check` · `pnpm typecheck` · `pnpm repojj:check` · `pnpm test` |
 
 ## Dev-flow
@@ -95,7 +80,7 @@ Command orchestration uses **`@stricli/core`** (`buildCommand` / `buildRouteMap`
 
 ### Adding a subagent model
 
-Edit `packages/cli/src/models.ts`: add an entry to `MODELS` mapping a canonical slug → `{ backend, backendModel, efforts, defaultEffort?, brief, roles? }`. Every command surface (`--model <slug>`) picks it up automatically. `roles` (recommended/supported per verb, with an optional qualifier) is what the skill's model table and the `{{plan}}`/`{{implement}}`/`{{review}}`/`{{image}}` placeholders in `packages/cli/instructions/` are generated from; models without `roles` are listed as "also registered". Instructions and every listing are filtered to backends whose CLI is on `PATH` (`packages/cli/src/installed.ts`); wrap backend-specific prose in `<!-- if:grok -->…<!-- endif -->`.
+Edit `packages/cli/src/models.ts`: add an entry to `MODELS` mapping a canonical slug → `{ backend, backendModel, efforts, defaultEffort?, brief }`. Every command surface (`--model <slug>`) picks it up automatically, and the skill lists it with its `brief` — so the brief states facts (login, quota shape, character), never which task to use it for. Instructions and every listing are filtered to backends whose CLI is on `PATH` (`packages/cli/src/installed.ts`); wrap backend-specific prose in `<!-- if:grok -->…<!-- endif -->`.
 
 ## Further reading — research & implementation notes
 
