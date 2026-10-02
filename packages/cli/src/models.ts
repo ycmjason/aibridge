@@ -156,8 +156,15 @@ export const MODELS: Record<string, ModelSpec> = {
     efforts: null,
     brief: 'GPT-OSS 120B (medium) via agy — own Antigravity login',
   },
-  // Codex serves `ultra` on gpt-6-astra/sol and gpt-5.6-sol/terra too; it is not in `Effort` yet.
+  // Codex serves `ultra` on gpt-6.1-sol, gpt-6-astra/sol and gpt-5.6-sol/terra too; it is not in `Effort` yet.
   // ponytail: add 'ultra' to Effort when a run actually needs it.
+  'openai-codex/gpt-6.1-sol': {
+    slug: 'openai-codex/gpt-6.1-sol',
+    backend: 'codex',
+    backendModel: 'gpt-6.1-sol',
+    efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
+    brief: 'OpenAI gpt-6.1-sol via codex CLI — latest workhorse for coding; own ChatGPT login',
+  },
   'openai-codex/gpt-6-astra': {
     slug: 'openai-codex/gpt-6-astra',
     backend: 'codex',
@@ -231,6 +238,14 @@ export const MODELS: Record<string, ModelSpec> = {
     defaultEffort: 'high',
     brief:
       'Claude Opus 5.5, 1M context via claude CLI — claude CLI default; bills the claude CLI subscription',
+  },
+  'anthropic-claude/sonnet-5.5': {
+    slug: 'anthropic-claude/sonnet-5.5',
+    backend: 'claude',
+    backendModel: 'claude-sonnet-5-5',
+    efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
+    brief:
+      'Claude Sonnet 5.5 via claude CLI — newest Sonnet tier; bills the claude CLI subscription',
   },
   'anthropic-claude/opus-5': {
     slug: 'anthropic-claude/opus-5',
