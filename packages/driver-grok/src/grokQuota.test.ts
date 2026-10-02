@@ -93,6 +93,21 @@ test('parseGrokBilling with proto3 zero omission (empty object for Cent)', () =>
   assert.strictEqual(snapshot.onDemandUsedCents, 0);
 });
 
+test('parseGrokBilling: credits payload with zero usage omits creditUsagePercent → 0%', () => {
+  const snapshot = parseGrokBilling({
+    config: {
+      currentPeriod: {
+        type: 'USAGE_PERIOD_TYPE_WEEKLY',
+        start: '2026-10-01T10:08:31.372022+00:00',
+        end: '2026-10-08T10:08:31.372022+00:00',
+      },
+      onDemandCap: { val: 0 },
+    },
+  });
+  assert.strictEqual(snapshot.usedPercent, 0);
+  assert.deepEqual(snapshot.products, []);
+});
+
 test('fetchGrokQuota: 401 then refresh once then 200 re-reads auth key', async () => {
   const authPath = join(tmpdir(), `aibridge-grok-auth-${Date.now()}-heal.json`);
   writeAuthFixture(authPath, 'old-key');
