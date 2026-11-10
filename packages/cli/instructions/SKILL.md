@@ -24,7 +24,7 @@ exits 2 with an install hint before anything runs.
 
 - Put permanent project assets in their final location, such as
   `--out public/icons/settings.png`.
-- Put plans, reviews, and drafts in `<repo root>/.aibridge/`. Outside a
+- Put drafts and working files in `<repo root>/.aibridge/`. Outside a
   repository, use `.aibridge/` under the current directory.
 - Name files by topic. Promote a draft to its real path once it is the keeper.
 - Once per session, before the first write: `git check-ignore -q .aibridge/`
@@ -36,9 +36,6 @@ exits 2 with an install hint before anything runs.
 
 | Command | Description |
 |---|---|
-| `plan` | Expand a task into a detailed implementation plan file |
-| `implement` | Implement a plan file in place and run the real checks |
-| `review` | Review a diff, commit range, or plan contract |
 | `subagent` | Delegate a self-contained task to another model |
 | `image-gen` | Generate a raster image with an image-capable model |
 | `image-cutout` | Cut the background out of an image into a PNG with real alpha |
@@ -46,10 +43,10 @@ exits 2 with an install hint before anything runs.
 | `quota` | Show backend quota and reset times |
 | `models` | List registered models and capabilities |
 
-`plan`, `review`, `image-gen` and `image-cutout` require `--out` and print only a verdict/path
-line. `subagent` and `implement` have no `--out`; they print the delegate's
-answer to stdout, and `subagent --out foo.md` exits 2 with
-`No flag registered for --out`. Redirect if you want that answer in a file.
+`image-gen` and `image-cutout` require `--out` and print a result line.
+`subagent` has no `--out`; it prints the delegate's answer to stdout, and
+`subagent --out foo.md` exits 2 with `No flag registered for --out`. Redirect
+if you want that answer in a file.
 
 ## Routing
 
@@ -60,47 +57,32 @@ answer to stdout, and `subagent --out foo.md` exits 2 with
    - an image, icon or graphic to make → `image-gen`;
    - a transparent PNG from an existing image, or from a JPEG model's render →
      `image-cutout`;
-   - a self-contained task, cross-model second opinion, or red-team → `subagent`;
-   - sizeable or risky implementation work → `plan` → *you read, edit and
-     approve the plan file* → `implement` → `review --plan <file>`. For
-     high-risk designs only, add a gate before any code is written:
-     `review --plan` on a clean tree.
+   - anything else to hand to another model → `subagent`.
 
    If genuinely ambiguous, show the table above and ask.
 3. **Unsure of the current flags?** Run `aibridge <command> --help`.
 
 ## Models
 
-`--model` is required on every command that spends a delegate (`plan`,
-`implement`, `review`, `subagent`, `image-gen`, `image-cutout`); nothing is
-chosen for you.
-`quota`, `models` and `runs` take no `--model`. Starting points, not
-benchmarks:
+`--model` is required on every command that spends a delegate (`subagent`,
+`image-gen`, `image-cutout`); nothing is chosen for you. `quota`, `models` and
+`runs` take no `--model`. Installed models:
 
 {{models}}
 
-✅ recommended · ○ supported · ✗ unsupported. For `plan`, the qualifier describes
-how much ambiguity the model can resolve. For `implement`, it describes how
-detailed the plan must be.
-**If the task fits no row, or the user has said how they want work routed, ask
-rather than guess.**
+If the user has said which models to use, follow that. Otherwise choose from
+the descriptions above, and ask if none fits; `aibridge models` lists each
+model's efforts.
 
 <!-- if:grok -->
-- **One grok stage at a time.** ~30 req/min, ~1k msgs/day, and both tiers share
-  that budget.
-- **`grok-4.6` plans and reviews, `grok-4.5` implements.** They are different
-  models, not old and new.
+- **One grok run at a time.** ~30 req/min, ~1k msgs/day, and every grok model
+  shares that budget.
 <!-- endif -->
-- **The reviewer must be a different model family from whoever implemented**,
-  including when that was you.
 - **A backend on the same provider as the agent you orchestrate from is a last
   resort**: it spends the pool you are already burning. Say so when you reach
   for it.
-<!-- if:codex -->
-- **Swap on quota**: `openai-codex/gpt-5.6-sol[-<effort>]` is the usual alternate.
-<!-- endif -->
 - Preflight runs before every delegation. `aibridge quota` is the manual check
-  before you pipeline several stages.
+  before you start several runs.
 
 ## Trust
 

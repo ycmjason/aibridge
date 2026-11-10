@@ -230,7 +230,7 @@ test('evaluateGrokPreflight: healthy (17% used) returns ok:true', () => {
 
 test('renderPreflightRefusal: auth kind uses unauthenticated wording', () => {
   const msg = renderPreflightRefusal(
-    'plan',
+    'subagent',
     {
       kind: 'auth',
       message: 'grok session expired (401) — run `grok login`, then retry',
@@ -240,7 +240,7 @@ test('renderPreflightRefusal: auth kind uses unauthenticated wording', () => {
   );
   assert.strictEqual(
     msg,
-    'aibridge plan: refusing — grok session expired (401) — run `grok login`, then retry. Running with --no-preflight would only fail unauthenticated later. Or use a different --model.',
+    'aibridge subagent: refusing — grok session expired (401) — run `grok login`, then retry. Running with --no-preflight would only fail unauthenticated later. Or use a different --model.',
   );
 });
 
@@ -273,11 +273,11 @@ test('renderPreflightRefusal: quota kind keeps override wording', () => {
   );
 });
 
-test('alternativeModels: curated models on other installed backends first, never the refused backend', () => {
+test('alternativeModels: models on other installed backends, never the refused backend', () => {
   const grok = resolveModel('xai-grok/grok-4.6');
   if (!grok) throw new Error('resolution failed');
   const alts = alternativeModels(grok, new Set(['grok', 'codex']));
-  assert.strictEqual(alts[0], 'openai-codex/gpt-5.6-sol');
+  assert.ok(alts.length > 0);
   assert.ok(alts.every(s => s.startsWith('openai-codex/')));
   assert.deepStrictEqual(alternativeModels(grok, new Set(['grok'])), []);
   assert.deepStrictEqual(alternativeModels(grok, new Set(['grok', 'claude']), true), []);

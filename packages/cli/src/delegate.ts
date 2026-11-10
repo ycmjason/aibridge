@@ -14,18 +14,13 @@ export interface DelegateOptions {
 
 export type DelegateOutcome = DelegationResult;
 
-const PREAMBLE =
-  'You are the sole executing agent for this task: do it yourself with your tools, now. ' +
-  'Never defer to, wait for, or claim to hand off to another agent or process — no one ' +
-  'else will act, and work not done in this run does not happen.\n\n';
-
 export async function delegate(
   opts: DelegateOptions,
   driver: AgentCliDriver = getDriver(opts.model.spec.backend),
 ): Promise<DelegateOutcome> {
-  const effectivePrompt = opts.tools ? PREAMBLE + opts.prompt : opts.prompt;
+  // The caller's prompt goes to the CLI verbatim; aibridge adds nothing.
   const result = await driver.run({
-    prompt: effectivePrompt,
+    prompt: opts.prompt,
     tools: opts.tools,
     timeoutSec: opts.timeoutSec,
     cwd: opts.cwd,

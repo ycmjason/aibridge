@@ -1,6 +1,3 @@
-import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
 import { isNotFound, probeVersion, type RunResult, runCaptured, stripAnsi } from '@aibridge/proc';
 import { agySupportsStreamJson, buildAgyPrintArgs } from './agy.ts';
 import { INSTALL_HINT } from './probe.ts';
@@ -300,160 +297,119 @@ export async function run(
   task: DelegationTask,
   exec: typeof runCaptured = runCaptured,
 ): Promise<DelegationResult> {
-  let tempDir: string | undefined;
-  let answerPath: string | undefined;
+  // agy ignores its spawn cwd and treats the first --add-dir as the workspace.
+  const addDirs = task.tools ? [task.cwd] : undefined;
 
-  let taskPrompt = task.prompt;
-  const addDirs: string[] = [];
-
-  if (task.tools) {
-    tempDir = mkdtempSync(join(tmpdir(), 'aibridge-agy-'));
-    answerPath = join(tempDir, 'answer.md');
-    taskPrompt =
-      `${task.prompt}\n\nYou are working in the repository rooted at ${task.cwd}; make ALL file ` +
-      `edits there (any relative paths in the task are relative to that root). When the task ` +
-      `is complete, write ONLY your final answer (the exact text you would otherwise print as ` +
-      `your response, with no narration of your steps) to the file ${answerPath} — nothing else ` +
-      `in that file. This is how your answer is captured; do not mention the file in the answer.`;
-    addDirs.push(task.cwd, tempDir);
-  }
+  let result: RunResult;
+  let useStreamJson = false;
+  let forwarder: LogForwarder | undefined;
 
   try {
-    let result: RunResult;
-    let useStreamJson = false;
-    let forwarder: LogForwarder | undefined;
+    const version = await probeVersion('agy', exec);
+    useStreamJson = agySupportsStreamJson(version);
+    if (!useStreamJson) {
+      task.onStderr?.(
+        `aibridge: agy version ${version ?? 'unavailable'} does not support stream-json (requires >= 1.2.3); using text compatibility mode.\n`,
+      );
+    }
 
-    try {
-      const version = await probeVersion('agy', exec);
-      useStreamJson = agySupportsStreamJson(version);
-      if (!useStreamJson) {
-        task.onStderr?.(
-          `aibridge: agy version ${version ?? 'unavailable'} does not support stream-json (requires >= 1.2.3); using text compatibility mode.\n`,
-        );
-      }
+    const args = [
+      ...buildAgyPrintArgs(task.prompt, {
+        model: task.backendModel,
+        printTimeoutSec: task.timeoutSec,
+        skipPermissions: task.tools,
+        addDirs,
+      }),
+      ...(useStreamJson ? MESSAGE_STREAM_ARGS : []),
+    ];
 
-      const args = [
-        ...buildAgyPrintArgs(taskPrompt, {
-          model: task.backendModel,
-          printTimeoutSec: task.timeoutSec,
-          skipPermissions: task.tools,
-          addDirs: addDirs.length > 0 ? addDirs : undefined,
-        }),
-        ...(useStreamJson ? MESSAGE_STREAM_ARGS : []),
-      ];
-
-      if (useStreamJson) {
-        forwarder = logForwarder(task.onStdout, task.onActivity);
-        result = await exec('agy', args, {
-          cwd: task.cwd,
-          timeoutMs: (task.timeoutSec + 20) * 1000,
-          captureStdout: false,
-          onStdout: forwarder.onChunk,
-          onStderr: task.onStderr,
-          onSpawn: task.onSpawn,
-        });
-      } else {
-        result = await exec('agy', args, {
-          cwd: task.cwd,
-          timeoutMs: (task.timeoutSec + 20) * 1000,
-          onStdout: chunk => {
-            task.onActivity?.();
-            task.onStdout?.(chunk);
-          },
-          onStderr: task.onStderr,
-          onSpawn: task.onSpawn,
-        });
-      }
-    } catch (err) {
-      if (isNotFound(err)) {
-        return {
-          ok: false,
-          kind: 'not-found',
-          message: `aibridge: "agy" not found on PATH. ${INSTALL_HINT}`,
-          exitCode: null,
-        };
-      }
+    if (useStreamJson) {
+      forwarder = logForwarder(task.onStdout, task.onActivity);
+      result = await exec('agy', args, {
+        cwd: task.cwd,
+        timeoutMs: (task.timeoutSec + 20) * 1000,
+        captureStdout: false,
+        onStdout: forwarder.onChunk,
+        onStderr: task.onStderr,
+        onSpawn: task.onSpawn,
+      });
+    } else {
+      result = await exec('agy', args, {
+        cwd: task.cwd,
+        timeoutMs: (task.timeoutSec + 20) * 1000,
+        onStdout: chunk => {
+          task.onActivity?.();
+          task.onStdout?.(chunk);
+        },
+        onStderr: task.onStderr,
+        onSpawn: task.onSpawn,
+      });
+    }
+  } catch (err) {
+    if (isNotFound(err)) {
       return {
         ok: false,
-        kind: 'spawn',
-        message: `aibridge: failed to run agy: ${(err as Error).message}`,
+        kind: 'not-found',
+        message: `aibridge: "agy" not found on PATH. ${INSTALL_HINT}`,
         exitCode: null,
       };
     }
-
-    forwarder?.flush();
-
-    if (result.timedOut) {
-      return {
-        ok: false,
-        kind: 'timeout',
-        message: `aibridge: agy timed out after ~${task.timeoutSec + 20}s; raise --timeout.`,
-        exitCode: result.code,
-      };
-    }
-
-    let fileAnswer = '';
-    if (answerPath && existsSync(answerPath)) {
-      fileAnswer = clean(readFileSync(answerPath, 'utf8'));
-      if (fileAnswer.length > 0) {
-        task.onStdout?.(`\n--- final answer ---\n${fileAnswer}\n`);
-      }
-    }
-
-    const snap = useStreamJson && forwarder ? forwarder.snapshot() : undefined;
-    let resolvedAnswer = '';
-    const sawProtocol = snap?.sawProtocol ?? false;
-    const rawTruncated = snap?.rawTruncated ?? false;
-    const resultError = snap?.resultError ?? null;
-    const resultStatus = snap?.resultStatus ?? null;
-
-    if (fileAnswer.length > 0) {
-      resolvedAnswer = fileAnswer;
-    } else {
-      const stderrLines = stripAnsi(result.stderr)
-        .split('\n')
-        .map(l => l.trim())
-        .filter(l => l.length > 0);
-      const lastStderrLine = stderrLines[stderrLines.length - 1] ?? '';
-      if (result.code === 0 && AGY_PRINT_TIMEOUT_RE.test(lastStderrLine)) {
-        return {
-          ok: false,
-          kind: 'timeout',
-          message: `aibridge: agy timed out after ~${task.timeoutSec}s; raise --timeout.`,
-          exitCode: result.code,
-        };
-      }
-
-      if (snap) {
-        resolvedAnswer = clean(
-          snap.text ?? (snap.sawProtocol || snap.rawTruncated ? '' : snap.rawFallback),
-        );
-      } else {
-        resolvedAnswer = clean(result.stdout);
-      }
-    }
-
-    if (useStreamJson && !sawProtocol && rawTruncated && resolvedAnswer.length === 0) {
-      return {
-        ok: false,
-        kind: 'no-answer',
-        message: `aibridge: agy returned more than ${RAW_FALLBACK_MAX_CHARS} characters without a recognized stream protocol; see the run log.`,
-        exitCode: result.code,
-      };
-    }
-
-    if (resultStatus === 'ERROR' || result.code !== 0 || resolvedAnswer.length === 0) {
-      const detail = clean(resultError || result.stderr) || `exit code ${result.code}`;
-      return {
-        ok: false,
-        kind: 'no-answer',
-        message: `aibridge: agy returned no usable answer (${detail}).`,
-        exitCode: result.code,
-      };
-    }
-
-    return { ok: true, response: resolvedAnswer, exitCode: result.code ?? 0 };
-  } finally {
-    if (tempDir) rmSync(tempDir, { recursive: true, force: true });
+    return {
+      ok: false,
+      kind: 'spawn',
+      message: `aibridge: failed to run agy: ${(err as Error).message}`,
+      exitCode: null,
+    };
   }
+
+  forwarder?.flush();
+
+  if (result.timedOut) {
+    return {
+      ok: false,
+      kind: 'timeout',
+      message: `aibridge: agy timed out after ~${task.timeoutSec + 20}s; raise --timeout.`,
+      exitCode: result.code,
+    };
+  }
+
+  const stderrLines = stripAnsi(result.stderr)
+    .split('\n')
+    .map(l => l.trim())
+    .filter(l => l.length > 0);
+  const lastStderrLine = stderrLines[stderrLines.length - 1] ?? '';
+  if (result.code === 0 && AGY_PRINT_TIMEOUT_RE.test(lastStderrLine)) {
+    return {
+      ok: false,
+      kind: 'timeout',
+      message: `aibridge: agy timed out after ~${task.timeoutSec}s; raise --timeout.`,
+      exitCode: result.code,
+    };
+  }
+
+  const snap = useStreamJson && forwarder ? forwarder.snapshot() : undefined;
+  const resolvedAnswer = snap
+    ? clean(snap.text ?? (snap.sawProtocol || snap.rawTruncated ? '' : snap.rawFallback))
+    : clean(result.stdout);
+
+  if (snap && !snap.sawProtocol && snap.rawTruncated && resolvedAnswer.length === 0) {
+    return {
+      ok: false,
+      kind: 'no-answer',
+      message: `aibridge: agy returned more than ${RAW_FALLBACK_MAX_CHARS} characters without a recognized stream protocol; see the run log.`,
+      exitCode: result.code,
+    };
+  }
+
+  if (snap?.resultStatus === 'ERROR' || result.code !== 0 || resolvedAnswer.length === 0) {
+    const detail = clean(snap?.resultError || result.stderr) || `exit code ${result.code}`;
+    return {
+      ok: false,
+      kind: 'no-answer',
+      message: `aibridge: agy returned no usable answer (${detail}).`,
+      exitCode: result.code,
+    };
+  }
+
+  return { ok: true, response: resolvedAnswer, exitCode: result.code ?? 0 };
 }

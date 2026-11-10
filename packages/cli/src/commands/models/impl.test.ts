@@ -58,10 +58,9 @@ describe('modelsImpl', () => {
       expect(item).toHaveProperty('image');
       expect(item).toHaveProperty('imageAlpha');
       expect(item).toHaveProperty('brief');
-      expect(item).toHaveProperty('roles');
       expect(item.installed).toBe(true);
       expect(typeof item.version).toBe('string');
-      expect(Object.keys(item)).toHaveLength(11);
+      expect(Object.keys(item)).toHaveLength(10);
     }
   });
 

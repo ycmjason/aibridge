@@ -142,9 +142,8 @@ export function alternativeModels(
   installed: ReadonlySet<Backend>,
   imageOnly = false,
 ): string[] {
-  const others = listModels({ installed, imageOnly }).filter(s => s.backend !== model.spec.backend);
-  // Curated models first so the suggestion is a sensible one, then anything else.
-  return [...others.filter(s => s.roles), ...others.filter(s => !s.roles)]
+  return listModels({ installed, imageOnly })
+    .filter(s => s.backend !== model.spec.backend)
     .map(s => s.slug)
     .slice(0, 3);
 }

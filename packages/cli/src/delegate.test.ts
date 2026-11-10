@@ -4,11 +4,6 @@ import type { AgentCliDriver, DelegationResult, DelegationTask } from './driver.
 import { resolveModel } from './models.ts';
 import type { RunLog } from './runlog.ts';
 
-const PREAMBLE_PIN =
-  'You are the sole executing agent for this task: do it yourself with your tools, now. ' +
-  'Never defer to, wait for, or claim to hand off to another agent or process — no one ' +
-  'else will act, and work not done in this run does not happen.\n\n';
-
 class StubDriver implements AgentCliDriver {
   lastTask?: DelegationTask;
   private readonly result: DelegationResult;
@@ -77,7 +72,7 @@ describe('delegate stub-driver tests', () => {
   const model = resolveModel('xai-grok/grok-4.6');
   if (!model) throw new Error('model resolution failed');
 
-  it('prepends preamble when tools: true, passes untouched when tools: false', async () => {
+  it('passes the prompt untouched with and without tools', async () => {
     const stubTrue = new StubDriver({ ok: true, response: 'ok', exitCode: 0 });
     const { runLog: runLogTrue } = createRecordingRunLog();
     await delegate(
@@ -91,7 +86,7 @@ describe('delegate stub-driver tests', () => {
       },
       stubTrue,
     );
-    expect(stubTrue.lastTask?.prompt).toBe(`${PREAMBLE_PIN}do work`);
+    expect(stubTrue.lastTask?.prompt).toBe('do work');
 
     const stubFalse = new StubDriver({ ok: true, response: 'ok', exitCode: 0 });
     const { runLog: runLogFalse } = createRecordingRunLog();

@@ -74,11 +74,11 @@ jobs:
           npm install "$tmp"/aibridge-*.tgz
           ./node_modules/.bin/aibridge --version
           ./node_modules/.bin/aibridge --help
-          ./node_modules/.bin/aibridge skill plan > skill-plan.md
-          grep -F '# aibridge' skill-plan.md
-          grep -F '# plan — write a detailed implementation plan file' skill-plan.md
+          ./node_modules/.bin/aibridge skill subagent > skill-subagent.md
+          grep -F '# aibridge' skill-subagent.md
+          grep -F '# subagent — delegate a task to another model' skill-subagent.md
           # The runner has no backend CLI: the router must still render, with hints.
-          grep -F 'Backend CLIs installed on this machine: none.' skill-plan.md
+          grep -F 'Backend CLIs installed on this machine: none.' skill-subagent.md
 
           node --input-type=module -e '
             const pkgs = ["proc", "driver-agy", "driver-grok", "driver-codex", "driver-claude", "cli"];

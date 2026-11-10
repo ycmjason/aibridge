@@ -1,4 +1,3 @@
-import { writeFileSync } from 'node:fs';
 import type { RunOptions, RunResult } from '@aibridge/proc';
 import { describe, expect, it } from 'vitest';
 import { run } from './run.ts';
@@ -11,7 +10,6 @@ interface FakeAgyConfig {
   readonly stderr?: string;
   readonly code?: number | null;
   readonly timedOut?: boolean;
-  readonly writeAnswerFile?: string;
   readonly streamChunks?: readonly string[];
 }
 
@@ -46,14 +44,6 @@ function fakeAgy(config: FakeAgyConfig = {}): {
         stderr: '',
         timedOut: false,
       };
-    }
-
-    if (config.writeAnswerFile !== undefined) {
-      const prompt = args[1] ?? '';
-      const match = prompt.match(/file (\/.*answer\.md)/);
-      if (match?.[1]) {
-        writeFileSync(match[1], config.writeAnswerFile);
-      }
     }
 
     if (config.streamChunks) {
@@ -166,10 +156,10 @@ describe('agy driver argv / version handling', () => {
     expect(res).toEqual({ ok: true, response: 'Text fallback', exitCode: 0 });
   });
 
-  it('passes --dangerously-skip-permissions, add-dirs, and stream-json on version 1.2.3 tools mode', async () => {
+  it('passes the prompt verbatim with --dangerously-skip-permissions, cwd as the only add-dir, and stream-json in tools mode', async () => {
     const fake = fakeAgy({
       version: 'agy 1.2.3',
-      writeAnswerFile: 'Written answer from file',
+      stdout: `${JSON.stringify({ event: 'result', result: { status: 'SUCCESS', response: 'from stream' } })}\n`,
     });
 
     const res = await run(
@@ -186,17 +176,16 @@ describe('agy driver argv / version handling', () => {
     const runCall = fake.calls[1];
     expect(runCall).toBeDefined();
     if (runCall) {
-      const firstAddDir = runCall.args.indexOf('--add-dir');
-      const secondAddDir = runCall.args.indexOf('--add-dir', firstAddDir + 1);
+      expect(runCall.args.slice(0, 2)).toEqual(['-p', 'do tool task']);
       expect(runCall.args).toContain('--dangerously-skip-permissions');
-      expect(firstAddDir).toBeGreaterThan(-1);
-      expect(runCall.args[firstAddDir + 1]).toBe('/repo/root');
-      expect(secondAddDir).toBeGreaterThan(firstAddDir);
-      expect(runCall.args[secondAddDir + 1]).toMatch(/aibridge-agy-/);
+      const addDirs = runCall.args.flatMap((a, i) =>
+        a === '--add-dir' ? [runCall.args[i + 1]] : [],
+      );
+      expect(addDirs).toEqual(['/repo/root']);
       expect(runCall.args.slice(-2)).toEqual(['--output-format', 'stream-json']);
       expect(runCall.opts.captureStdout).toBe(false);
     }
-    expect(res).toEqual({ ok: true, response: 'Written answer from file', exitCode: 0 });
+    expect(res).toEqual({ ok: true, response: 'from stream', exitCode: 0 });
   });
 });
 
@@ -424,42 +413,6 @@ describe('agy tools stream-json parsing', () => {
     backendModel: 'gemini-3.7-flash-high',
   };
 
-  it('authoritative answer file wins over result.response and emits banner', async () => {
-    const log: string[] = [];
-    const stream = [
-      JSON.stringify({ event: 'init' }),
-      JSON.stringify({
-        event: 'result',
-        result: { status: 'SUCCESS', response: 'something else' },
-      }),
-      '',
-    ].join('\n');
-
-    const fake = fakeAgy({
-      version: 'agy 1.2.3',
-      stdout: stream,
-      writeAnswerFile: 'Written answer from file',
-    });
-
-    const res = await run({ ...task, onStdout: c => log.push(c) }, fake.exec);
-
-    expect(res).toEqual({ ok: true, response: 'Written answer from file', exitCode: 0 });
-    expect(log.join('')).toContain('--- final answer ---\nWritten answer from file\n');
-  });
-
-  it('returns result.response when no answer file is created in tools mode', async () => {
-    const stream = [
-      JSON.stringify({ event: 'init' }),
-      JSON.stringify({ event: 'result', result: { status: 'SUCCESS', response: 'from stream' } }),
-      '',
-    ].join('\n');
-
-    const fake = fakeAgy({ version: 'agy 1.2.3', stdout: stream });
-    const res = await run(task, fake.exec);
-
-    expect(res).toEqual({ ok: true, response: 'from stream', exitCode: 0 });
-  });
-
   it('logs tool ACTIVE and DONE concisely without dumping heavy payloads', async () => {
     const log: string[] = [];
     const stream = [
@@ -547,21 +500,17 @@ describe('agy timeout and error handling', () => {
     }
   });
 
-  it('answer file wins over soft print-timeout stderr in tools mode', async () => {
+  it('maps soft print-timeout stderr to timeout in tools mode too', async () => {
     const stderr = '[agy] print timeout after 1s with turn in progress; returning partial output\n';
-    const fake = fakeAgy({
-      version: 'agy 1.2.3',
-      stderr,
-      code: 0,
-      writeAnswerFile: 'Full finished answer',
-    });
+    const fake = fakeAgy({ version: 'agy 1.2.3', stderr, code: 0 });
 
     const res = await run({ ...task, tools: true }, fake.exec);
 
-    expect(res).toEqual({ ok: true, response: 'Full finished answer', exitCode: 0 });
+    expect(res.ok).toBe(false);
+    if (!res.ok) expect(res.kind).toBe('timeout');
   });
 
-  it('ERROR result frame overrides a non-empty answer file even with exit 0', async () => {
+  it('ERROR result frame is no-answer even with exit 0', async () => {
     const stream = [
       JSON.stringify({ event: 'init' }),
       JSON.stringify({
@@ -574,7 +523,6 @@ describe('agy timeout and error handling', () => {
       version: 'agy 1.2.3',
       stdout: stream,
       code: 0,
-      writeAnswerFile: 'Apparently finished answer',
     });
 
     const res = await run({ ...task, tools: true }, fake.exec);
@@ -614,23 +562,6 @@ describe('agy timeout and error handling', () => {
     });
 
     const res = await run(task, fake.exec);
-
-    expect(res.ok).toBe(false);
-    if (!res.ok) {
-      expect(res.kind).toBe('timeout');
-      expect(res.message).toBe('aibridge: agy timed out after ~21s; raise --timeout.');
-    }
-  });
-
-  it('hard process timeout wins over a non-empty answer file', async () => {
-    const fake = fakeAgy({
-      version: 'agy 1.2.3',
-      timedOut: true,
-      code: null,
-      writeAnswerFile: 'Possibly torn answer',
-    });
-
-    const res = await run({ ...task, tools: true }, fake.exec);
 
     expect(res.ok).toBe(false);
     if (!res.ok) {
