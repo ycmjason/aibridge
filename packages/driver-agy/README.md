@@ -1,7 +1,7 @@
 # @aibridge/driver-agy
 
 Driver for the Antigravity (`agy`) CLI. It builds print-mode commands, checks
-availability, runs delegated tasks, captures answer files, and reads quota
+availability, runs delegated tasks, captures their answers, and reads quota
 windows. Delegation `run()` uses `--output-format stream-json` when agy is ≥ 1.2.3; image generation does not.
 
 ```ts

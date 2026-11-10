@@ -68,6 +68,9 @@ export function parseGrokBilling(data: RawGrokBilling): GrokQuotaSnapshot {
     config.monthlyLimit.val > 0
   ) {
     usedPercent = Math.round((config.used.val / config.monthlyLimit.val) * 1000) / 10;
+  } else if (config?.currentPeriod) {
+    // proto3 JSON omits a zero creditUsagePercent; a credits-shaped response without it is 0%.
+    usedPercent = 0;
   }
 
   const rawPeriodType = config?.currentPeriod?.type;
