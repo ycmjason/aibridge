@@ -80,6 +80,53 @@ test('evaluateAgyPreflight: exhausted model with undefined resetTime falls back 
   assert.strictEqual(result.resetAt, '2024-01-01T17:00:00Z');
 });
 
+const geminiGroup = (weekly: number, fiveHour: number): AgyQuotaSnapshot => ({
+  fetchedAt: '2024-01-01T12:00:00Z',
+  groups: [
+    {
+      displayName: 'Gemini Models',
+      description: undefined,
+      buckets: [
+        {
+          bucketId: 'gemini-weekly',
+          displayName: 'Weekly Limit Remaining',
+          window: 'weekly',
+          remainingFraction: weekly,
+          resetTime: '2024-01-08T12:00:00Z',
+        },
+        {
+          bucketId: 'gemini-5h',
+          displayName: 'Five Hour Limit Remaining',
+          window: '5h',
+          remainingFraction: fiveHour,
+          resetTime: '2024-01-01T17:00:00Z',
+        },
+      ],
+    },
+  ],
+  models: [],
+});
+
+test('evaluateAgyPreflight: an un-itemised gemini id is guarded by the Gemini group', () => {
+  assert.deepEqual(evaluateAgyPreflight(geminiGroup(0.5, 0.2), 'gemini-pro-orchestrator'), {
+    ok: true,
+  });
+
+  const fiveHourSpent = evaluateAgyPreflight(geminiGroup(0.5, 0), 'gemini-pro-orchestrator');
+  assert.strictEqual(fiveHourSpent.ok, false);
+  assert.strictEqual(fiveHourSpent.resetAt, '2024-01-01T17:00:00Z');
+
+  const bothSpent = evaluateAgyPreflight(geminiGroup(0, 0), 'gemini-pro-orchestrator');
+  assert.strictEqual(bothSpent.ok, false);
+  assert.strictEqual(bothSpent.resetAt, '2024-01-08T12:00:00Z');
+});
+
+test('evaluateAgyPreflight: an un-itemised non-gemini id still warns and proceeds', () => {
+  const result = evaluateAgyPreflight(geminiGroup(0, 0), 'gpt-oss-120b-medium');
+  assert.strictEqual(result.ok, true);
+  assert.match(result.ok ? (result.warning ?? '') : '', /not in quota snapshot/);
+});
+
 test('evaluateAgyPreflight: healthy model returns ok:true', () => {
   const snapshot: AgyQuotaSnapshot = {
     fetchedAt: '2024-01-01T12:00:00Z',

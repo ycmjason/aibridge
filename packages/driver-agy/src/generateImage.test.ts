@@ -54,7 +54,7 @@ describe('generateImage', () => {
     expect(promptIdx).toBeGreaterThan(-1);
     const promptArg = capturedArgs[promptIdx + 1] ?? '';
 
-    expect(promptArg).toContain('generate_image');
+    expect(promptArg).toContain('image-generator subagent');
     expect(promptArg).toContain('16:9');
     expect(promptArg).toContain('print ONLY the absolute filesystem path');
   });
