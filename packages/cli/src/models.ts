@@ -78,7 +78,7 @@ export const MODELS: Record<string, ModelSpec> = {
     efforts: ['low', 'medium', 'high'],
     defaultEffort: 'high',
     brief:
-      'Google Gemini 3.8 Flash via agy — own Antigravity login; quota shared across all Gemini tiers (not itemised per-model, so no exhaustion preflight)',
+      'Google Gemini 3.8 Flash via agy — own Antigravity login; quota shared across all Gemini tiers',
   },
   'google-antigravity/gemini-4-neon': {
     slug: 'google-antigravity/gemini-4-neon',
@@ -87,7 +87,7 @@ export const MODELS: Record<string, ModelSpec> = {
     efforts: ['low', 'medium', 'high', 'xhigh'],
     defaultEffort: 'high',
     brief:
-      'Google Gemini 4 Neon via agy — own Antigravity login; quota shared across all Gemini tiers (not itemised per-model, so no exhaustion preflight)',
+      'Google Gemini 4 Neon via agy — own Antigravity login; quota shared across all Gemini tiers',
   },
   'google-antigravity/gemini-4-carbon': {
     slug: 'google-antigravity/gemini-4-carbon',
@@ -96,7 +96,7 @@ export const MODELS: Record<string, ModelSpec> = {
     efforts: ['low', 'medium', 'high'],
     defaultEffort: 'high',
     brief:
-      'Google Gemini 4 Carbon via agy — own Antigravity login; quota shared across all Gemini tiers (not itemised per-model, so no exhaustion preflight)',
+      'Google Gemini 4 Carbon via agy — own Antigravity login; quota shared across all Gemini tiers',
   },
   'google-antigravity/gemini-4-argon': {
     slug: 'google-antigravity/gemini-4-argon',
@@ -105,7 +105,7 @@ export const MODELS: Record<string, ModelSpec> = {
     efforts: ['low', 'medium', 'high'],
     defaultEffort: 'high',
     brief:
-      'Google Gemini 4 Argon via agy — own Antigravity login; quota shared across all Gemini tiers (not itemised per-model, so no exhaustion preflight)',
+      'Google Gemini 4 Argon via agy — own Antigravity login; quota shared across all Gemini tiers',
   },
   'google-antigravity/gemini-4-hydrogen': {
     slug: 'google-antigravity/gemini-4-hydrogen',
@@ -114,7 +114,7 @@ export const MODELS: Record<string, ModelSpec> = {
     efforts: ['low', 'medium', 'high', 'xhigh'],
     defaultEffort: 'high',
     brief:
-      'Google Gemini 4 Hydrogen via agy — own Antigravity login; quota shared across all Gemini tiers (not itemised per-model, so no exhaustion preflight)',
+      'Google Gemini 4 Hydrogen via agy — own Antigravity login; quota shared across all Gemini tiers',
   },
   // agy lists the orchestrators with no effort suffix.
   'google-antigravity/gemini-pro-orchestrator-neon': {

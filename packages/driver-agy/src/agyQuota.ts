@@ -12,23 +12,36 @@
  *      in-memory via Google's token endpoint with Antigravity's installed-app
  *      client (public by design for installed apps); we NEVER write agy's
  *      store.
- *   2. POST cloudcode-pa.googleapis.com/v1internal:loadCodeAssist
+ *   2. POST daily-cloudcode-pa.googleapis.com/v1internal:loadCodeAssist
  *      (metadata ideType ANTIGRAVITY / pluginType GEMINI) → project id.
- *   3. POST /v1internal:fetchAvailableModels { project } — the
- *      `User-Agent: antigravity` header is MANDATORY (403 without it).
+ *   3. POST /v1internal:fetchAvailableModels { project }
  *      → models keyed by id, each with quotaInfo.remainingFraction (0..1)
  *      and quotaInfo.resetTime (ISO timestamp).
  *
- * Model `label`s match the names agy uses (e.g. "Gemini 3.5 Flash (Low)").
+ * The server shapes both answers by User-Agent. `antigravity/cli/<version>`
+ * (what agy itself sends) gets the Gemini group and every current model id;
+ * a bare `antigravity`, an unknown surface or a version below 1.2 gets only
+ * the Claude and GPT group and a stale model list. The host is the one agy
+ * calls by default: usage shows up there first.
+ *
+ * Model `label`s match the names agy uses (e.g. "Gemini 4 Neon (High)").
  */
 
 import { readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { AuthExpiredError, runCaptured } from '@aibridge/proc';
-import { AGY_CANONICAL_TO_NATIVE } from './registry.ts';
+import { probe } from './probe.ts';
 
-const CLOUDCODE_BASE = 'https://cloudcode-pa.googleapis.com';
+const CLOUDCODE_BASE = 'https://daily-cloudcode-pa.googleapis.com';
+/** Sent when `agy --version` cannot be read; the server only needs a version it knows. */
+const FALLBACK_AGY_VERSION = '1.5.15';
+
+/** The client id agy's own quota calls carry. `versionLine` is `agy --version` output. */
+export function agyUserAgent(versionLine: string | undefined): string {
+  const version = versionLine?.match(/\d+\.\d+\.\d+/)?.[0] ?? FALLBACK_AGY_VERSION;
+  return `antigravity/cli/${version}`;
+}
 const TOKEN_ENDPOINT = 'https://oauth2.googleapis.com/token';
 const OAUTH_CLIENT_ID =
   process.env.ANTIGRAVITY_OAUTH_CLIENT_ID ??
@@ -174,13 +187,18 @@ async function getAccessToken(): Promise<string> {
   return data.access_token;
 }
 
-async function cloudcode(access: string, endpoint: string, body: unknown): Promise<unknown> {
+async function cloudcode(
+  access: string,
+  userAgent: string,
+  endpoint: string,
+  body: unknown,
+): Promise<unknown> {
   const res = await fetch(`${CLOUDCODE_BASE}/v1internal:${endpoint}`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${access}`,
       'Content-Type': 'application/json',
-      'User-Agent': 'antigravity',
+      'User-Agent': userAgent,
     },
     body: JSON.stringify(body),
   });
@@ -228,20 +246,29 @@ const CACHE_TTL_MS = 60_000;
 export async function fetchAgyQuota(): Promise<AgyQuotaSnapshot> {
   if (cache && Date.now() - cache.at < CACHE_TTL_MS) return cache.snapshot;
 
-  const access = await getAccessToken();
-  const load = (await cloudcode(access, 'loadCodeAssist', {
+  const [access, agy] = await Promise.all([getAccessToken(), probe()]);
+  const userAgent = agyUserAgent(agy.ok ? agy.version : undefined);
+  const load = (await cloudcode(access, userAgent, 'loadCodeAssist', {
     metadata: { ideType: 'ANTIGRAVITY', platform: 'PLATFORM_UNSPECIFIED', pluginType: 'GEMINI' },
   })) as { cloudaicompanionProject?: string | { id?: string } };
 
   const proj = load.cloudaicompanionProject;
   const projectId = typeof proj === 'string' ? proj : proj?.id;
   const [modelsRes, summaryRes] = await Promise.all([
-    cloudcode(access, 'fetchAvailableModels', projectId ? { project: projectId } : {}) as Promise<{
+    cloudcode(
+      access,
+      userAgent,
+      'fetchAvailableModels',
+      projectId ? { project: projectId } : {},
+    ) as Promise<{
       models?: Record<string, RawModelInfo>;
     }>,
-    cloudcode(access, 'retrieveUserQuotaSummary', projectId ? { project: projectId } : {}).catch(
-      () => ({}),
-    ) as Promise<{
+    cloudcode(
+      access,
+      userAgent,
+      'retrieveUserQuotaSummary',
+      projectId ? { project: projectId } : {},
+    ).catch(() => ({})) as Promise<{
       groups?: { displayName?: string; description?: string; buckets?: [] }[];
     }>,
   ]);
@@ -259,14 +286,7 @@ export function findModelQuota(
   snapshot: AgyQuotaSnapshot,
   labelOrId: string,
 ): AgyModelQuota | undefined {
-  const nativeLabel = AGY_CANONICAL_TO_NATIVE[labelOrId] ?? labelOrId;
-  const matches = snapshot.models.filter(
-    m =>
-      m.label === labelOrId ||
-      m.modelId === labelOrId ||
-      m.label === nativeLabel ||
-      m.modelId === nativeLabel,
-  );
+  const matches = snapshot.models.filter(m => m.label === labelOrId || m.modelId === labelOrId);
   if (matches.length === 0) return undefined;
   return matches.find(m => m.exhausted) ?? matches[0];
 }
