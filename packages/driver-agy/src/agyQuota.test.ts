@@ -1,6 +1,12 @@
 import assert from 'node:assert/strict';
 import { test } from 'vitest';
-import { decodeKeyringSecret, findModelQuota, parseModels, parseQuotaGroups } from './agyQuota.ts';
+import {
+  agyUserAgent,
+  decodeKeyringSecret,
+  findModelQuota,
+  parseModels,
+  parseQuotaGroups,
+} from './agyQuota.ts';
 
 test('parseQuotaGroups preserves fractions or defaults to 0 if absent', () => {
   const groups = [
@@ -140,4 +146,14 @@ test('decodeKeyringSecret returns undefined for malformed payloads so the file f
   assert.equal(decodeKeyringSecret('not json'), undefined);
   assert.equal(decodeKeyringSecret('go-keyring-base64:!!!'), undefined);
   assert.equal(decodeKeyringSecret('"a string"'), undefined);
+});
+
+test('agyUserAgent identifies as the agy CLI at the installed version', () => {
+  assert.equal(agyUserAgent('1.5.15'), 'antigravity/cli/1.5.15');
+  assert.equal(agyUserAgent('agy 1.6.0 (stable)'), 'antigravity/cli/1.6.0');
+});
+
+test('agyUserAgent falls back to a version the server knows when agy cannot be probed', () => {
+  assert.match(agyUserAgent(undefined), /^antigravity\/cli\/\d+\.\d+\.\d+$/);
+  assert.match(agyUserAgent('no version here'), /^antigravity\/cli\/\d+\.\d+\.\d+$/);
 });
