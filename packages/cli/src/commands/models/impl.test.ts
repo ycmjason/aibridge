@@ -64,17 +64,17 @@ describe('modelsImpl', () => {
     }
   });
 
-  it('reports efforts: ["low", "high"] and defaultEffort: "high" for gemini-3.1-pro in JSON', async () => {
+  it('reports efforts without xhigh and defaultEffort: "high" for gemini-4-carbon in JSON', async () => {
     const { ctx, getStdout } = createTestContext();
     await modelsImpl.call(ctx, { json: true }, ALL);
 
     const data = JSON.parse(getStdout());
-    const geminiPro = data.find(
-      (item: { slug: string }) => item.slug === 'google-antigravity/gemini-3.1-pro',
+    const carbon = data.find(
+      (item: { slug: string }) => item.slug === 'google-antigravity/gemini-4-carbon',
     );
-    expect(geminiPro).toBeDefined();
-    expect(geminiPro.efforts).toEqual(['low', 'high']);
-    expect(geminiPro.defaultEffort).toBe('high');
+    expect(carbon).toBeDefined();
+    expect(carbon.efforts).toEqual(['low', 'medium', 'high']);
+    expect(carbon.defaultEffort).toBe('high');
   });
 
   it('reports backendModel, image, and imageAlpha correctly for opus-5 and gpt-5.6-sol in JSON', async () => {

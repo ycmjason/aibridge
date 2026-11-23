@@ -70,6 +70,7 @@ export const MODELS: Record<string, ModelSpec> = {
     brief:
       'xAI Grok 4.5 via grok CLI — follows detailed instructions literally; own xAI login; ~30 req/min, ~1k msgs/day, single-flight',
   },
+  // First agy seat: the skill's image table names the first model per backend.
   'google-antigravity/gemini-3.8-flash': {
     slug: 'google-antigravity/gemini-3.8-flash',
     backend: 'agy',
@@ -79,115 +80,185 @@ export const MODELS: Record<string, ModelSpec> = {
     brief:
       'Google Gemini 3.8 Flash via agy — own Antigravity login; quota shared across all Gemini tiers (not itemised per-model, so no exhaustion preflight)',
   },
-  'google-antigravity/gemini-3.7-flash': {
-    slug: 'google-antigravity/gemini-3.7-flash',
+  'google-antigravity/gemini-4-neon': {
+    slug: 'google-antigravity/gemini-4-neon',
     backend: 'agy',
-    backendModel: 'gemini-3.7-flash',
+    backendModel: 'gemini-4-neon',
+    efforts: ['low', 'medium', 'high', 'xhigh'],
+    defaultEffort: 'high',
+    brief:
+      'Google Gemini 4 Neon via agy — own Antigravity login; quota shared across all Gemini tiers (not itemised per-model, so no exhaustion preflight)',
+  },
+  'google-antigravity/gemini-4-carbon': {
+    slug: 'google-antigravity/gemini-4-carbon',
+    backend: 'agy',
+    backendModel: 'gemini-4-carbon',
     efforts: ['low', 'medium', 'high'],
     defaultEffort: 'high',
     brief:
-      'Google Gemini 3.7 Flash via agy — own Antigravity login; quota shared across all Gemini tiers (not yet itemised per-model, so no exhaustion preflight)',
+      'Google Gemini 4 Carbon via agy — own Antigravity login; quota shared across all Gemini tiers (not itemised per-model, so no exhaustion preflight)',
   },
-  // 3.6 stays registered while agy's quota endpoint still stops at 3.6: it is
-  // the newest flash tier the exhaustion preflight can actually guard.
-  'google-antigravity/gemini-3.6-flash': {
-    slug: 'google-antigravity/gemini-3.6-flash',
+  'google-antigravity/gemini-4-argon': {
+    slug: 'google-antigravity/gemini-4-argon',
     backend: 'agy',
-    backendModel: 'gemini-3.6-flash',
+    backendModel: 'gemini-4-argon',
     efforts: ['low', 'medium', 'high'],
     defaultEffort: 'high',
     brief:
-      'Google Gemini 3.6 Flash via agy — own Antigravity login; quota shared across all Gemini tiers',
+      'Google Gemini 4 Argon via agy — own Antigravity login; quota shared across all Gemini tiers (not itemised per-model, so no exhaustion preflight)',
   },
-  'google-antigravity/gemini-3.1-pro': {
-    slug: 'google-antigravity/gemini-3.1-pro',
+  'google-antigravity/gemini-4-hydrogen': {
+    slug: 'google-antigravity/gemini-4-hydrogen',
     backend: 'agy',
-    // agy exposes only -high and -low for this class — there is no medium tier.
-    efforts: ['low', 'high'],
-    backendModel: 'gemini-3.1-pro',
+    backendModel: 'gemini-4-hydrogen',
+    efforts: ['low', 'medium', 'high', 'xhigh'],
     defaultEffort: 'high',
     brief:
-      'Google Gemini 3.1 Pro via agy — own Antigravity login; quota shared across all Gemini tiers',
+      'Google Gemini 4 Hydrogen via agy — own Antigravity login; quota shared across all Gemini tiers (not itemised per-model, so no exhaustion preflight)',
   },
-  'google-antigravity/claude-sonnet-4-6': {
-    slug: 'google-antigravity/claude-sonnet-4-6',
+  // agy lists the orchestrators with no effort suffix.
+  'google-antigravity/gemini-pro-orchestrator-neon': {
+    slug: 'google-antigravity/gemini-pro-orchestrator-neon',
     backend: 'agy',
-    backendModel: 'claude-sonnet-4-6',
+    backendModel: 'gemini-pro-orchestrator-neon',
     efforts: null,
-    brief: 'Claude Sonnet 4.6 (thinking) via agy — own Antigravity login',
+    brief:
+      'Google Orchestrator (Neon) via agy — own Antigravity login; quota shared across all Gemini tiers (not itemised per-model, so no exhaustion preflight)',
   },
-  'google-antigravity/claude-opus-4-6-thinking': {
-    slug: 'google-antigravity/claude-opus-4-6-thinking',
+  'google-antigravity/gemini-pro-orchestrator': {
+    slug: 'google-antigravity/gemini-pro-orchestrator',
     backend: 'agy',
-    backendModel: 'claude-opus-4-6-thinking',
+    backendModel: 'gemini-pro-orchestrator',
     efforts: null,
-    brief: 'Claude Opus 4.6 (thinking) via agy — own Antigravity login; heavyweight',
+    brief:
+      'Google Orchestrator (Carbon) via agy — own Antigravity login; quota shared across all Gemini tiers (not itemised per-model, so no exhaustion preflight)',
+  },
+  'google-antigravity/gemini-pro-orchestrator-argon': {
+    slug: 'google-antigravity/gemini-pro-orchestrator-argon',
+    backend: 'agy',
+    backendModel: 'gemini-pro-orchestrator-argon',
+    efforts: null,
+    brief:
+      'Google Orchestrator (Argon) via agy — own Antigravity login; quota shared across all Gemini tiers (not itemised per-model, so no exhaustion preflight)',
+  },
+  'google-antigravity/claude-opus-5-5': {
+    slug: 'google-antigravity/claude-opus-5-5',
+    backend: 'agy',
+    backendModel: 'claude-opus-5-5',
+    efforts: ['low', 'medium', 'high'],
+    defaultEffort: 'high',
+    brief:
+      'Claude Opus 5.5 via agy — own Antigravity login; quota shared with the other Claude and GPT-OSS seats on agy; heavyweight',
+  },
+  'google-antigravity/claude-sonnet-5-5': {
+    slug: 'google-antigravity/claude-sonnet-5-5',
+    backend: 'agy',
+    backendModel: 'claude-sonnet-5-5',
+    efforts: ['low', 'medium', 'high'],
+    defaultEffort: 'high',
+    brief:
+      'Claude Sonnet 5.5 via agy — own Antigravity login; quota shared with the other Claude and GPT-OSS seats on agy',
   },
   'google-antigravity/gpt-oss-120b-medium': {
     slug: 'google-antigravity/gpt-oss-120b-medium',
     backend: 'agy',
     backendModel: 'gpt-oss-120b-medium',
     efforts: null,
-    brief: 'GPT-OSS 120B (medium) via agy — own Antigravity login',
+    brief:
+      'GPT-OSS 120B (medium) via agy — own Antigravity login; quota shared with the Claude seats on agy',
   },
-  // Codex serves `ultra` on gpt-6.1-sol, gpt-6-astra/sol and gpt-5.6-sol/terra too; it is not in `Effort` yet.
+  // Codex serves `ultra` on every seat below except the two luna tiers; it is not in `Effort` yet.
   // ponytail: add 'ultra' to Effort when a run actually needs it.
+  // Briefs carry codex's own description of each model (models_cache.json, 2026-11-23).
+  'openai-codex/gpt-6.2-sol': {
+    slug: 'openai-codex/gpt-6.2-sol',
+    backend: 'codex',
+    backendModel: 'gpt-6.2-sol',
+    efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
+    brief:
+      'OpenAI gpt-6.2-sol via codex CLI — fast, go-to model for coding and everyday work; own ChatGPT login',
+  },
+  'openai-codex/gpt-6.2-astra': {
+    slug: 'openai-codex/gpt-6.2-astra',
+    backend: 'codex',
+    backendModel: 'gpt-6.2-astra',
+    efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
+    brief:
+      'OpenAI gpt-6.2-astra via codex CLI — most capable model for complex coding and professional work; own ChatGPT login',
+  },
+  'openai-codex/gpt-6.1-terra': {
+    slug: 'openai-codex/gpt-6.1-terra',
+    backend: 'codex',
+    backendModel: 'gpt-6.1-terra',
+    efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
+    brief:
+      'OpenAI gpt-6.1-terra via codex CLI — efficient model for visual understanding and computer use; own ChatGPT login',
+  },
   'openai-codex/gpt-6.1-sol': {
     slug: 'openai-codex/gpt-6.1-sol',
     backend: 'codex',
     backendModel: 'gpt-6.1-sol',
     efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
-    brief: 'OpenAI gpt-6.1-sol via codex CLI — latest workhorse for coding; own ChatGPT login',
+    brief:
+      'OpenAI gpt-6.1-sol via codex CLI — previous-generation model for coding and everyday work; own ChatGPT login',
   },
   'openai-codex/gpt-6-astra': {
     slug: 'openai-codex/gpt-6-astra',
     backend: 'codex',
     backendModel: 'gpt-6-astra',
     efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
-    brief: 'OpenAI gpt-6-astra via codex CLI — newest frontier tier; own ChatGPT login',
+    brief:
+      'OpenAI gpt-6-astra via codex CLI — previous-generation model for complex coding and professional work; own ChatGPT login',
   },
   'openai-codex/gpt-6-sol': {
     slug: 'openai-codex/gpt-6-sol',
     backend: 'codex',
     backendModel: 'gpt-6-sol',
     efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
-    brief: 'OpenAI gpt-6-sol via codex CLI — gpt-6 agentic coding; own ChatGPT login',
+    brief:
+      'OpenAI gpt-6-sol via codex CLI — legacy model for coding and everyday work; own ChatGPT login',
   },
   'openai-codex/gpt-6-luna': {
     slug: 'openai-codex/gpt-6-luna',
     backend: 'codex',
     backendModel: 'gpt-6-luna',
     efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
-    brief: 'OpenAI gpt-6-luna via codex CLI — gpt-6 fast and affordable; own ChatGPT login',
+    brief:
+      'OpenAI gpt-6-luna via codex CLI — fast and affordable model for easier tasks; own ChatGPT login',
   },
   'openai-codex/gpt-5.6-sol': {
     slug: 'openai-codex/gpt-5.6-sol',
     backend: 'codex',
     backendModel: 'gpt-5.6-sol',
     efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
-    brief: 'OpenAI gpt-5.6-sol via codex CLI — frontier agentic coding; own ChatGPT login',
+    brief:
+      'OpenAI gpt-5.6-sol via codex CLI — legacy model for coding and everyday work; own ChatGPT login',
   },
   'openai-codex/gpt-5.6-terra': {
     slug: 'openai-codex/gpt-5.6-terra',
     backend: 'codex',
     backendModel: 'gpt-5.6-terra',
     efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
-    brief: 'OpenAI gpt-5.6-terra via codex CLI — balanced, everyday coding; own ChatGPT login',
+    brief:
+      'OpenAI gpt-5.6-terra via codex CLI — legacy balanced model for agentic coding; own ChatGPT login',
   },
   'openai-codex/gpt-5.6-luna': {
     slug: 'openai-codex/gpt-5.6-luna',
     backend: 'codex',
     backendModel: 'gpt-5.6-luna',
     efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
-    brief: 'OpenAI gpt-5.6-luna via codex CLI — fast and affordable coding; own ChatGPT login',
+    brief:
+      'OpenAI gpt-5.6-luna via codex CLI — legacy fast model for simpler tasks; own ChatGPT login',
   },
   // Every id the latest codex lists as visible stays registered (2026-09-07).
-  'openai-codex/gpt-5.5': {
-    slug: 'openai-codex/gpt-5.5',
-    backend: 'codex',
-    backendModel: 'gpt-5.5',
-    efforts: ['low', 'medium', 'high', 'xhigh'],
-    brief: 'OpenAI gpt-5.5 via codex CLI — previous-generation general model; own ChatGPT login',
+  'anthropic-claude/fable-5.2': {
+    slug: 'anthropic-claude/fable-5.2',
+    backend: 'claude',
+    backendModel: 'claude-fable-5-2',
+    efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
+    defaultEffort: 'high',
+    brief:
+      'Claude Fable 5.2 via claude CLI — newest Fable tier, hardest and longest-running work; bills the claude CLI subscription',
   },
   'anthropic-claude/fable-5.1': {
     slug: 'anthropic-claude/fable-5.1',
@@ -196,7 +267,7 @@ export const MODELS: Record<string, ModelSpec> = {
     efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
     defaultEffort: 'high',
     brief:
-      'Claude Fable 5.1 via claude CLI — hardest, longest-running work; bills the claude CLI subscription',
+      'Claude Fable 5.1 via claude CLI — previous Fable tier; bills the claude CLI subscription',
   },
   'anthropic-claude/opus-5.5': {
     slug: 'anthropic-claude/opus-5.5',
@@ -231,12 +302,21 @@ export const MODELS: Record<string, ModelSpec> = {
     efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
     brief: 'Claude Sonnet 5 via claude CLI — routine work; bills the claude CLI subscription',
   },
+  'anthropic-claude/haiku-5.5': {
+    slug: 'anthropic-claude/haiku-5.5',
+    backend: 'claude',
+    backendModel: 'claude-haiku-5-5',
+    efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
+    brief:
+      'Claude Haiku 5.5 via claude CLI — newest Haiku tier, quick answers; bills the claude CLI subscription',
+  },
   'anthropic-claude/haiku-4-5': {
     slug: 'anthropic-claude/haiku-4-5',
     backend: 'claude',
     backendModel: 'claude-haiku-4-5-20251001',
     efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
-    brief: 'Claude Haiku 4.5 via claude CLI — quick answers; bills the claude CLI subscription',
+    brief:
+      'Claude Haiku 4.5 via claude CLI — previous Haiku tier; bills the claude CLI subscription',
   },
 } as const satisfies Record<string, ModelSpec>;
 
