@@ -20,7 +20,24 @@ export function evaluateAgyPreflight(
   const quota = findModelQuota(snapshot, backendModel);
 
   if (!quota) {
-    return { ok: true, warning: `model "${backendModel}" not in quota snapshot; proceeding` };
+    // agy does not itemise every Gemini id (the orchestrators); those draw on
+    // the shared Gemini group, so its windows are the guard.
+    const group = backendModel.startsWith('gemini-')
+      ? snapshot.groups.find(g => g.displayName.includes('Gemini'))
+      : undefined;
+    if (!group) {
+      return { ok: true, warning: `model "${backendModel}" not in quota snapshot; proceeding` };
+    }
+    const spent = group.buckets.filter(b => b.remainingFraction <= 0);
+    if (spent.length === 0) return { ok: true };
+    // Usable again only once every spent window has reset.
+    const resets = spent.map(b => b.resetTime).filter(t => t !== undefined);
+    return {
+      ok: false,
+      kind: 'quota',
+      message: `agy "${group.displayName}" quota is exhausted (model "${backendModel}" draws on it)`,
+      resetAt: resets.length === spent.length ? resets.sort().at(-1) : undefined,
+    };
   }
 
   if (quota.exhausted) {

@@ -123,7 +123,7 @@ export const MODELS: Record<string, ModelSpec> = {
     backendModel: 'gemini-pro-orchestrator-neon',
     efforts: null,
     brief:
-      'Google Orchestrator (Neon) via agy — own Antigravity login; quota shared across all Gemini tiers (not itemised per-model, so no exhaustion preflight)',
+      'Google Orchestrator (Neon) via agy — own Antigravity login; quota shared across all Gemini tiers',
   },
   'google-antigravity/gemini-pro-orchestrator': {
     slug: 'google-antigravity/gemini-pro-orchestrator',
@@ -131,7 +131,7 @@ export const MODELS: Record<string, ModelSpec> = {
     backendModel: 'gemini-pro-orchestrator',
     efforts: null,
     brief:
-      'Google Orchestrator (Carbon) via agy — own Antigravity login; quota shared across all Gemini tiers (not itemised per-model, so no exhaustion preflight)',
+      'Google Orchestrator (Carbon) via agy — own Antigravity login; quota shared across all Gemini tiers',
   },
   'google-antigravity/gemini-pro-orchestrator-argon': {
     slug: 'google-antigravity/gemini-pro-orchestrator-argon',
@@ -139,7 +139,7 @@ export const MODELS: Record<string, ModelSpec> = {
     backendModel: 'gemini-pro-orchestrator-argon',
     efforts: null,
     brief:
-      'Google Orchestrator (Argon) via agy — own Antigravity login; quota shared across all Gemini tiers (not itemised per-model, so no exhaustion preflight)',
+      'Google Orchestrator (Argon) via agy — own Antigravity login; quota shared across all Gemini tiers',
   },
   'google-antigravity/claude-opus-5-5': {
     slug: 'google-antigravity/claude-opus-5-5',

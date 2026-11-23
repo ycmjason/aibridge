@@ -34,20 +34,17 @@ export async function generateImage(
   const agy = await probe(exec);
   if (!agy.ok) return { kind: 'error', reason: agy.error };
 
-  let instruction: string;
-  if (req.imagePaths.length > 0) {
-    const refs = req.imagePaths.map(p => JSON.stringify(p)).join(', ');
-    instruction =
-      `Call the generate_image tool once with ImageName="aibridge-render", Prompt=${JSON.stringify(req.prompt)}, and ImagePaths=[${refs}]. ` +
-      `Change only what the instruction asks, using the references for subject/identity.` +
-      `${req.aspectRatio ? ` Pass AspectRatio='${req.aspectRatio}'.` : ''}` +
-      ` After the tool returns, print ONLY the absolute filesystem path of the saved image on a single line. No other text.`;
-  } else {
-    instruction =
-      `Call the generate_image tool once with ImageName="aibridge-render" and Prompt=${JSON.stringify(req.prompt)}.` +
-      `${req.aspectRatio ? ` Pass AspectRatio='${req.aspectRatio}'.` : ''}` +
-      ` After the tool returns, print ONLY the absolute filesystem path of the saved image on a single line. No other text.`;
-  }
+  // agy 1.2.16+ renders through its built-in `image-generator` subagent; the
+  // main model has no `generate_image` tool of its own. Naming the subagent
+  // saves the model from searching for a tool, and the ban on skills keeps it
+  // from rendering through an operator-installed skill on another backend.
+  const refs = req.imagePaths.map(p => JSON.stringify(p)).join(', ');
+  const instruction =
+    `Generate one image with your built-in image-generator subagent. Do not use any skill, shell command or other CLI. ` +
+    `Give it ImageName="aibridge-render" and Prompt=${JSON.stringify(req.prompt)}` +
+    `${req.imagePaths.length > 0 ? `, and ImagePaths=[${refs}]. Change only what the prompt asks, using the references for subject/identity` : ''}.` +
+    `${req.aspectRatio ? ` Pass AspectRatio='${req.aspectRatio}'.` : ''}` +
+    ` After it returns, print ONLY the absolute filesystem path of the saved image on a single line. No other text.`;
 
   const beforePaths = brainImagePaths();
 
