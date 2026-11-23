@@ -12,7 +12,7 @@
  *      in-memory via Google's token endpoint with Antigravity's installed-app
  *      client (public by design for installed apps); we NEVER write agy's
  *      store.
- *   2. POST cloudcode-pa.googleapis.com/v1internal:loadCodeAssist
+ *   2. POST daily-cloudcode-pa.googleapis.com/v1internal:loadCodeAssist
  *      (metadata ideType ANTIGRAVITY / pluginType GEMINI) → project id.
  *   3. POST /v1internal:fetchAvailableModels { project }
  *      → models keyed by id, each with quotaInfo.remainingFraction (0..1)
