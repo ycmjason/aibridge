@@ -217,7 +217,7 @@ describe('image-cutout', () => {
 
     await imageCutout.call(
       c,
-      flags({ model: 'google-antigravity/gemini-3.7-flash', out: join(dir, 'out.png') }),
+      flags({ model: 'google-antigravity/gemini-3.8-flash', out: join(dir, 'out.png') }),
       input,
       undefined,
       driver,

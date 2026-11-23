@@ -89,7 +89,7 @@ describe('skill command', () => {
   it('lists image models one row per installed image backend', () => {
     const table = applyTemplate('{{image-models}}', CODEX_AGY);
     expect(table.split('\n')).toHaveLength(4);
-    expect(table).toContain('`google-antigravity/gemini-3.7-flash`');
+    expect(table).toContain('`google-antigravity/gemini-3.8-flash`');
     expect(table).toContain('| Codex CLI | PNG |');
     expect(applyTemplate('{{image-jpg}}', CODEX_AGY)).toMatch(/^google-antigravity\//);
     const codexOnly: Installed = new Map([['codex', { ok: true, version: '1' }]]);

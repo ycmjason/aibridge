@@ -293,6 +293,26 @@ function logForwarder(
   };
 }
 
+const AGY_ERROR_PREFIX = 'AGY_ERROR:';
+
+/**
+ * agy 1.5 reports a print timeout as exit 3 plus a machine-readable stderr line:
+ * `AGY_ERROR: {"status":"DEADLINE_EXCEEDED","reason":"print_timeout",…}`.
+ */
+function isPrintTimeoutError(stderrLine: string): boolean {
+  if (!stderrLine.startsWith(AGY_ERROR_PREFIX)) return false;
+  try {
+    const parsed: unknown = JSON.parse(stderrLine.slice(AGY_ERROR_PREFIX.length));
+    return (
+      typeof parsed === 'object' &&
+      parsed !== null &&
+      (parsed as { reason?: unknown }).reason === 'print_timeout'
+    );
+  } catch {
+    return false;
+  }
+}
+
 export async function run(
   task: DelegationTask,
   exec: typeof runCaptured = runCaptured,
@@ -378,7 +398,10 @@ export async function run(
     .map(l => l.trim())
     .filter(l => l.length > 0);
   const lastStderrLine = stderrLines[stderrLines.length - 1] ?? '';
-  if (result.code === 0 && AGY_PRINT_TIMEOUT_RE.test(lastStderrLine)) {
+  if (
+    (result.code === 0 && AGY_PRINT_TIMEOUT_RE.test(lastStderrLine)) ||
+    stderrLines.some(isPrintTimeoutError)
+  ) {
     return {
       ok: false,
       kind: 'timeout',

@@ -112,7 +112,7 @@ test('findModelQuota hits modelId id-form', () => {
     groups: [],
     models: [
       {
-        modelId: 'gemini-3.7-flash-high',
+        modelId: 'gemini-3.8-flash-high',
         label: 'Gemini 3.7 Flash (High)',
         remainingFraction: 0.9,
         exhausted: false,
@@ -121,8 +121,8 @@ test('findModelQuota hits modelId id-form', () => {
     ],
   };
 
-  const found = findModelQuota(snapshot, 'gemini-3.7-flash-high');
-  assert.equal(found?.modelId, 'gemini-3.7-flash-high');
+  const found = findModelQuota(snapshot, 'gemini-3.8-flash-high');
+  assert.equal(found?.modelId, 'gemini-3.8-flash-high');
 });
 
 test('decodeKeyringSecret accepts raw JSON (linux) and go-keyring base64 (macOS)', () => {

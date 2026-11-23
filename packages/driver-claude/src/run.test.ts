@@ -177,7 +177,7 @@ describe('claude stream-json parsing and log forwarding', () => {
     tools: false,
     timeoutSec: 30,
     cwd: '/work',
-    backendModel: 'claude-sonnet-4-6',
+    backendModel: 'claude-sonnet-5-5',
   };
 
   const execStream =

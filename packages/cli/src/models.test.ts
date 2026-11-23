@@ -16,9 +16,9 @@ describe('models registry', () => {
     expect(grok?.spec.slug).toBe('xai-grok/grok-4.6');
     expect(grok?.effort).toBeUndefined();
 
-    const gemini = resolveModel('google-antigravity/gemini-3.7-flash');
+    const gemini = resolveModel('google-antigravity/gemini-3.8-flash');
     expect(gemini).toBeDefined();
-    expect(gemini?.spec.slug).toBe('google-antigravity/gemini-3.7-flash');
+    expect(gemini?.spec.slug).toBe('google-antigravity/gemini-3.8-flash');
     expect(gemini?.effort).toBe('high');
   });
 
@@ -29,7 +29,7 @@ describe('models registry', () => {
       'codex',
       'sonnet',
       'opus',
-      'gemini-3.6',
+      'gemini-3.8',
       'gpt-oss',
       'anthropic-claude/sonnet',
       'anthropic-claude/opus',
@@ -70,13 +70,13 @@ describe('models registry', () => {
   });
 
   it('computes backendModelId correctly for agy vs others', () => {
-    const gemini = resolveModel('google-antigravity/gemini-3.7-flash');
+    const gemini = resolveModel('google-antigravity/gemini-3.8-flash');
     if (!gemini) throw new Error('gemini resolution failed');
-    expect(backendModelId(gemini)).toBe('gemini-3.7-flash-high');
+    expect(backendModelId(gemini)).toBe('gemini-3.8-flash-high');
 
-    const geminiLow = resolveModel('google-antigravity/gemini-3.7-flash-low');
+    const geminiLow = resolveModel('google-antigravity/gemini-3.8-flash-low');
     if (!geminiLow) throw new Error('geminiLow resolution failed');
-    expect(backendModelId(geminiLow)).toBe('gemini-3.7-flash-low');
+    expect(backendModelId(geminiLow)).toBe('gemini-3.8-flash-low');
 
     const grok = resolveModel('xai-grok/grok-4.6');
     if (!grok) throw new Error('grok resolution failed');
@@ -87,10 +87,10 @@ describe('models registry', () => {
     expect(backendModelId(sonnet)).toBe('claude-sonnet-5');
   });
 
-  it('marks codex, grok, and gemini-3.7-flash models as image-gen capable', () => {
+  it('marks codex, grok, and gemini-3.8-flash models as image-gen capable', () => {
     const codex = resolveModel('openai-codex/gpt-5.6-sol');
     const grok = resolveModel('xai-grok/grok-4.6');
-    const gemini = resolveModel('google-antigravity/gemini-3.7-flash');
+    const gemini = resolveModel('google-antigravity/gemini-3.8-flash');
     const claudeSonnet = resolveModel('anthropic-claude/sonnet-5');
     if (!codex || !grok || !gemini || !claudeSonnet) throw new Error('resolution failed');
     expect(supportsImageGen(codex)).toBe(true);
@@ -103,7 +103,7 @@ describe('models registry', () => {
     const lines = listModelHelpLines({ imageOnly: true }).join('\n');
     expect(lines).toContain('xai-grok/grok-4.6');
     expect(lines).toContain('openai-codex/gpt-5.6-sol');
-    expect(lines).toContain('google-antigravity/gemini-3.7-flash');
+    expect(lines).toContain('google-antigravity/gemini-3.8-flash');
     expect(lines).not.toContain('anthropic-claude/sonnet-5');
     expect(lines).toContain('transparency: native alpha');
     expect(lines).toContain('then `aibridge image-cutout`');
@@ -112,7 +112,7 @@ describe('models registry', () => {
   it('reports correct imageAlpha for models', () => {
     const codex = resolveModel('openai-codex/gpt-5.6-sol');
     const grok = resolveModel('xai-grok/grok-4.6');
-    const gemini = resolveModel('google-antigravity/gemini-3.7-flash');
+    const gemini = resolveModel('google-antigravity/gemini-3.8-flash');
     const claudeSonnet = resolveModel('anthropic-claude/sonnet-5');
     if (!codex || !grok || !gemini || !claudeSonnet) throw new Error('resolution failed');
     expect(imageAlphaFor(codex)).toBe('native');
@@ -125,7 +125,7 @@ describe('models registry', () => {
     const installed = new Set(['codex', 'agy'] as const);
     const lines = listModelHelpLines({ installed }).join('\n');
     expect(lines).toContain('openai-codex/gpt-5.6-sol');
-    expect(lines).toContain('google-antigravity/gemini-3.7-flash');
+    expect(lines).toContain('google-antigravity/gemini-3.8-flash');
     expect(lines).not.toContain('xai-grok');
     expect(lines).not.toContain('anthropic-claude');
     expect(lines).toContain('installed backends: agy, codex');
@@ -141,7 +141,7 @@ describe('models registry', () => {
     expect(err).toContain('backend "claude"');
     expect(err).toContain('xai-grok/grok-4.6');
     expect(err).toContain('openai-codex/gpt-5.6-sol');
-    expect(err).toContain('google-antigravity/gemini-3.7-flash');
+    expect(err).toContain('google-antigravity/gemini-3.8-flash');
     const modelsSection = err.slice(err.indexOf('Image-gen models'));
     expect(modelsSection).not.toContain('anthropic-claude/sonnet-5');
   });

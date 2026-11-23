@@ -80,7 +80,7 @@ describe('agy driver argv / version handling', () => {
         tools: false,
         timeoutSec: 60,
         cwd: '/test/cwd',
-        backendModel: 'gemini-3.7-flash-high',
+        backendModel: 'gemini-3.8-flash-high',
       },
       fake.exec,
     );
@@ -94,7 +94,7 @@ describe('agy driver argv / version handling', () => {
         '-p',
         'do something',
         '--model',
-        'gemini-3.7-flash-high',
+        'gemini-3.8-flash-high',
         '--print-timeout',
         '60s',
         '--output-format',
@@ -113,7 +113,7 @@ describe('agy driver argv / version handling', () => {
         tools: false,
         timeoutSec: 60,
         cwd: '/test/cwd',
-        backendModel: 'gemini-3.7-flash-high',
+        backendModel: 'gemini-3.8-flash-high',
       },
       fake.exec,
     );
@@ -125,7 +125,7 @@ describe('agy driver argv / version handling', () => {
         '-p',
         'do something',
         '--model',
-        'gemini-3.7-flash-high',
+        'gemini-3.8-flash-high',
         '--print-timeout',
         '60s',
       ]);
@@ -143,7 +143,7 @@ describe('agy driver argv / version handling', () => {
         tools: false,
         timeoutSec: 60,
         cwd: '/test/cwd',
-        backendModel: 'gemini-3.7-flash-high',
+        backendModel: 'gemini-3.8-flash-high',
       },
       fake.exec,
     );
@@ -168,7 +168,7 @@ describe('agy driver argv / version handling', () => {
         tools: true,
         timeoutSec: 100,
         cwd: '/repo/root',
-        backendModel: 'gemini-3.7-flash-high',
+        backendModel: 'gemini-3.8-flash-high',
       },
       fake.exec,
     );
@@ -195,7 +195,7 @@ describe('agy no-tools stream-json parsing (1.2.3)', () => {
     tools: false,
     timeoutSec: 30,
     cwd: '/work',
-    backendModel: 'gemini-3.7-flash-high',
+    backendModel: 'gemini-3.8-flash-high',
   };
 
   const stepUpdate = (
@@ -410,7 +410,7 @@ describe('agy tools stream-json parsing', () => {
     tools: true,
     timeoutSec: 30,
     cwd: '/work',
-    backendModel: 'gemini-3.7-flash-high',
+    backendModel: 'gemini-3.8-flash-high',
   };
 
   it('logs tool ACTIVE and DONE concisely without dumping heavy payloads', async () => {
@@ -455,8 +455,44 @@ describe('agy timeout and error handling', () => {
     tools: false,
     timeoutSec: 1,
     cwd: '/work',
-    backendModel: 'gemini-3.7-flash-high',
+    backendModel: 'gemini-3.8-flash-high',
   };
+
+  it('maps the agy 1.5 AGY_ERROR print_timeout line (exit 3) to timeout', async () => {
+    const stderr = [
+      '[agy] print timeout after 1s with turn in progress; returning partial output',
+      'error: print timeout after 1s with the turn still in progress; the response is partial',
+      'AGY_ERROR: {"short_error":"print timeout after 1s with the turn still in progress; the response is partial","status":"DEADLINE_EXCEEDED","retryable":false,"reason":"print_timeout"}',
+      '',
+    ].join('\n');
+    const stream = [
+      JSON.stringify({ event: 'init' }),
+      JSON.stringify({
+        event: 'result',
+        result: { status: 'ERROR', response: '', error: 'print timeout after 1s' },
+      }),
+      '',
+    ].join('\n');
+
+    const res = await run(
+      task,
+      fakeAgy({ version: 'agy 1.5.15', stdout: stream, stderr, code: 3 }).exec,
+    );
+
+    expect(res.ok).toBe(false);
+    if (!res.ok) expect(res.kind).toBe('timeout');
+  });
+
+  it('keeps another AGY_ERROR reason as no-answer', async () => {
+    const stderr = 'AGY_ERROR: {"status":"NOT_FOUND","reason":"unknown_model"}\n';
+    const res = await run(
+      task,
+      fakeAgy({ version: 'agy 1.5.15', stdout: '', stderr, code: 1 }).exec,
+    );
+
+    expect(res.ok).toBe(false);
+    if (!res.ok) expect(res.kind).toBe('no-answer');
+  });
 
   it('maps soft print-timeout stderr on stream path to timeout with ~1s message', async () => {
     const stderr = '[agy] print timeout after 1s with turn in progress; returning partial output\n';
@@ -623,7 +659,7 @@ describe('agy spawn failure handling', () => {
     tools: false,
     timeoutSec: 10,
     cwd: '/work',
-    backendModel: 'gemini-3.7-flash-high',
+    backendModel: 'gemini-3.8-flash-high',
   };
 
   it('maps ENOENT spawn error to not-found', async () => {
